@@ -80,6 +80,7 @@ export async function cancelRun(brandId: string, runId: string): Promise<void> {
  * that failed retryably), or the render. Drafts already stored are not touched and not paid for again.
  */
 export async function retryRun(brandId: string, runId: string, facts: ApprovedFact[]): Promise<void> {
+  const workflowId = `${runId}:retry:${randomUUID()}`;
   const { run, targets } = await withBrand(brandId, async (tx) => {
     const r = await getRun(tx, brandId, runId);
     const failures = r.counts.failures ?? [];
@@ -87,11 +88,12 @@ export async function retryRun(brandId: string, runId: string, facts: ApprovedFa
     if (!ok) throw new ConflictError('Only a run that failed, or finished with failed items, can be retried');
     const targets = r.kind === 'generate' && failures.length ? failures.map((f) => f.planItemId) : r.targets;
     if (!targets.length) throw new ConflictError('Nothing to retry');
-    await tx.update(studioRuns).set({ state: 'running', error: null, finishedAt: null }).where(eq(studioRuns.id, runId));
+    // Only from the state just read: of two retries at once, the second finds the run running and is refused.
+    const [moved] = await tx.update(studioRuns).set({ state: 'running', error: null, finishedAt: null, workflowId })
+      .where(and(eq(studioRuns.id, runId), eq(studioRuns.state, r.state))).returning({ id: studioRuns.id });
+    if (!moved) throw new ConflictError('This run is already being retried');
     await audit(tx, { brandId, actor: 'operator', action: 'studio.run.retry', objectType: 'studio_run', objectId: runId, result: 'ok' });
     return { run: r, targets };
   });
-  const workflowId = `${runId}:retry:${randomUUID()}`;
-  await withBrand(brandId, (tx) => tx.update(studioRuns).set({ workflowId }).where(eq(studioRuns.id, runId)));
   await DBOS.startWorkflow(studioWorkflow, { queueName: QUEUE, workflowID: workflowId })(brandId, runId, run.kind, targets, run.kind === 'generate' ? facts : []);
 }

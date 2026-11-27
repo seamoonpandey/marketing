@@ -1,5 +1,6 @@
+import { DBOS } from '@dbos-inc/dbos-sdk';
 import { randomUUID } from 'node:crypto';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { fakeRenderer, studioBrand } from '../../../test/fixtures/studio/setup.ts';
 import { launchTestWorkflows, testDb, type TestDb } from '../../../test/helpers.ts';
 import { mockAi } from '../../ai/index.ts';
@@ -7,7 +8,7 @@ import { withBrand } from '../../db/tenant.ts';
 import { objectKey, putObject } from '../../storage/index.ts';
 import { editItem } from '../plan/index.ts';
 import { editDraft, getDraft, listDrafts, markReady } from './drafts.ts';
-import { estimateDrafts, retryRun, startGenerate, startRender, getRun } from './runs.ts';
+import { cancelRun, estimateDrafts, retryRun, startGenerate, startRender, getRun } from './runs.ts';
 
 let t: TestDb;
 let stop: () => Promise<void>;
@@ -96,6 +97,43 @@ describe('generate', () => {
     expect(again).toMatchObject({ state: 'completed', counts: { drafted: 2, failed: 0 } });
     expect(mockAi.calls.length - before).toBe(1);
     expect(await drafts(s)).toHaveLength(2);
+  });
+
+  it('two retries at once: one is refused, and the failed item is paid for once', async () => {
+    const s = await studioBrand(t, { formats: ['text', 'text'] });
+    mockAi.queue(answer(s));
+    const run = await gen(s);
+    const before = mockAi.calls.length;
+    mockAi.queue(answer(s), answer(s));
+    const tries = await Promise.allSettled([retryRun(s.brand, run.id, s.facts), retryRun(s.brand, run.id, s.facts)]);
+    expect(tries.map((x) => x.status).sort()).toEqual(['fulfilled', 'rejected']);
+    await wait(s.brand, run.id);
+    await new Promise((r) => setTimeout(r, 300));
+    expect(mockAi.calls.length - before).toBe(1);
+  });
+
+  it('a cancel that lands while a retry is starting stops it before any model call', async () => {
+    const s = await studioBrand(t, { formats: ['text', 'text'] });
+    mockAi.queue(answer(s));
+    const run = await gen(s);
+    const before = mockAi.calls.length;
+    mockAi.queue(answer(s));
+    const start = DBOS.startWorkflow.bind(DBOS);
+    const spy = vi.spyOn(DBOS, 'startWorkflow').mockImplementationOnce(((fn: never, o: never) => async (...args: unknown[]) => {
+      await cancelRun(s.brand, run.id); // the owner's cancel arrives between the run row and the workflow
+      return (start(fn, o) as (...a: unknown[]) => Promise<unknown>)(...args);
+    }) as never);
+    try {
+      await retryRun(s.brand, run.id, s.facts);
+    } finally {
+      spy.mockRestore();
+    }
+    const after = await withBrand(s.brand, (tx) => getRun(tx, s.brand, run.id));
+    await DBOS.retrieveWorkflow(after.workflowId!).getResult().catch(() => undefined);
+    expect(after).toMatchObject({ state: 'cancelled' });
+    expect(await withBrand(s.brand, (tx) => getRun(tx, s.brand, run.id))).toMatchObject({ state: 'cancelled' });
+    expect(mockAi.calls.length - before).toBe(0);
+    expect(await drafts(s)).toHaveLength(1);
   });
 
   it('refuses items of another brand, an unapproved week and an item that has a draft, before any run or model call', async () => {

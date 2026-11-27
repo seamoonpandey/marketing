@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { AiError, estimateTokens, extract } from '../../ai/index.ts';
 import { config } from '../../config.ts';
 import type { ApprovedFact, Money } from '../../contracts/common.ts';
-import { studioDrafts, studioVersions, type DraftContent, type DraftKind, type LeftOut, type Ratio, type TemplateName } from '../../db/schema/studio.ts';
+import { studioDrafts, studioRuns, studioVersions, type DraftContent, type DraftKind, type LeftOut, type Ratio, type TemplateName } from '../../db/schema/studio.ts';
 import { withBrand, type Tx } from '../../db/tenant.ts';
 import { ConflictError, HttpError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
@@ -128,7 +128,12 @@ export type ItemResult =
 export async function generateOne(brandId: string, runId: string, planItemId: string, facts: ApprovedFact[]): Promise<ItemResult> {
   try {
     if (!facts.length) throw new ValidationError(NO_FACTS);
-    const { item, languages } = await withBrand(brandId, async (tx) => ({ item: await assertDraftable(tx, brandId, planItemId), languages: (await loadEnv(tx, brandId)).languages }));
+    const { item, languages } = await withBrand(brandId, async (tx) => {
+      // A cancel can land before the workflow exists, where DBOS cannot stop it; no paid call once the run is not running.
+      const [run] = await tx.select({ state: studioRuns.state }).from(studioRuns).where(and(eq(studioRuns.id, runId), eq(studioRuns.brandId, brandId)));
+      if (run?.state !== 'running') throw new ConflictError('The run was cancelled');
+      return { item: await assertDraftable(tx, brandId, planItemId), languages: (await loadEnv(tx, brandId)).languages };
+    });
     const { object } = await extract({ brandId, runType: 'studio_copy', runId, system: SYSTEM, parts: parts(item, languages, facts), schema: Answer, maxOutputTokens: COPY_MAX_OUTPUT });
     return await withBrand(brandId, async (tx) => {
       await assertDraftable(tx, brandId, planItemId); // the week may have gone back to draft during the call
