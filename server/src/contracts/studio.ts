@@ -147,6 +147,7 @@ export const DraftView = z
     versions: z.array(z.object({ version: z.number().int(), origin: z.enum(['model', 'owner']), createdAt: iso })).openapi({ description: 'Newest first.' }),
     planItem: z.union([PlanItemRef, z.null()]).openapi({ description: 'null when the plan item was deleted; the draft stays readable.' }),
     planApproved: z.boolean().openapi({ description: 'False when the item was deleted or its week went back to draft: the draft is stale, readable, and cannot be regenerated.' }),
+    weekStart: z.union([day, z.null()]).openapi({ description: "The first day of the plan item's week, so a screen can link back to it; null when the item was deleted." }),
     channel: z.string(), languages: z.array(z.string()).openapi({ description: 'The brand languages.' }),
     missingLanguages: z.array(z.string()).openapi({ description: 'Brand languages with no copy in this version.' }),
     content: Content,

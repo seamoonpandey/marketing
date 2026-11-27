@@ -30,7 +30,10 @@ export type DraftView = {
   version: { version: number; origin: 'model' | 'owner'; createdAt: Date };
   versions: { version: number; origin: 'model' | 'owner'; createdAt: Date }[];
   planItem: { id: string; day: string; channel: string; format: string | null; idea: string; cta: string; kind: DraftKind } | null;
-  planApproved: boolean; languages: string[]; missingLanguages: string[];
+  planApproved: boolean;
+  /** The first day of the plan item's week, or null when the item was deleted. */
+  weekStart: string | null;
+  languages: string[]; missingLanguages: string[];
   /** The cited facts that are approved today. */
   facts: ApprovedFact[]; blockingCount: number; canMarkReady: boolean; cannotMarkReadyReason: string | null;
 };
@@ -60,7 +63,8 @@ export async function buildView(tx: Tx, brandId: string, d: Draft, facts: Approv
   } catch (e) {
     if (!(e instanceof NotFoundError)) throw e; // the item was deleted: the draft stays readable
   }
-  const planApproved = item ? (await getPlan(tx, brandId, item.weekPlanId)).status === 'approved' : false;
+  const plan = item ? await getPlan(tx, brandId, item.weekPlanId) : null;
+  const planApproved = plan?.status === 'approved';
   const channel = item?.channel ?? v.content.channel;
   const findings = checkDraft({
     kind: d.kind, channel, content: v.content, renders: v.renders, version: v.version, facts, prohibited: prohibitedOf(facts),
@@ -75,7 +79,7 @@ export async function buildView(tx: Tx, brandId: string, d: Draft, facts: Approv
     assetIds: [...new Set([...assetIdsOf(v.content), ...v.renders.flatMap((r) => (r.logoAssetId ? [r.logoAssetId] : []))])],
     version: { version: v.version, origin: v.origin, createdAt: v.createdAt }, versions: all,
     planItem: item && { id: item.id, day: item.day, channel: item.channel, format: item.format, idea: item.idea, cta: item.cta, kind: kindFor(item.format) },
-    planApproved, languages: env.languages, missingLanguages: env.languages.filter((l) => !v.content.copies.some((c) => c.language === l)),
+    planApproved, weekStart: plan?.weekStart ?? null, languages: env.languages, missingLanguages: env.languages.filter((l) => !v.content.copies.some((c) => c.language === l)),
     facts: facts.filter((f) => cited.has(f.id)), blockingCount: blocking.length,
     canMarkReady: d.status === 'draft' && !blocking.length,
     cannotMarkReadyReason: d.status === 'ready' ? 'Already marked ready' : blocking.length ? `${blocking.length} blocking ${blocking.length === 1 ? 'issue' : 'issues'}: ${blocking[0]!.message}` : null,

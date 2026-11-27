@@ -29,7 +29,7 @@ const toView = async (v: DraftView, brandId: string, run: StudioRunRow | null): 
   version: { ...v.version, createdAt: v.version.createdAt.toISOString() },
   versions: v.versions.map((x) => ({ ...x, createdAt: x.createdAt.toISOString() })),
   planItem: v.planItem && { ...v.planItem, channel: v.planItem.channel as never, format: v.planItem.format as never },
-  planApproved: v.planApproved, channel: v.channel, languages: v.languages, missingLanguages: v.missingLanguages,
+  planApproved: v.planApproved, weekStart: v.weekStart, channel: v.channel, languages: v.languages, missingLanguages: v.missingLanguages,
   content: { copies: v.content.copies, slides: v.content.slides, scenes: v.content.scenes, template: v.content.template, ratios: v.content.ratios },
   leftOut: v.leftOut, facts: v.facts.map(toFact), findings: v.findings, blockingCount: v.blockingCount,
   renders: await Promise.all(v.renders.map(async (r) => ({ ratio: r.ratio, width: r.width, height: r.height, overflow: r.overflow, index: r.index, type: r.type, url: await presignDownload(r.key) }))),

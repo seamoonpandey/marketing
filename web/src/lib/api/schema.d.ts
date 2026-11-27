@@ -4172,6 +4172,626 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/brands/{brandId}/studio/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    /** @description The first day of a brand week. Default: the current week. Another day answers 400. */
+                    weekStart?: string;
+                };
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioOverview"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioTemplateList"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/drafts/estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StudioDraftCreate"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioEstimate"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StudioDraftCreate"];
+                };
+            };
+            responses: {
+                /** @description Started */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                402: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/drafts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioDraftView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StudioContentPatch"];
+                };
+            };
+            responses: {
+                /** @description The edit is the new current version */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioDraftView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/drafts/{id}/render": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Started. Costs NPR 0. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/drafts/{id}/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioDraftView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/runs/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/runs/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5206,6 +5826,293 @@ export interface components {
         };
         PlanItemRemoved: {
             plan: components["schemas"]["PlanWeekPlan"];
+        };
+        StudioOverview: {
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            weekStart: string;
+            /** @description False when the week has no approved plan: items is then empty and the screen links to the Plan calendar. */
+            planApproved: boolean;
+            /** @description The approved plan items, by day then position. */
+            items: components["schemas"]["StudioOverviewItem"][];
+            ready: components["schemas"]["StudioReady"];
+            /** @description The newest generate run that touched one of these items, so a screen can resume RunProgress. */
+            latestRun: components["schemas"]["StudioRun"] | null;
+            monthCost: components["schemas"]["StudioMoney"] & unknown;
+        };
+        StudioOverviewItem: {
+            item: components["schemas"]["StudioPlanItem"];
+            /** @description null until drafted. */
+            draft: components["schemas"]["StudioDraftCard"] | null;
+        };
+        StudioPlanItem: {
+            id: string;
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            day: string;
+            /** @enum {string} */
+            channel: "facebook" | "instagram" | "tiktok" | "youtube" | "linkedin" | "x" | "whatsapp" | "email" | "website";
+            format: ("text" | "image" | "carousel" | "infographic" | "poll" | "story" | "short_video" | "long_video" | "live" | "gif" | "blog" | "email" | "landing_page" | "podcast" | "case_study") | null;
+            idea: string;
+            cta: string;
+            kind: components["schemas"]["StudioKind"];
+        };
+        /**
+         * @description The kind of draft this item gets.
+         * @enum {string}
+         */
+        StudioKind: "post" | "static" | "carousel" | "video";
+        StudioDraftCard: {
+            id: string;
+            kind: components["schemas"]["StudioKind"] & unknown;
+            status: components["schemas"]["StudioDraftStatus"];
+            currentVersion: number;
+            /** @description Blocking findings today; a draft with 0 can be marked ready. */
+            blockingCount: number;
+            /** @description First rendered image, or null before the first render. */
+            thumbnailUrl: string | null;
+        };
+        /** @enum {string} */
+        StudioDraftStatus: "draft" | "ready";
+        StudioReady: {
+            /** @description The brand has an approved fact. Drafting needs it. */
+            facts: boolean;
+        };
+        StudioRun: {
+            id: string;
+            /** @enum {string} */
+            kind: "generate" | "render";
+            /** @description Plan item ids (generate) or the draft id (render). */
+            targets: string[];
+            state: components["schemas"]["StudioRunState"];
+            /** @description On a failed run its reason. A completed render run can carry a plain note, such as the video engine being unavailable while the images were kept. */
+            error: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            startedAt: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            finishedAt: string | null;
+            estimate: components["schemas"]["StudioMoney"] | null;
+            actual: components["schemas"]["StudioMoney"] | null;
+            counts: components["schemas"]["StudioRunCounts"];
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        StudioRunState: "running" | "awaiting_approval" | "completed" | "failed_retryable" | "failed_final" | "cancelled";
+        /** @description Decimal strings: usd to 4 places, npr to 2. */
+        StudioMoney: {
+            usd: string;
+            npr: string;
+        };
+        StudioRunCounts: {
+            drafted?: number;
+            failed?: number;
+            rendered?: number;
+            /** @description Items whose model call failed; retry redoes only these. */
+            failures?: {
+                planItemId: string;
+                message: string;
+            }[];
+            /** @description Brand languages the model returned no copy for; the draft is still stored. */
+            missingLanguages?: {
+                planItemId: string;
+                languages: string[];
+            }[];
+        };
+        StudioTemplateList: {
+            templates: {
+                name: components["schemas"]["StudioTemplate"];
+                label: string;
+                description: string;
+            }[];
+            ratios: {
+                ratio: components["schemas"]["StudioRatio"];
+                width: number;
+                height: number;
+                label: string;
+            }[];
+        };
+        /** @enum {string} */
+        StudioTemplate: "headline" | "offer" | "quote";
+        /** @enum {string} */
+        StudioRatio: "1:1" | "4:5" | "9:16" | "16:9";
+        /** @description The most the copy for these items can cost. Show it before starting. Rendering costs NPR 0. */
+        StudioEstimate: {
+            estimate: components["schemas"]["StudioMoney"];
+            remaining: components["schemas"]["StudioMoney"] & unknown;
+            count: number;
+        };
+        /** @description Items of this brand whose week is approved and that have no draft yet. Another brand, an unapproved week or an item that already has a draft is refused (404, 409). */
+        StudioDraftCreate: {
+            planItemIds: string[];
+        };
+        StudioDraftView: {
+            draft: {
+                id: string;
+                planItemId: string;
+                kind: components["schemas"]["StudioKind"] & unknown;
+                status: components["schemas"]["StudioDraftStatus"];
+                currentVersion: number;
+                readyVersion: number | null;
+                /**
+                 * @description ISO 8601 timestamp
+                 * @example 2026-11-27T06:00:00.000Z
+                 */
+                readyAt: string | null;
+                /**
+                 * @description ISO 8601 timestamp
+                 * @example 2026-11-27T06:00:00.000Z
+                 */
+                createdAt: string;
+            };
+            version: {
+                version: number;
+                /** @enum {string} */
+                origin: "model" | "owner";
+                /**
+                 * @description ISO 8601 timestamp
+                 * @example 2026-11-27T06:00:00.000Z
+                 */
+                createdAt: string;
+            };
+            /** @description Newest first. */
+            versions: {
+                version: number;
+                /** @enum {string} */
+                origin: "model" | "owner";
+                /**
+                 * @description ISO 8601 timestamp
+                 * @example 2026-11-27T06:00:00.000Z
+                 */
+                createdAt: string;
+            }[];
+            /** @description null when the plan item was deleted; the draft stays readable. */
+            planItem: components["schemas"]["StudioPlanItem"] | null;
+            /** @description False when the item was deleted or its week went back to draft: the draft is stale, readable, and cannot be regenerated. */
+            planApproved: boolean;
+            /** @description The first day of the plan item's week, so a screen can link back to it; null when the item was deleted. */
+            weekStart: string | null;
+            channel: string;
+            /** @description The brand languages. */
+            languages: string[];
+            /** @description Brand languages with no copy in this version. */
+            missingLanguages: string[];
+            content: components["schemas"]["StudioContent"];
+            /** @description Claims removed for lack of an approved fact. */
+            leftOut: components["schemas"]["StudioLeftOut"][];
+            facts: components["schemas"]["StudioFactRef"][];
+            /** @description Blocking first. Computed on every read against today's facts and rights. */
+            findings: components["schemas"]["StudioFinding"][];
+            blockingCount: number;
+            /** @description Of the current version only. */
+            renders: components["schemas"]["StudioRender"][];
+            canMarkReady: boolean;
+            cannotMarkReadyReason: string | null;
+            /** @description The newest run of this draft (its generate run or a render run). */
+            latestRun: components["schemas"]["StudioRun"] | null;
+        };
+        StudioContent: {
+            copies: components["schemas"]["StudioCopy"][];
+            /** @description static and carousel drafts. Empty for others. */
+            slides: components["schemas"]["StudioSlideText"][];
+            /** @description video drafts. Empty for others. */
+            scenes: components["schemas"]["StudioScene"][];
+            template: components["schemas"]["StudioTemplate"];
+            ratios: components["schemas"]["StudioRatio"][];
+        };
+        StudioCopy: {
+            /** @description One of the brand languages. */
+            language: string;
+            /** @description The caption is these joined with spaces. */
+            sentences: components["schemas"]["StudioSentence"][];
+            /**
+             * @description Without the leading #.
+             * @default []
+             */
+            hashtags: string[];
+            /** @default  */
+            cta: string;
+        };
+        StudioSentence: {
+            text: string;
+            /** @description A claim is kept only while it cites at least one approved fact. */
+            claim: boolean;
+            /** @default [] */
+            factIds: string[];
+        };
+        StudioSlideText: {
+            headline: string;
+            subline?: string;
+            badge?: string;
+            /** @description An asset of this brand with a licence recorded; any other id is refused with 404. */
+            photoAssetId?: string;
+        };
+        /** @description Each scene becomes one card of the video. There is no voice: voiceover is script text only. */
+        StudioScene: {
+            onScreenText: string;
+            voiceover: string;
+            shot: string;
+            seconds: number;
+        };
+        StudioLeftOut: {
+            language: string;
+            text: string;
+            /** @description "no approved fact" for a claim that cited nothing usable. */
+            reason: string;
+        };
+        /** @description An approved fact that the draft cites. A cited id missing from the list is not approved today. */
+        StudioFactRef: {
+            id: string;
+            section: string;
+            subjectName: string | null;
+            field: string;
+            value?: unknown;
+            unit: string | null;
+        };
+        StudioFinding: {
+            check: components["schemas"]["StudioCheck"];
+            blocking: boolean;
+            /** @example caption en */
+            where: string;
+            message: string;
+        };
+        /** @enum {string} */
+        StudioCheck: "unverified_number" | "prohibited_word" | "too_long" | "missing_cta" | "expired_fact" | "no_rights" | "text_overflow" | "not_rendered" | "low_contrast" | "many_hashtags";
+        StudioRender: {
+            ratio: components["schemas"]["StudioRatio"];
+            width: number;
+            height: number;
+            overflow: boolean;
+            /** @description The slide or scene number, from 0. A video is index 0. */
+            index: number;
+            /** @enum {string} */
+            type: "image" | "video";
+            /** @description Presigned download URL, valid for about 15 minutes. Images open inline; a video is an attachment. */
+            url: string;
+        };
+        /** @description Every change makes a new version (origin owner), clears the renders of the new version and sets a ready draft back to draft. Claims citing no approved fact move to leftOut. */
+        StudioContentPatch: {
+            /** @description Replaces the copy of each language listed; languages not listed are kept. */
+            copies?: components["schemas"]["StudioCopy"][];
+            slides?: components["schemas"]["StudioSlideText"][];
+            scenes?: components["schemas"]["StudioScene"][];
+            template?: components["schemas"]["StudioTemplate"];
+            ratios?: components["schemas"]["StudioRatio"][];
+            /** @description The version the editor started from; a different current version answers 409 so an edit never overwrites a newer one. */
+            baseVersion?: number;
         };
     };
     responses: never;
