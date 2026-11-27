@@ -30,7 +30,7 @@ export async function currentPlans(tx: Tx, brandId: string, weekStart: string): 
   return { plan: draft ?? approved, approvedPlan: draft ? approved : null };
 }
 
-const listItems = (tx: Tx, planId: string) =>
+export const listItems = (tx: Tx, planId: string) =>
   tx.select().from(planItems).where(eq(planItems.weekPlanId, planId)).orderBy(asc(planItems.day), asc(planItems.position), asc(planItems.createdAt));
 
 /** Ideas of the approved plans of the four weeks before `weekStart`. */

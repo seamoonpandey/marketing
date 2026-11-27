@@ -24,7 +24,7 @@ export type DraftContent = {
 };
 export type LeftOut = { language: string; text: string; reason: string };
 /** One rendered file. `index` is the slide or scene number; a video is index 0 with type 'video'. */
-export type RenderRecord = { ratio: Ratio; key: string; width: number; height: number; overflow: boolean; index: number; type: 'image' | 'video' };
+export type RenderRecord = { ratio: Ratio; key: string; sha256: string; width: number; height: number; overflow: boolean; index: number; type: 'image' | 'video' };
 export type StudioCounts = {
   drafted?: number;
   failed?: number;

@@ -7,3 +7,5 @@ export {
   approveBatch, approvedFacts, approveFact, editFact, enterFact, factHistory, findOrCreateSubject, listFacts, listSubjects,
   proposeFacts, rejectFact, resolveConflict, type Fact, type ProposedFact, type Subject,
 } from './facts/index.ts';
+export { listAssets } from './assets.ts';
+export { contrast, getPalette } from './palette/index.ts';
