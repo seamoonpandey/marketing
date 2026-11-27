@@ -50,7 +50,7 @@ const versionRow = async (tx: Tx, draftId: string, version: number) => {
 const citedIds = (c: DraftContent) => [...new Set(c.copies.flatMap((x) => x.sentences.flatMap((s) => s.factIds)))];
 const assetIdsOf = (c: DraftContent) => [...new Set(c.slides.flatMap((s) => (s.photoAssetId ? [s.photoAssetId] : [])))];
 
-async function buildView(tx: Tx, brandId: string, d: Draft, facts: ApprovedFact[], env: Env): Promise<DraftView> {
+export async function buildView(tx: Tx, brandId: string, d: Draft, facts: ApprovedFact[], env: Env): Promise<DraftView> {
   const v = await versionRow(tx, d.id, d.currentVersion);
   const all = await tx.select({ version: studioVersions.version, origin: studioVersions.origin, createdAt: studioVersions.createdAt }).from(studioVersions)
     .where(eq(studioVersions.draftId, d.id)).orderBy(desc(studioVersions.version));

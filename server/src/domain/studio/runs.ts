@@ -5,11 +5,11 @@ import { and, desc, eq, sql } from 'drizzle-orm';
 import type { ApprovedFact, Money } from '../../contracts/common.ts';
 import { studioRuns } from '../../db/schema/studio.ts';
 import { withBrand, type Tx } from '../../db/tenant.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../http/errors.ts';
+import { ConflictError, NotFoundError } from '../../http/errors.ts';
 import { QUEUE } from '../../workflows/index.ts';
 import { studioWorkflow } from '../../workflows/studio-run.ts';
 import { audit } from '../audit/index.ts';
-import { assertDraftable, estimateDrafts, NO_FACTS } from './generate.ts';
+import { assertDraftable, estimateDrafts } from './generate.ts';
 import { getDraftRow, type StudioRunRow } from './drafts.ts';
 import { pendingRenderers } from './rendering.ts';
 import type { Renderer } from './render-types.ts';
@@ -25,8 +25,8 @@ export async function getRun(tx: Tx, brandId: string, runId: string): Promise<St
 }
 
 /** The newest run (of the last 50) whose targets include any of the ids. */
-export async function latestRun(tx: Tx, brandId: string, kind: 'generate' | 'render', ids: string[]): Promise<StudioRunRow | null> {
-  const rows = await tx.select().from(studioRuns).where(and(eq(studioRuns.brandId, brandId), eq(studioRuns.kind, kind))).orderBy(desc(studioRuns.createdAt)).limit(50);
+export async function latestRun(tx: Tx, brandId: string, kind: 'generate' | 'render' | undefined, ids: string[]): Promise<StudioRunRow | null> {
+  const rows = await tx.select().from(studioRuns).where(and(eq(studioRuns.brandId, brandId), kind ? eq(studioRuns.kind, kind) : undefined)).orderBy(desc(studioRuns.createdAt)).limit(50);
   return rows.find((r) => r.targets.some((t) => ids.includes(t))) ?? null;
 }
 
@@ -42,7 +42,6 @@ async function begin(brandId: string, kind: 'generate' | 'render', targets: stri
 
 /** Refused before any run row or model call: another brand's item (404), an unapproved week or an item that has a draft (409), no approved fact (400). */
 export async function startGenerate(brandId: string, planItemIds: string[], facts: ApprovedFact[]): Promise<{ runId: string }> {
-  if (!facts.length) throw new ValidationError(NO_FACTS);
   const ids = [...new Set(planItemIds)];
   const estimate = await estimateDrafts(brandId, ids, facts);
   const runId = await begin(brandId, 'generate', ids, estimate, async (tx) => {

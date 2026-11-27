@@ -65,7 +65,6 @@ function parts(item: Item, languages: string[], facts: ApprovedFact[]) {
 }
 
 export async function estimateDrafts(brandId: string, planItemIds: string[], facts: ApprovedFact[]): Promise<Money> {
-  if (!facts.length) throw new ValidationError(NO_FACTS);
   const ids = [...new Set(planItemIds)];
   const tokens = await withBrand(brandId, async (tx) => {
     const { languages } = await loadEnv(tx, brandId);
@@ -73,6 +72,7 @@ export async function estimateDrafts(brandId: string, planItemIds: string[], fac
     for (const id of ids) n += estimateTokens([{ type: 'text', text: SYSTEM }, ...parts(await assertDraftable(tx, brandId, id), languages, facts)]);
     return n;
   });
+  if (!facts.length) throw new ValidationError(NO_FACTS); // after the items, so another brand's item is a 404 first
   return estimateCost(config.AI_MODEL, tokens, COPY_MAX_OUTPUT * ids.length);
 }
 
