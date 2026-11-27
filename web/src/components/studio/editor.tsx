@@ -1,17 +1,15 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CircleAlert, CircleCheck, Film, ImageIcon, Info, Plus, Save, Trash2 } from 'lucide-react';
+import { CircleAlert, CircleCheck, Film, ImageIcon, Info, Plus, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useEffect, useRef, useState, type MutableRefObject } from 'react';
-import { MoneyText, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { useEffect, useEffectEvent, useRef, useState, type MutableRefObject } from 'react';
+import { Async, BackLink, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { Preview } from './preview';
-import {
-  Async, CHANNEL_LABEL, CHECK_LABEL, KIND_LABEL, LANGUAGE_LABEL, MutationError, NO_COST, cancelRun, fetchRun, retryRun, runKey, useAct, useAssets, useDraft, useTemplates, whyUnavailable,
-  type Asset, type DraftView, type Ratio, type Template,
-} from './lib';
+import { CHECK_LABEL, LANGUAGE_LABEL, NO_COST, cancelRun, fetchRun, retryRun, runKey, useAct, useAssets, useDraft, useTemplates, whyUnavailable, type Asset, type DraftView, type Ratio, type Template } from './lib';
+import { label } from '@/lib/labels';
 
 type Sentence = Schemas['StudioSentence'];
 // The contract's bounds: a carousel has 2 to 10 slides, a video 1 to 10 scenes, a caption at most 30 sentences.
@@ -71,21 +69,19 @@ function Screen({ brandId, v }: { brandId: string; v: DraftView }) {
   const isReady = v.draft.status === 'ready';
   const reason = dirty ? 'Save your changes first: Ready applies to a saved version.' : v.cannotMarkReadyReason ?? 'Something still blocks this draft.';
   const canReady = !dirty && v.canMarkReady && !isReady;
-  const title = v.planItem?.idea ?? `${CHANNEL_LABEL[v.channel] ?? v.channel} ${KIND_LABEL[v.draft.kind].toLowerCase()}`;
+  const title = v.planItem?.idea ?? `${label(v.channel)} ${label(v.draft.kind).toLowerCase()}`;
   const blocking = v.findings.filter((f) => f.blocking);
 
   return (
     <>
-      <Link href={`/app/b/${brandId}/studio${v.weekStart ? `?week=${v.weekStart}` : ''}`} className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
-        <ArrowLeft className="size-4" aria-hidden />Back to Studio
-      </Link>
+      <BackLink href={`/app/b/${brandId}/studio${v.weekStart ? `?week=${v.weekStart}` : ''}`}>Back to Studio</BackLink>
       <PageHeader
         title={title}
         description={
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span>{CHANNEL_LABEL[v.channel] ?? v.channel} · {KIND_LABEL[v.draft.kind]}</span>
+            <span>{label(v.channel)} · {label(v.draft.kind)}</span>
             <span className="num">Version {v.version.version}, written by {v.version.origin === 'model' ? 'the model' : 'you'}</span>
-            <StatusBadge status={isReady ? 'completed' : 'draft'} label={isReady ? `Ready as version ${v.draft.readyVersion}` : 'Draft'} />
+            <StatusBadge status={isReady ? 'completed' : 'draft'} label={isReady ? `Ready as version ${v.draft.readyVersion}` : undefined} />
           </span>
         }
         actions={
@@ -115,8 +111,9 @@ function Screen({ brandId, v }: { brandId: string; v: DraftView }) {
         {renderRun ? <RenderRun brandId={brandId} id={renderRun} onSettled={() => setRenderRun(null)} /> : null}
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-        <div className="lg:sticky lg:top-4">
+      <div className="grid items-start gap-6 lg:grid-cols-2 xl:grid-cols-[minmax(0,6fr)_minmax(0,5fr)]">
+        {/* The previews are the wider column, so a post can be judged by its picture; a tall set scrolls on its own beside the form. */}
+        <div role="group" aria-label="Preview" tabIndex={0} className="lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto">
           <Preview view={v} />
         </div>
         <div className="grid min-w-0 gap-6">
@@ -129,15 +126,32 @@ function Screen({ brandId, v }: { brandId: string; v: DraftView }) {
   );
 }
 
+/** How long the "Rendering completed" strip stays before it goes by itself. */
+const DISMISS_MS = 8000;
+
 function RenderRun({ brandId, id, onSettled }: { brandId: string; id: string; onSettled: () => void }) {
   const key = runKey(brandId, id);
   const run = useQuery({ queryKey: key, queryFn: () => fetchRun(brandId, id) });
   const state = run.data?.state;
   const settled = !!state && state !== 'running' && state !== 'awaiting_approval';
+  // A clean finish needs nothing from the owner, so its strip leaves by itself (a failure or a note stays until dismissed).
+  const clean = state === 'completed' && !run.data?.error;
+  const [held, setHeld] = useState(false);
   const client = useQueryClient();
+  const dismiss = useEffectEvent(onSettled);
   useEffect(() => { if (settled) client.invalidateQueries({ queryKey: ['studio', brandId] }); }, [settled, client, brandId]);
+  // Hovering or focusing the strip holds it, so it never goes while it is being read or used.
+  useEffect(() => {
+    if (!clean || held) return;
+    const t = setTimeout(dismiss, DISMISS_MS);
+    return () => clearTimeout(t);
+  }, [clean, held]);
   return (
-    <div className="grid gap-2">
+    <div
+      className="grid gap-2"
+      onMouseEnter={() => setHeld(true)} onMouseLeave={() => setHeld(false)}
+      onFocus={() => setHeld(true)} onBlur={() => setHeld(false)}
+    >
       <RunProgress queryKey={key} fetchRun={() => fetchRun(brandId, id)} onCancel={() => cancelRun(brandId, id)} onRetry={() => retryRun(brandId, id)} label="Rendering" />
       {state === 'completed' && run.data?.error ? <StateBlock state="partial" size="inline" title="Rendered with a note">{run.data.error}</StateBlock> : null}
       {settled ? <button type="button" className="btn btn-quiet justify-self-start" onClick={onSettled}>Dismiss</button> : null}
@@ -404,7 +418,6 @@ function PhotoPick({ brandId, label, value, onChange }: { brandId: string; label
               return (
                 <li key={a.id} className="flex items-center gap-2.5 rounded-md border border-line p-2">
                   {isImage(a) ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- presigned storage URL
                     <img src={a.source.downloadUrl} alt="" className="size-12 shrink-0 rounded object-cover" />
                   ) : null}
                   <div className="grid min-w-0 flex-1 gap-0.5 text-sm">

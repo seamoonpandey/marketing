@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { StatusBadge } from '@/components/app';
+import { Async, LiveStatus, MutationError, StateBlock, StatusBadge } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
-import { Async, MutationError, useAct, useTargets } from './lib';
+import { useAct, useTargets } from './lib';
 
 const LIMIT = 5;
 
@@ -32,7 +32,7 @@ export function WatchList({ brandId, competitorId, site }: { brandId: string; co
           return (
             <>
               {list.length === 0 ? (
-                <p className="panel p-4 text-sm text-muted">No pages yet. Pricing, offers and the home page are the ones worth watching{site ? '; let Prachaar suggest them from the site' : ''}.</p>
+                <StateBlock state="empty" size="inline" title="No pages yet">Pricing, offers and the home page are the ones worth watching{site ? '; let Prachaar suggest them from the site' : ''}.</StateBlock>
               ) : (
                 <ul className="panel divide-y divide-line" aria-label="Watched pages">
                   {list.map((t) => (
@@ -104,6 +104,7 @@ export function WatchList({ brandId, competitorId, site }: { brandId: string; co
                 </div>
               </form>
               <MutationError error={add.error ?? suggest.error ?? toggle.error ?? remove.error} />
+              <LiveStatus message={remove.isSuccess ? 'Page removed.' : toggle.isSuccess ? 'Page updated.' : add.isSuccess ? 'Page added.' : ''} />
             </>
           );
         }}

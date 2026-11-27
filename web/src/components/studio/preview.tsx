@@ -48,11 +48,10 @@ export function Preview({ view }: { view: DraftView }) {
           <Caption r={v} label="Video" />
         </figure>
       ))}
-      <ul className={`grid gap-3 ${total > 1 ? 'sm:grid-cols-2' : ''}`}>
+      <ul className="grid gap-4">
         {images.map((r) => (
           <li key={r.index}>
             <figure className="grid gap-1.5">
-              {/* eslint-disable-next-line @next/next/no-img-element -- presigned storage URL; shown at the file's own ratio */}
               <img
                 src={r.url}
                 width={r.width}
@@ -69,8 +68,8 @@ export function Preview({ view }: { view: DraftView }) {
   );
 }
 
-/** Full width up to the point where the file would be taller than 70% of the screen; width and height always keep the file's ratio. */
-const fit = (r: Render) => ({ width: '100%', height: 'auto', aspectRatio: `${r.width} / ${r.height}`, maxWidth: `min(100%, calc(70vh * ${r.width / r.height}))` });
+/** The column's full width, up to the point where the file would be taller than 80% of the screen; width and height always keep the file's ratio. */
+const fit = (r: Render) => ({ width: '100%', height: 'auto', aspectRatio: `${r.width} / ${r.height}`, maxWidth: `min(100%, calc(80vh * ${r.width / r.height}))` });
 
 function Caption({ r, label }: { r: Render; label: string }) {
   return (

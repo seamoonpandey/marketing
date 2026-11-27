@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { expect, test, type APIRequestContext } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { queueAi, resetAi } from './helpers';
 
 const FIXTURES = '../server/test/fixtures/studio/render';

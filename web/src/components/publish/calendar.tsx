@@ -1,11 +1,12 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { PageHeader, StateBlock, useBrandId } from '@/components/app';
-import { api, ApiError, unwrap, type Schemas } from '@/lib/api/client';
-import { addDays, Async, dayKey, JobBadge, MutationError, PLATFORM, timeLabel, useAct, useJobs, useSchedulable, wallToIso } from './lib';
+import { Async, MutationError, PageHeader, StateBlock, useBrandId, WeekNav } from '@/components/app';
+import { api, errorMessage, unwrap, type Schemas } from '@/lib/api/client';
+import { JobBadge, useAct, useJobs, useSchedulable } from './lib';
+import { addDays, dayKey, formatYmd, timeLabel, wallToIso } from '@/lib/time';
+import { label } from '@/lib/labels';
 
 type Schedulable = Schemas['PublishSchedulable'];
 type Draft = Schedulable['drafts'][number];
@@ -26,15 +27,13 @@ function Week({ brandId, s }: { brandId: string; s: Schedulable }) {
   const [start, setStart] = useState(() => dayKey(new Date(), tz));
   const jobs = useJobs(brandId, wallToIso(start, '00:00', tz), wallToIso(addDays(start, 7), '00:00', tz), true);
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
-  const label = (d: string) => new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(`${d}T00:00:00Z`)).replace(',', '');
+  const dayName = (d: string) => formatYmd(d, { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '');
   return (
     <div className="grid gap-10">
       <section aria-labelledby="wk-h" className="grid gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 id="wk-h" className="mr-auto text-xl font-semibold">{label(days[0]!)} to {label(days[6]!)} <span className="text-base font-normal text-muted">{tz}</span></h2>
-          <button type="button" className="btn btn-secondary" aria-label="Previous week" onClick={() => setStart(addDays(start, -7))}><ChevronLeft className="size-4" aria-hidden /></button>
-          <button type="button" className="btn btn-secondary" onClick={() => setStart(dayKey(new Date(), tz))}>This week</button>
-          <button type="button" className="btn btn-secondary" aria-label="Next week" onClick={() => setStart(addDays(start, 7))}><ChevronRight className="size-4" aria-hidden /></button>
+          <h2 id="wk-h" className="mr-auto text-xl font-semibold">{dayName(days[0]!)} to {dayName(days[6]!)} <span className="text-base font-normal text-muted">{tz}</span></h2>
+          <WeekNav prev={{ onClick: () => setStart(addDays(start, -7)) }} next={{ onClick: () => setStart(addDays(start, 7)) }} today={{ onClick: () => setStart(dayKey(new Date(), tz)) }} />
         </div>
         <Async q={jobs} what="week">
           {(l) => (
@@ -42,14 +41,14 @@ function Week({ brandId, s }: { brandId: string; s: Schedulable }) {
               {days.map((d) => {
                 const here = l.jobs.filter((j) => dayKey(j.scheduledAt, tz) === d);
                 return (
-                  <li key={d} aria-label={label(d)} className="panel grid content-start gap-2 p-2.5 md:min-h-32">
-                    <h3 className="text-sm font-semibold">{label(d)}</h3>
+                  <li key={d} aria-label={dayName(d)} className="panel grid content-start gap-2 p-2.5 md:min-h-32">
+                    <h3 className="text-sm font-semibold">{dayName(d)}</h3>
                     {here.length ? (
                       <ul className="grid gap-2">
                         {here.map((j) => (
                           <li key={j.id} className="grid gap-1 rounded-md border border-line p-2 text-sm" data-job-state={j.state}>
                             <Link href={`/app/b/${brandId}/publish/jobs/${j.id}`} className="font-medium underline">
-                              <span className="num">{timeLabel(j.scheduledAt, tz)}</span> {j.channel ? PLATFORM[j.channel.platform] : 'Channel removed'}
+                              <span className="num">{timeLabel(j.scheduledAt, tz)}</span> {j.channel ? label(j.channel.platform) : 'Channel removed'}
                             </Link>
                             <JobBadge state={j.state} />
                           </li>
@@ -89,12 +88,12 @@ function DraftCard({ brandId, d, s }: { brandId: string; d: Draft; s: Schedulabl
     const out = await Promise.all(
       [...picked].map(async (channelId) => {
         const c = d.channels.find((x) => x.channelId === channelId)!;
-        const name = `${PLATFORM[c.platform]} · ${c.accountName}`;
+        const name = `${label(c.platform)} · ${c.accountName}`;
         try {
           await unwrap(api.POST('/api/brands/{brandId}/publish/jobs', { params: { path: { brandId } }, body: { draftId: d.draftId, channelId, scheduledAt: wallToIso(date, time, tz) } }));
           return { id: channelId, ok: true, text: `${name}: scheduled` };
         } catch (e) {
-          return { id: channelId, ok: false, text: `${name}: ${e instanceof ApiError ? e.message : 'could not be scheduled'}` };
+          return { id: channelId, ok: false, text: `${name}: ${errorMessage(e, 'could not be scheduled')}` };
         }
       }),
     );
@@ -105,7 +104,6 @@ function DraftCard({ brandId, d, s }: { brandId: string; d: Draft; s: Schedulabl
   return (
     <li className="panel grid gap-4 p-4 md:grid-cols-[8rem_minmax(0,1fr)]">
       {d.thumbnailUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img src={d.thumbnailUrl} alt={`First image of the ${d.kind} draft`} className="max-h-40 w-auto max-w-32 rounded-md object-contain" />
       ) : (
         <div className="grid h-24 place-items-center rounded-md bg-[color-mix(in_oklab,var(--theme-ink)_6%,transparent)] text-sm text-muted">No image</div>
@@ -121,7 +119,7 @@ function DraftCard({ brandId, d, s }: { brandId: string; d: Draft; s: Schedulabl
             <div key={c.channelId} className="grid gap-0.5">
               <label className={`flex items-center gap-2.5 ${c.fits ? '' : 'text-muted'}`}>
                 <input type="checkbox" className="size-4" disabled={!c.fits} checked={picked.has(c.channelId)} onChange={() => toggle(c.channelId)} aria-describedby={c.fits ? undefined : `${id}-${c.channelId}`} />
-                {PLATFORM[c.platform]} · {c.accountName}
+                {label(c.platform)} · {c.accountName}
               </label>
               {!c.fits ? <p id={`${id}-${c.channelId}`} className="pl-6.5 text-sm text-danger">Cannot schedule here: {c.reason ?? 'not available'}</p> : null}
             </div>

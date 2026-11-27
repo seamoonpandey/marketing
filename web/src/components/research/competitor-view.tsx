@@ -1,12 +1,12 @@
 'use client';
 
-import { ChevronLeft, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { PageHeader, SourceQuote, StateBlock, useBrandId } from '@/components/app';
-import { ApiError } from '@/lib/api/client';
+import { Async, BackLink, PageHeader, SourceQuote, StateBlock, useBrandId } from '@/components/app';
+import { hasStatus } from '@/lib/api/client';
 import { BattlecardSection } from './battlecard';
-import { Async, useCompetitors, useObservations, useProfile } from './lib';
+import { useCompetitors, useObservations, useProfile } from './lib';
 import { ObservationCard } from './observation-card';
 import { WatchList } from './watch-list';
 
@@ -17,7 +17,7 @@ export function CompetitorView() {
   const { competitorId } = useParams<{ competitorId: string }>();
   const competitors = useCompetitors(brandId);
   return (
-    <Async q={competitors} what="the competitor">
+    <Async q={competitors} what="competitor">
       {(list) => {
         const c = list.find((x) => x.id === competitorId);
         if (!c)
@@ -28,9 +28,7 @@ export function CompetitorView() {
           );
         return (
           <>
-            <Link href={`/app/b/${brandId}/research`} className="mb-3 inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
-              <ChevronLeft className="size-4" aria-hidden />Research
-            </Link>
+            <BackLink href={`/app/b/${brandId}/research`}>Back to Research</BackLink>
             <PageHeader
               title={c.name}
               description={<>{c.kind[0]!.toUpperCase() + c.kind.slice(1)} competitor{c.site ? <> · <span className="break-all">{c.site.replace(/^https?:\/\//, '')}</span></> : null}</>}
@@ -60,7 +58,7 @@ function ChangeLog({ brandId, competitorId }: { brandId: string; competitorId: s
   return (
     <section aria-labelledby="log-h" className="grid gap-3">
       <h2 id="log-h" className="text-xl font-semibold">Change log</h2>
-      <Async q={q} what="the change log">
+      <Async q={q} what="change log">
         {(list) =>
           list.length === 0 ? (
             <StateBlock state="empty" size="inline" title="No changes seen yet">Changes appear here after a run finds one on a watched page.</StateBlock>
@@ -78,10 +76,10 @@ function Profile({ brandId, competitorId }: { brandId: string; competitorId: str
   return (
     <section aria-labelledby="prof-h" className="grid gap-3">
       <h2 id="prof-h" className="text-xl font-semibold">Profile</h2>
-      {q.isError && q.error instanceof ApiError && q.error.status === 404 ? (
+      {q.isError && hasStatus(q.error, 404) ? (
         <StateBlock state="empty" size="inline" title="No profile yet">The baseline run reads the watched pages and writes it.</StateBlock>
       ) : (
-        <Async q={q} what="the profile">
+        <Async q={q} what="profile">
           {(p) =>
             p.entries.length === 0 ? (
               <StateBlock state="empty" size="inline" title="The profile is empty">Nothing on the watched pages could be quoted.</StateBlock>

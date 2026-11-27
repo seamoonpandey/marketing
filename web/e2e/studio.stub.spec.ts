@@ -280,6 +280,20 @@ test('Render costs NPR 0, follows its run, and then shows the slides in order at
   await expect(page.getByRole('button', { name: 'Mark ready' })).toBeEnabled();
 });
 
+test('the Rendering strip announces the finish and then leaves by itself, and the previews are big enough to judge', async ({ page }) => {
+  await stub(page, { draft: visualView() });
+  await page.goto(`/app/b/${B}/studio/drafts/d-1`);
+  await page.getByRole('button', { name: /^Render/ }).click();
+  const strip = page.getByRole('region', { name: 'Rendering' });
+  // Its state is a polite live region while it is shown.
+  await expect(strip.getByRole('status')).toContainText('Completed', { timeout: 15_000 });
+  const previews = page.getByRole('region', { name: 'Rendered previews' });
+  await expect(previews.getByRole('img')).toHaveCount(3);
+  const box = await previews.getByRole('img').first().boundingBox();
+  expect(box!.width).toBeGreaterThan(400);
+  await expect(strip).toHaveCount(0, { timeout: 15_000 });
+});
+
 test('a slide that overflows is flagged on its preview', async ({ page }) => {
   await stub(page, { draft: visualView({ renders: [render('1:1', 1080, 1080, 0, { overflow: true }), render('1:1', 1080, 1080, 1)] }) });
   await page.goto(`/app/b/${B}/studio/drafts/d-1`);

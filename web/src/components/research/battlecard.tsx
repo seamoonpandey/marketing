@@ -1,9 +1,9 @@
 'use client';
 
 import { CircleCheck } from 'lucide-react';
-import { StateBlock, StatusBadge } from '@/components/app';
+import { Async, MutationError, StateBlock, StatusBadge, Time } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { Async, formatDate, MutationError, useAct, useBattlecard } from './lib';
+import { useAct, useBattlecard } from './lib';
 
 type Card = NonNullable<Schemas['Battlecard']>;
 
@@ -28,7 +28,7 @@ export function BattlecardSection({ brandId, competitorId }: { brandId: string; 
         </button>
       </div>
       <MutationError error={generate.error ?? approve.error} />
-      <Async q={card} what="the battlecard">
+      <Async q={card} what="battlecard">
         {({ approved, draft }) =>
           !approved && !draft ? (
             <StateBlock state="empty" size="inline" title="No battlecard yet">A draft uses only facts you have approved and what was seen on the competitor’s pages. You approve it before anyone uses it.</StateBlock>
@@ -51,8 +51,8 @@ function Version({ card, onApprove, pending }: { card: Card; onApprove?: () => v
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <h3 className="text-lg font-semibold">Version {card.version}</h3>
-          {draft ? <StatusBadge status="unverified" label="Draft" /> : <StatusBadge status="approved" />}
-          <span className="text-sm text-muted">{draft ? `Written ${formatDate(card.createdAt)}` : `Approved ${formatDate(card.approvedAt)}`}</span>
+          {draft ? <StatusBadge status="draft" /> : <StatusBadge status="approved" />}
+          <span className="text-sm text-muted">{draft ? <>Written <Time iso={card.createdAt} year /></> : card.approvedAt ? <>Approved <Time iso={card.approvedAt} year /></> : null}</span>
         </div>
         {draft && onApprove ? (
           <button type="button" className="btn btn-primary" onClick={onApprove} disabled={pending}>

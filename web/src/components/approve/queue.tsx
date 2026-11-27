@@ -3,9 +3,10 @@
 import { FileText, PauseCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { PageHeader, StateBlock, useBrandId } from '@/components/app';
-import { api, ApiError, unwrap } from '@/lib/api/client';
-import { Async, cap, fmtDay, fmtWhen, MutationError, Notice, RiskTag, StateTag, STATE_LABEL, STATES, useAct, useQueue, type QueueItem, type State } from './lib';
+import { Async, MutationError, PageHeader, StateBlock, Time, useBrandId } from '@/components/app';
+import { api, hasStatus, unwrap } from '@/lib/api/client';
+import { label } from '@/lib/labels';
+import { fmtDay, Notice, RiskTag, StateTag, STATE_LABEL, STATES, useAct, useQueue, type QueueItem, type State } from './lib';
 
 export function Queue() {
   const brandId = useBrandId()!;
@@ -13,7 +14,7 @@ export function Queue() {
   const q = useQueue(brandId, filter);
   return (
     <>
-      <PageHeader title="Approve" description="Nothing goes out until you approve the exact version. Open an item to see it as it will appear." actions={<Link href={`/app/b/${brandId}/approve/settings`} className="btn btn-secondary">Settings</Link>} />
+      <PageHeader title="Approve" description="Nothing goes out until you approve the exact version. Open an item to see it as it will appear." />
       <Async q={q} what="approval queue">
         {({ summary, items }) => (
           <div className="grid gap-8">
@@ -72,7 +73,7 @@ function PausePanel({ brandId, paused, reason, at }: { brandId: string; paused: 
           <PauseCircle className="mt-0.5 size-5 shrink-0" aria-hidden />
           <div className="grid gap-0.5">
             <h2 className="font-semibold">Approvals are paused</h2>
-            <p className="text-sm break-words">{reason}{at ? ` (since ${fmtWhen(at)})` : ''}. Approved items will not go out until you resume.</p>
+            <p className="text-sm break-words">{reason}{at ? <> (since <Time iso={at} year />)</> : null}. Approved items will not go out until you resume.</p>
           </div>
         </div>
         {open ? form('resume') : <button type="button" className="btn btn-secondary justify-self-start" onClick={() => setOpen(true)}>Resume approvals…</button>}
@@ -118,14 +119,14 @@ function Days({ brandId, items }: { brandId: string; items: QueueItem[] }) {
     bulk.mutate(selected, {
       onSuccess: () => setPicked([]),
       onError: (e) => {
-        if (e instanceof ApiError && e.status === 409) { setPicked([]); setMsg(`Nothing was approved: ${e.message}. The list has been reloaded; look at the items again.`); }
+        if (hasStatus(e, 409)) { setPicked([]); setMsg(`Nothing was approved: ${e.message}. The list has been reloaded; look at the items again.`); }
       },
     });
   };
   return (
     <div className="grid gap-8">
       {msg ? <Notice><p className="font-semibold">Nothing was approved</p><p>{msg}</p></Notice> : null}
-      <MutationError error={bulk.error instanceof ApiError && bulk.error.status === 409 ? null : bulk.error} />
+      <MutationError error={hasStatus(bulk.error, 409) ? null : bulk.error} />
       {[...days].map(([day, list]) => (
         <section key={day} aria-labelledby={`day-${day}`} className="grid gap-3">
           <h2 id={`day-${day}`} className="text-lg font-semibold">{day ? fmtDay(day) : 'No longer in Studio'}</h2>
@@ -153,7 +154,7 @@ function Row({ brandId, item, checked, why, onToggle }: { brandId: string; item:
   const blocked = !checked && !!why;
   return (
     <li>
-      <article aria-label={d ? `${d.channel} ${d.kind}, ${d.day}` : 'Draft no longer in Studio'} data-state-of={item.state} className="grid grid-cols-[auto_5rem_minmax(0,1fr)] items-start gap-x-4 gap-y-2 px-4 py-4 md:grid-cols-[auto_5rem_minmax(0,1fr)_auto]">
+      <article aria-label={d ? `${label(d.channel)} ${label(d.kind)}, ${d.day}` : 'Draft no longer in Studio'} data-state-of={item.state} className="grid grid-cols-[auto_5rem_minmax(0,1fr)] items-start gap-x-4 gap-y-2 px-4 py-4 md:grid-cols-[auto_5rem_minmax(0,1fr)_auto]">
         {waiting && d ? (
           // aria-disabled, not disabled: it stays reachable by keyboard and its reason is read out.
           <input
@@ -164,14 +165,13 @@ function Row({ brandId, item, checked, why, onToggle }: { brandId: string; item:
         ) : <span aria-hidden />}
         <div className="grid h-16 w-20 place-items-center overflow-hidden rounded-md bg-[color-mix(in_oklab,var(--theme-ink)_5%,transparent)]">
           {d?.thumbnailUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- presigned URL, true aspect ratio kept by max sizes
             <img src={d.thumbnailUrl} alt={`Preview of the ${d.kind} for ${d.channel}`} className="h-auto max-h-16 w-auto max-w-20 object-contain" />
           ) : (
             <FileText className="size-5 text-muted" aria-hidden />
           )}
         </div>
         <div className="grid min-w-0 gap-1.5">
-          <p className="text-xs font-semibold tracking-wide text-muted uppercase">{d ? `${d.channel} · ${cap(d.kind)}` : 'Draft'}{d && !d.viewed && waiting ? ' · not opened yet' : ''}</p>
+          <p className="text-xs font-semibold tracking-wide text-muted uppercase">{d ? `${label(d.channel)} · ${label(d.kind)}` : 'Draft'}{d && !d.viewed && waiting ? ' · not opened yet' : ''}</p>
           {d ? (
             <Link href={`/app/b/${brandId}/approve/${item.draftId}`} className="font-semibold break-words hover:underline">{d.excerpt || 'No caption'}</Link>
           ) : (

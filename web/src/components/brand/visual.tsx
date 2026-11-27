@@ -3,9 +3,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
-import { PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, LiveStatus, MutationError, PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { Loaded, refreshAll, useBook, usePalette } from './data';
+import { refreshAll, useBook, usePalette } from './data';
 
 type Colour = Schemas['PaletteColour'];
 type Role = NonNullable<Colour['role']>;
@@ -20,11 +20,11 @@ export function VisualScreen() {
     <>
       <PageHeader title="Visual identity" description="The logos, the colours and the roles they play, and the fonts. The roles decide which colour is text, which is background and which carries the brand." />
       <div className="grid gap-6">
-        <Loaded query={book} what="The logos and fonts" rows={2}>
+        <Async q={book} what="logos and fonts" rows={2}>
           {(b) => {
             const logos = b.assets.filter((a) => a.kind === 'logo');
             const fonts = b.assets.filter((a) => a.kind === 'font');
-            const fontFacts = (b.sections.find((s) => s.key === 'visual')?.facts ?? []).filter((f) => /font|typeface/i.test(f.field));
+            const fontFacts = (b.sections.find((s) => s.key === 'visual')?.facts ?? []).filter((f) => f.field === 'fonts');
             return (
               <>
                 <section aria-labelledby="v-logos" className="grid gap-3">
@@ -34,7 +34,6 @@ export function VisualScreen() {
                       {logos.map((l) => (
                         <li key={l.id} className="panel grid gap-2 p-3">
                           <div className="grid h-36 place-items-center rounded-md bg-[color-mix(in_oklab,var(--theme-ink)_6%,transparent)] p-3">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={l.source.downloadUrl} alt={`${l.variant ?? 'Logo'}`} className="max-h-full max-w-full object-contain" />
                           </div>
                           <div className="flex items-center justify-between gap-2 text-sm">
@@ -62,8 +61,8 @@ export function VisualScreen() {
               </>
             );
           }}
-        </Loaded>
-        <Loaded query={palette} what="The palette" rows={3}>{(p) => <PaletteEditor brandId={brandId} palette={p} />}</Loaded>
+        </Async>
+        <Async q={palette} what="palette" rows={3}>{(p) => <PaletteEditor brandId={brandId} palette={p} />}</Async>
       </div>
     </>
   );
@@ -95,7 +94,8 @@ function PaletteEditor({ brandId, palette }: { brandId: string; palette: Schemas
           {save.isPending ? 'Saving…' : draft ? 'Save palette' : 'Palette saved'}
         </button>
       </div>
-      {save.isError ? <p role="alert" className="text-sm font-medium text-danger">{save.error.message}</p> : null}
+      <MutationError error={save.error} />
+      <LiveStatus message={save.isSuccess && !draft ? 'Palette saved.' : ''} />
 
       {colours.length ? (
         <ul aria-label="Colours" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

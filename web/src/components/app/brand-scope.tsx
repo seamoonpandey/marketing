@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
-import { api, ApiError, unwrap } from '@/lib/api/client';
+import { api, hasStatus, unwrap } from '@/lib/api/client';
 import { StateBlock } from './state-block';
 
 /** The brand in the URL (/app/b/[brandId]/…), or undefined outside a brand. */
@@ -46,7 +46,7 @@ export function BrandScope({ children }: { children: ReactNode }) {
 function BrandStatus({ onMissing }: { onMissing: (missing: boolean) => void }) {
   const brandId = useBrandId();
   const brand = useBrand(brandId);
-  const missing = brand.error instanceof ApiError && brand.error.status === 404;
+  const missing = hasStatus(brand.error, 404);
   useEffect(() => onMissing(missing), [missing, onMissing]);
 
   if (brand.isError) {

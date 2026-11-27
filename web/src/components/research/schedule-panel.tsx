@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { StateBlock } from '@/components/app';
+import { Async, MutationError, StateBlock, Time } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
-import { Async, formatDate, MutationError, useAct, useSchedule, WEEKDAYS } from './lib';
+import { useAct, useSchedule } from './lib';
+import { WEEKDAYS } from '@/lib/time';
 
 const DAY = 86_400_000;
 
@@ -12,7 +13,7 @@ export function SchedulePanel({ brandId }: { brandId: string }) {
   return (
     <section aria-labelledby="schedule-h" className="grid gap-3">
       <h2 id="schedule-h" className="text-xl font-semibold">Schedule</h2>
-      <Async q={schedule} what="the schedule">{(s) => <Form brandId={brandId} s={s} />}</Async>
+      <Async q={schedule} what="schedule">{(s) => <Form brandId={brandId} s={s} />}</Async>
     </section>
   );
 }
@@ -43,7 +44,7 @@ function Form({ brandId, s }: { brandId: string; s: { enabled: boolean; weekday:
           </select>
         </div>
       </div>
-      <p className="text-sm text-muted">In the brand’s time zone. Last run: {formatDate(s.lastRunAt)}.</p>
+      <p className="text-sm text-muted">In the brand’s time zone. Last run: {s.lastRunAt ? <Time iso={s.lastRunAt} year /> : 'never'}.</p>
       {stale ? <StateBlock state="stale" size="inline" title="The last run was over a week ago">A weekly run may be waiting for approval, or it failed. Check the run above.</StateBlock> : null}
       <div className="flex items-center gap-3">
         <button type="submit" className="btn btn-secondary" disabled={!dirty || save.isPending}>{save.isPending ? 'Saving…' : 'Save schedule'}</button>

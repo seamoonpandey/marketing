@@ -4,9 +4,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { CostConfirm, MoneyText, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, BackLink, CostConfirm, LiveStatus, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { Async, factText, fetchRun, fmt, label, MutationError, runKey, SECTIONS, useAct, useBrief, type Body, type FactRef } from './lib';
+import { factText, fetchRun, runKey, SECTIONS, useAct, useBrief, type Body, type FactRef } from './lib';
+import { formatYmd } from '@/lib/time';
+import { nprText } from '@/lib/money';
+import { label } from '@/lib/labels';
 
 type View = Schemas['PlanBriefView'];
 type Brief = Schemas['PlanBrief'];
@@ -17,7 +20,7 @@ export function CampaignView() {
   const brandId = useBrandId()!;
   const id = useParams<{ id: string }>().id;
   const q = useBrief(brandId, id);
-  return <Async q={q} what="the campaign">{(v) => <Inner brandId={brandId} id={id} v={v} />}</Async>;
+  return <Async q={q} what="campaign">{(v) => <Inner brandId={brandId} id={id} v={v} />}</Async>;
 }
 
 function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
@@ -44,9 +47,10 @@ function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
 
   return (
     <>
+      <BackLink href={`/app/b/${brandId}/plan/campaigns`}>Back to Campaigns</BackLink>
       <PageHeader
         title={c.name}
-        description={`${label(c.objective)}${c.startsOn ? ` · ${fmt(c.startsOn)}${c.endsOn ? ` to ${fmt(c.endsOn)}` : ''}` : ''}${c.budgetNpr ? ` · budget NPR ${c.budgetNpr}` : ''}`}
+        description={`${label(c.objective)}${c.startsOn ? ` · ${formatYmd(c.startsOn)}${c.endsOn ? ` to ${formatYmd(c.endsOn)}` : ''}` : ''}${c.budgetNpr ? ` · budget ${nprText(c.budgetNpr)}` : ''}`}
         actions={
           <>
             <label className="sr-only" htmlFor="c-status">Campaign status</label>
@@ -56,8 +60,8 @@ function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
           </>
         }
       />
-      <p className="-mt-3 pb-5 text-sm"><Link href={`/app/b/${brandId}/plan/campaigns`} className="text-brand underline">All campaigns</Link></p>
       <MutationError error={setStatus.error} />
+      <LiveStatus message={setStatus.isSuccess ? `Campaign status is now ${label(setStatus.variables)}.` : ''} />
 
       <div className="grid gap-6">
         {!v.ready.facts ? (
@@ -85,7 +89,7 @@ function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
             onRetry={() => unwrap(api.POST('/api/brands/{brandId}/plan/runs/{id}/retry', { params: { path: { brandId, id: run.id } } }))}
           />
         ) : polled.data?.actual ? (
-          <p className="text-sm text-muted">Last draft cost <MoneyText value={polled.data.actual} />.</p>
+          <p className="text-sm text-muted">Cost <MoneyText value={polled.data.actual} />.</p>
         ) : null}
 
         {!shown ? (
@@ -97,7 +101,7 @@ function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-xl font-semibold">Brief, version {shown.version}</h2>
-                <StatusBadge status={shown.status} label={shown.status === 'approved' ? 'Approved' : 'Draft'} />
+                <StatusBadge status={shown.status} />
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" className="btn btn-secondary" onClick={() => (shown.status === 'approved' ? setWarn(true) : setEditing(true))}>Edit the brief</button>

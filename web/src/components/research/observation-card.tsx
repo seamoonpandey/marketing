@@ -1,7 +1,7 @@
 import { ArrowRightLeft, BadgePercent, CircleSlash, Megaphone, PackageMinus, PackagePlus, Pencil, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
-import { SourceQuote } from '@/components/app';
-import { formatDate, TYPE_LABEL, type Observation } from './lib';
+import { SourceQuote, Time } from '@/components/app';
+import { TYPE_LABEL, type Observation } from './lib';
 
 const ICON: Record<Observation['type'], LucideIcon> = {
   price_change: ArrowRightLeft,
@@ -34,7 +34,7 @@ export function ObservationCard({ o, brandId, showCompetitor = true }: { o: Obse
           )
         ) : null}
         <span className="text-muted">
-          <time dateTime={o.observedAt}>{formatDate(o.observedAt)}</time> · {o.confidence} confidence
+          <Time iso={o.observedAt} year /> · {o.confidence} confidence
         </span>
       </div>
       <p className="text-lg font-semibold break-words">{o.summary}</p>

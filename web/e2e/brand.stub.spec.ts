@@ -5,7 +5,6 @@ import { expect, test, type Page, type Route } from '@playwright/test';
 
 const B = '11111111-1111-4111-8111-111111111111';
 const API = `/api/brands/${B}`;
-const KB = `${API}/knowledge`;
 const NEPALI = 'हिमालयको चिसोमा न्यानो पश्मिना, हातले बुनेको र नेपालमै बनाइएको, पुस्तौँदेखि चलिआएको कला';
 
 type J = Record<string, unknown>;

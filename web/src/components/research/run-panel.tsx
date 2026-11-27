@@ -2,9 +2,10 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { CostConfirm, MoneyText, RunProgress, StateBlock } from '@/components/app';
+import { Async, CostConfirm, MoneyText, MutationError, RunProgress, StateBlock } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
-import { Async, fetchRun, MutationError, runKey, sumMoney, useAct, useCosts, useRuns, type Run } from './lib';
+import { fetchRun, runKey, useAct, useCosts, useRuns, type Run } from './lib';
+import { sumMoney } from '@/lib/money';
 
 const bid = (b: string, id: string) => ({ params: { path: { brandId: b, id } } });
 
@@ -56,7 +57,7 @@ function Inner({ brandId, latest, everCompleted, hasTargets, runIds }: { brandId
         <>
           <RunProgress queryKey={key} fetchRun={() => fetchRun(brandId, latest.id)} onCancel={cancel} onRetry={retry} label={label} />
           {r && state === 'awaiting_approval' && r.estimate ? (
-            <Async q={costs} what="the budget">
+            <Async q={costs} what="budget">
               {(c) => (
                 <CostConfirm estimate={r.estimate!} remaining={c.remaining} onConfirm={() => confirm.mutate()} onCancel={() => cancel().then(() => client.invalidateQueries({ queryKey: ['research', brandId] }))} pending={confirm.isPending}>
                   {r.counts.pages ? `Reading ${r.counts.pages} watched page${r.counts.pages === 1 ? '' : 's'}.` : 'Reading the watched pages.'}

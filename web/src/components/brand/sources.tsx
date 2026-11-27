@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, FileUp, Globe, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
-import { CostConfirm, MoneyText, PageHeader, RunProgress, StateBlock, StatusBadge, useBrand, useBrandId } from '@/components/app';
-import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { importKey, Loaded, refreshAll, useAssets, useImports, useSources } from './data';
+import { Async, CostConfirm, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrand, useBrandId } from '@/components/app';
+import { api, errorMessage, type Schemas, unwrap } from '@/lib/api/client';
+import { importKey, refreshAll, useAssets, useImports, useSources } from './data';
 
 type Source = Schemas['Source'];
 type Asset = Schemas['Asset'];
@@ -61,7 +61,7 @@ export function SourcesScreen() {
       await refreshAll(client, brandId);
       setPending((l) => l.filter((x) => x.key !== key));
     } catch (e) {
-      patch({ error: (e as Error).message });
+      patch({ error: errorMessage(e) });
     }
   }
 
@@ -122,7 +122,7 @@ export function SourcesScreen() {
                     )}
                   </div>
                   {p.error ? (
-                    <p role="alert" className="text-sm font-medium text-danger">{p.error}</p>
+                    <p role="alert" className="text-sm text-danger">{p.error}</p>
                   ) : (
                     <div role="progressbar" aria-label={`Uploading ${p.name}`} aria-valuenow={p.pct} aria-valuemin={0} aria-valuemax={100} className="h-1 overflow-hidden rounded-full bg-line">
                       <div className="h-full rounded-full bg-brand motion-safe:transition-[width]" style={{ width: `${p.pct}%` }} />
@@ -133,7 +133,7 @@ export function SourcesScreen() {
             </ul>
           ) : null}
 
-          <Loaded query={sources} what="The files" rows={2}>
+          <Async q={sources} what="files" rows={2}>
             {() =>
               uploads.length ? (
                 <ul aria-label="Uploaded files" className="grid gap-3">
@@ -148,7 +148,7 @@ export function SourcesScreen() {
                 <StateBlock state="empty" size="inline" title="No files yet">Add a logo, the brand guide or a price list. You can also import from the website alone.</StateBlock>
               )
             }
-          </Loaded>
+          </Async>
         </section>
 
         <section aria-labelledby="src-run" className="grid gap-4">
@@ -208,14 +208,14 @@ function Run({ brandId, runId }: { brandId: string; runId: string }) {
           <CostConfirm estimate={r.estimate} remaining={r.remaining} pending={confirm.isPending} onConfirm={() => confirm.mutate()} onCancel={() => cancel.mutate()}>
             Reading {r.counts.pages} page{s(r.counts.pages)} and {r.counts.files} file{s(r.counts.files)} in {r.counts.batches} model call{s(r.counts.batches)}.
           </CostConfirm>
-          {confirm.isError ? <p role="alert" className="text-sm font-medium text-danger">{confirm.error.message}</p> : null}
+          <MutationError error={confirm.error} />
         </>
       ) : null}
       {r && state === 'completed' ? (
         <section aria-label="Import result" className="panel grid gap-4 p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h3 className="text-lg font-semibold">Import finished</h3>
-            <p className="text-sm text-muted">Actual cost {r.actual ? <MoneyText value={r.actual} className="font-semibold text-ink" /> : '—'}</p>
+            <p className="text-sm text-muted">Cost {r.actual ? <MoneyText value={r.actual} /> : '—'}</p>
           </div>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
             {(
@@ -303,7 +303,7 @@ function FileRow({ brandId, source, asset, included, onInclude }: { brandId: str
             <label className="flex items-center gap-2"><input type="checkbox" className="size-4" checked={!!rights.commercialUse} onChange={(e) => set({ commercialUse: e.target.checked })} /> Commercial use allowed</label>
             <label className="flex items-center gap-2"><input type="checkbox" className="size-4" checked={!!rights.paidUse} onChange={(e) => set({ paidUse: e.target.checked })} /> Paid ads allowed</label>
           </div>
-          {save.isError ? <p role="alert" className="text-sm font-medium text-danger">{save.error.message}</p> : null}
+          <MutationError error={save.error} />
           {save.isSuccess ? (
             <p role="status" className="text-sm font-medium text-success">
               Saved.{use === 'logo' ? ' The logo’s colours appear in the palette after the next import.' : ''}

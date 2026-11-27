@@ -1,16 +1,15 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, CircleAlert, FileText, ImageOff, Sparkles } from 'lucide-react';
+import { CircleAlert, FileText, ImageOff, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-import { CostConfirm, MoneyText, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { Async, CostConfirm, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId, WeekNav } from '@/components/app';
 import { api, unwrap, type Money } from '@/lib/api/client';
-import {
-  addDays, Async, CHANNEL_LABEL, KIND_LABEL, MutationError, cancelRun, fetchRun, formatDay, formatWeek, retryRun, runKey, useAct, useOverview,
-  type Overview, type OverviewItem,
-} from './lib';
+import { cancelRun, fetchRun, retryRun, runKey, useAct, useOverview, type Overview, type OverviewItem } from './lib';
+import { addDays, formatYmd, weekRange } from '@/lib/time';
+import { label } from '@/lib/labels';
 
 export function Dashboard() {
   const brandId = useBrandId()!;
@@ -21,7 +20,7 @@ export function Dashboard() {
   return (
     <>
       <PageHeader title="Studio" description="Each approved plan item becomes a draft: the copy, and the picture or video where the format needs one." />
-      <Async q={overview} what="this week">{(o) => <Week brandId={brandId} o={o} onWeek={go} />}</Async>
+      <Async q={overview} what="studio week">{(o) => <Week brandId={brandId} o={o} onWeek={go} />}</Async>
     </>
   );
 }
@@ -50,12 +49,10 @@ function Week({ brandId, o, onWeek }: { brandId: string; o: Overview; onWeek: (w
   return (
     <div className="grid gap-6">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-line py-3">
-        <nav aria-label="Week" className="flex items-center gap-1.5">
-          <button type="button" className="btn btn-quiet px-2" onClick={() => onWeek(prev)} aria-label="Previous week"><ChevronLeft className="size-4" aria-hidden /></button>
-          <p className="min-w-44 text-center font-semibold" aria-live="polite"><span className="sr-only">Week of </span>{formatWeek(o.weekStart)}</p>
-          <button type="button" className="btn btn-quiet px-2" onClick={() => onWeek(next)} aria-label="Next week"><ChevronRight className="size-4" aria-hidden /></button>
-          <button type="button" className="btn btn-secondary ml-1" onClick={() => onWeek()}>This week</button>
-        </nav>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <WeekNav prev={{ onClick: () => onWeek(prev) }} next={{ onClick: () => onWeek(next) }} today={{ onClick: () => onWeek() }} />
+          <p className="font-semibold" aria-live="polite"><span className="sr-only">Week of </span>{weekRange(o.weekStart)}</p>
+        </div>
         <p className="text-sm text-muted">Studio copy this month: <strong className="font-semibold text-ink"><MoneyText value={o.monthCost} /></strong></p>
       </div>
 
@@ -108,7 +105,7 @@ function Week({ brandId, o, onWeek }: { brandId: string; o: Overview; onWeek: (w
           ) : (
             days.map((day) => (
               <section key={day} aria-labelledby={`day-${day}`} className="grid gap-3">
-                <h3 id={`day-${day}`} className="text-sm font-semibold tracking-wide text-muted uppercase">{formatDay(day)}</h3>
+                <h3 id={`day-${day}`} className="text-sm font-semibold tracking-wide text-muted uppercase">{formatYmd(day, { weekday: 'long', day: 'numeric', month: 'short' })}</h3>
                 <ul className="grid gap-3 lg:grid-cols-2">
                   {o.items.filter((i) => i.item.day === day).map((i) => (
                     <li key={i.item.id}>
@@ -129,13 +126,14 @@ function GenerateRun({ brandId, runId, onSettled }: { brandId: string; runId: st
   const key = runKey(brandId, runId);
   const run = useQuery({ queryKey: key, queryFn: () => fetchRun(brandId, runId) });
   const state = run.data?.state;
-  useEffect(() => { if (state && state !== 'running' && state !== 'awaiting_approval') onSettled(); }, [state, onSettled]);
+  const settle = useEffectEvent(onSettled);
+  useEffect(() => { if (state && state !== 'running' && state !== 'awaiting_approval') settle(); }, [state]);
   const c = run.data?.counts;
   return (
     <div className="grid gap-2">
       <RunProgress queryKey={key} fetchRun={() => fetchRun(brandId, runId)} onCancel={() => cancelRun(brandId, runId)} onRetry={() => retryRun(brandId, runId)} label="Writing drafts" />
       {state === 'completed' && c ? (
-        <p className="text-sm" role="status">
+        <p className="text-sm text-muted" role="status">
           {c.drafted ?? 0} drafted{c.failed ? `, ${c.failed} failed` : ''}.
           {run.data?.actual ? <> Cost <MoneyText value={run.data.actual} />.</> : null}
         </p>
@@ -148,7 +146,7 @@ function GenerateRun({ brandId, runId, onSettled }: { brandId: string; runId: st
 
 function ItemCard({ brandId, i, canDraft, onDraft }: { brandId: string; i: OverviewItem; canDraft: boolean; onDraft: () => void }) {
   const { item, draft } = i;
-  const title = `${CHANNEL_LABEL[item.channel] ?? item.channel} ${KIND_LABEL[item.kind].toLowerCase()}`;
+  const title = `${label(item.channel)} ${label(item.kind).toLowerCase()}`;
   return (
     <article aria-label={title} className="panel grid h-full grid-cols-[auto_1fr] gap-4 p-4">
       <Thumb url={draft?.thumbnailUrl ?? null} drafted={!!draft} textOnly={item.kind === 'post'} alt={`First image of the ${title}`} />
@@ -156,7 +154,7 @@ function ItemCard({ brandId, i, canDraft, onDraft }: { brandId: string; i: Overv
         <div className="grid gap-1.5">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <p className="text-sm font-semibold">{title}</p>
-            {draft ? <StatusBadge status={draft.status === 'ready' ? 'completed' : 'draft'} label={draft.status === 'ready' ? 'Ready' : 'Draft'} /> : <StatusBadge status="not_drafted" label="Not drafted" />}
+            {draft ? <StatusBadge status={draft.status === 'ready' ? 'completed' : 'draft'} label={draft.status === 'ready' ? 'Ready' : undefined} /> : <StatusBadge status="not_drafted" />}
             {draft && draft.blockingCount > 0 ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-danger"><CircleAlert className="size-3.5" aria-hidden />{draft.blockingCount} blocking</span>
             ) : null}
@@ -184,7 +182,6 @@ function Thumb({ url, drafted, textOnly, alt }: { url: string | null; drafted: b
   return (
     <div className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-md bg-surface text-muted">
       {url ? (
-        // eslint-disable-next-line @next/next/no-img-element -- presigned storage URL; its size is not known here
         <img src={url} alt={alt} className="size-full object-contain" />
       ) : (
         <span className="grid place-items-center gap-1 px-2 text-center text-xs"><ImageOff className="size-5" aria-hidden />{textOnly ? 'Text only' : drafted ? 'Not rendered' : 'No draft'}</span>

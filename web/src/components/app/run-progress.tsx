@@ -8,6 +8,7 @@ export type Run = { state: RunState; error?: string | null };
 
 /** States that wait for nobody but the owner, so polling stops. */
 const SETTLED: RunState[] = ['completed', 'failed_retryable', 'failed_final', 'cancelled'];
+const POLL_MS = 3000;
 
 type Props<R extends Run> = {
   queryKey: readonly unknown[];
@@ -24,7 +25,16 @@ export function RunProgress<R extends Run>({ queryKey, fetchRun, onCancel, onRet
   const run = useQuery({
     queryKey,
     queryFn: fetchRun,
-    refetchInterval: (q) => (q.state.data && SETTLED.includes(q.state.data.state) ? false : 3000),
+    // The interval is the only retry: a failed poll is just one tick lost, not the end of polling.
+    // It keeps ticking in a tab that is not in front and while the browser thinks it is offline (those
+    // pauses once left a finished run on "Running"), and a tab coming back or reconnecting asks at once.
+    retry: false,
+    staleTime: 0,
+    refetchInterval: (q) => (q.state.data && SETTLED.includes(q.state.data.state) ? false : POLL_MS),
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
+    networkMode: 'always',
   });
   const refresh = () => client.invalidateQueries({ queryKey });
   const cancel = useMutation({ mutationFn: () => onCancel!(), onSettled: refresh });
@@ -37,7 +47,7 @@ export function RunProgress<R extends Run>({ queryKey, fetchRun, onCancel, onRet
     <section aria-label={label} aria-busy={state === 'running'} className="panel grid gap-3 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3" role="status">
-          <span className="truncate font-semibold">{label}</span>
+          <span className="font-semibold">{label}</span>
           {state ? <StatusBadge status={state} /> : <span className="text-sm text-muted">Checking…</span>}
         </div>
         <div className="flex gap-2">

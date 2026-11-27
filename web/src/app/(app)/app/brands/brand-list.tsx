@@ -2,10 +2,7 @@
 
 import { ArrowRight, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { PageHeader, StateBlock, StatusBadge, useBrands } from '@/components/app';
-import { ApiError } from '@/lib/api/client';
-
-const added = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+import { PageHeader, StateBlock, StatusBadge, Time, useBrands, viewStateOf } from '@/components/app';
 
 export function BrandList() {
   const brands = useBrands();
@@ -26,7 +23,7 @@ export function BrandList() {
       {brands.isPending ? <StateBlock state="loading" rows={4} title="Loading brands" /> : null}
       {brands.isError ? (
         <StateBlock
-          state={brands.error instanceof ApiError && brands.error.code === 'rate_limited' ? 'rate_limited' : 'error'}
+          state={viewStateOf(brands.error)}
           title="The brands could not be loaded"
           action={
             <button type="button" className="btn btn-secondary" onClick={() => brands.refetch()} disabled={brands.isFetching}>
@@ -54,11 +51,11 @@ export function BrandList() {
                   {[...b.name.trim()][0]?.toUpperCase()}
                 </span>
                 <span className="grid min-w-0 flex-1 gap-0.5">
-                  <span className="truncate font-semibold">{b.name}</span>
-                  <span className="truncate text-sm text-muted">{b.website ? b.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : 'No website yet'}</span>
+                  <span className="font-semibold break-words">{b.name}</span>
+                  <span className="text-sm break-all text-muted">{b.website ? b.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : 'No website yet'}</span>
                 </span>
                 {b.status === 'archived' ? <StatusBadge status="archived" /> : null}
-                <span className="num hidden text-sm text-muted sm:block">Added {added.format(new Date(b.createdAt))}</span>
+                <span className="num hidden text-sm text-muted sm:block">Added <Time iso={b.createdAt} tz={b.timezone} year /></span>
                 <ArrowRight className="size-4 shrink-0 text-muted transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-ink" strokeWidth={1.75} aria-hidden />
               </Link>
             </li>

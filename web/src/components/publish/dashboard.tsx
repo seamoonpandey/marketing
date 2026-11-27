@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { PageHeader, StateBlock, useBrandId } from '@/components/app';
+import { Async, PageHeader, StateBlock, useBrandId } from '@/components/app';
 import { JobRow } from './job-row';
-import { Async, STATE, useSummary, type Job, type JobState } from './lib';
+import { STATE, useSummary, type Job, type JobState } from './lib';
 
 const COUNTED: JobState[] = ['scheduled', 'awaiting_manual', 'unknown', 'blocked', 'failed', 'published'];
 
@@ -15,12 +15,7 @@ export function Dashboard() {
       <PageHeader
         title="Publish"
         description="Posts go out at the time you choose. Today every channel is posted by hand: you get the finished copy and image, post it, and paste the link back."
-        actions={
-          <>
-            <Link href={`/app/b/${brandId}/publish/settings`} className="btn btn-secondary">Settings</Link>
-            <Link href={`/app/b/${brandId}/publish/calendar`} className="btn btn-primary">Schedule a draft</Link>
-          </>
-        }
+        actions={<Link href={`/app/b/${brandId}/publish/calendar`} className="btn btn-primary">Schedule a draft</Link>}
       />
       <Async q={q} what="publishing overview">
         {(s) => {
