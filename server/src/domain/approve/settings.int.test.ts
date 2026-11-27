@@ -13,8 +13,8 @@ afterAll(() => t.close());
 
 const DRAFT = '0196f3c2-0000-7000-8000-0000000000d1';
 const HASH = 'a'.repeat(64);
-const row = (brandId: string, version = 1) => ({
-  brandId, objectType: 'studio_draft' as const, objectId: DRAFT, objectVersion: version, payloadHash: HASH,
+const row = (brandId: string, version = 1, seq = 1) => ({
+  brandId, objectType: 'studio_draft' as const, objectId: DRAFT, objectVersion: version, seq, payloadHash: HASH,
   decision: 'approved' as const, risk: 'low' as const, decidedBy: 'operator', expiresAt: new Date(Date.now() + 86_400_000),
 });
 const DENIED = { cause: { code: '42501' } }; // insufficient_privilege
@@ -31,10 +31,11 @@ describe('approve schema and settings', () => {
     expect(await t.adminQuery(`select reason from approvals where brand_id = $1`, [a])).toEqual([{ reason: null }]);
   });
 
-  it('stores one decision per object version', async () => {
+  it('stores one decision per object version and sequence number', async () => {
     const a = await t.makeBrand();
     await withBrand(a, (tx) => tx.insert(approvals).values(row(a, 1)));
     await expect(withBrand(a, (tx) => tx.insert(approvals).values({ ...row(a, 1), decision: 'rejected', reason: 'no' }))).rejects.toThrow();
+    await withBrand(a, (tx) => tx.insert(approvals).values({ ...row(a, 1, 2), decision: 'rejected', reason: 'no' }));
     await withBrand(a, (tx) => tx.insert(approvals).values(row(a, 2)));
   });
 
@@ -48,7 +49,7 @@ describe('approve schema and settings', () => {
 
   it('refuses setPaused without a reason, and audits a pause and a resume with one', async () => {
     const a = await t.makeBrand();
-    for (const reason of ['', '   ', undefined as unknown as string]) {
+    for (const reason of ['', '   ', '\u200b\u00ad', undefined as unknown as string]) {
       await expect(withBrand(a, (tx) => setPaused(tx, a, true, reason))).rejects.toThrow(/reason/);
       await expect(withBrand(a, (tx) => setPaused(tx, a, false, reason))).rejects.toThrow(/reason/);
     }

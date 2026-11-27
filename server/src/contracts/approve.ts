@@ -10,7 +10,7 @@ const hash = z.string().regex(/^[0-9a-f]{64}$/).openapi({ description: 'The payl
 export const State = z.enum(['waiting', 'approved', 'rejected', 'invalid', 'expired', 'paused']).openapi('ApproveState', {
   description:
     'Worked out on every read, never stored. waiting: ready, no decision for its current version. approved: valid now. rejected: rejected for its current version. ' +
-    'invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved or a used asset lost its rights. ' +
+    'invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved, a used asset lost its rights, Studio now reports a blocking issue, or the draft turned high risk after a bulk or note-less approval. ' +
     'expired: approved, past its expiry. paused: approved and otherwise valid while the brand is paused.',
 });
 export const Risk = z.enum(['low', 'medium', 'high']).openapi('ApproveRisk', {
@@ -26,7 +26,11 @@ export const Decision = z
     expiresAt: iso.nullable().openapi({ description: 'When an approval stops being valid; null for a rejection.' }),
     bulkId: z.string().nullable().openapi({ description: 'Shared by every approval of one bulk approval.' }),
   })
-  .openapi('ApproveDecision', { description: 'A decision is never edited. One per draft version: a version that has one cannot be decided again; a new version can.' });
+  .openapi('ApproveDecision', {
+    description:
+      'A decision is never edited; the newest one on the current version counts. On one version: an approval that expired or became invalid can be approved again (renewed, ' +
+      'with every check), an approval can be withdrawn by a rejection, and a rejected version can be approved after all.',
+  });
 
 export const Counts = z
   .object({

@@ -22,6 +22,8 @@ export const approvals = pgTable(
     objectType: text('object_type', { enum: approvalObjectTypes }).notNull(),
     objectId: uuid('object_id').notNull(),
     objectVersion: integer('object_version').notNull(),
+    /** 1, 2, 3… within one object version: the highest is the decision that counts. */
+    seq: integer('seq').notNull(),
     payloadHash: text('payload_hash').notNull(),
     decision: text('decision', { enum: approvalDecisions }).notNull(),
     reason: text('reason'),
@@ -34,8 +36,8 @@ export const approvals = pgTable(
     createdAt: createdAt(),
   },
   (t) => [
-    // One decision per object version, ever: of two racing requests the database stores one.
-    uniqueIndex('approvals_one_per_version').on(t.brandId, t.objectType, t.objectId, t.objectVersion),
+    // A new decision takes the latest seq of its version plus one: of two racing requests the database stores one.
+    uniqueIndex('approvals_seq').on(t.brandId, t.objectType, t.objectId, t.objectVersion, t.seq),
     ...brandPolicies('approvals'),
   ],
 );
