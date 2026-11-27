@@ -3,7 +3,7 @@ import { and, asc, eq, sql } from 'drizzle-orm';
 import { sources } from '../../db/schema/core.ts';
 import { tenantOf, type Tx } from '../../db/tenant.ts';
 import { NotFoundError, ValidationError } from '../../http/errors.ts';
-import { deleteObject, getObject, objectKey, presignUpload, putObject } from '../../storage/index.ts';
+import { deleteObject, getObject, objectKey, objectSize, presignUpload, putObject } from '../../storage/index.ts';
 import { audit } from '../audit/index.ts';
 import { extractText } from './extract-text.ts';
 import { fetchPage } from './fetch.ts';
@@ -104,6 +104,16 @@ export async function completeUpload(tx: Tx, brandId: string, sourceId: string):
   if (source.meta.status === 'ready') return source;
 
   const pending = pendingKey(source.objectKey);
+  let size: number;
+  try {
+    size = await objectSize(pending);
+  } catch {
+    throw new ValidationError('The file has not been uploaded yet');
+  }
+  if (size > MAX_UPLOAD_BYTES) {
+    await deleteObject(pending);
+    throw new ValidationError('The file is larger than 25 MB');
+  }
   let bytes: Uint8Array;
   try {
     bytes = await getObject(pending);

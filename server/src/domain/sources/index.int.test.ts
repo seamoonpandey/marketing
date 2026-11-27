@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { testDb, type TestDb } from '../../../test/helpers.ts';
 import { withBrand } from '../../db/tenant.ts';
 import { ValidationError } from '../../http/errors.ts';
@@ -12,6 +12,11 @@ import { completeUpload, createUpload, getSource, listSources, savePageSource } 
 
 const file = (name: string) => readFileSync(new URL(`../../../test/fixtures/base/files/${name}`, import.meta.url));
 const PDF = 'application/pdf';
+
+vi.mock('../../storage/index.ts', async (orig) => {
+  const m = await orig<typeof import('../../storage/index.ts')>();
+  return { ...m, getObject: vi.fn(m.getObject) };
+});
 
 let t: TestDb;
 let brand: string;
@@ -103,6 +108,18 @@ describe('sources', () => {
     expect((await docx.complete()).text).toContain('warm and plain');
     const scan = await upload('scan.pdf', PDF, file('scan.pdf'));
     expect((await scan.complete()).text).toBeNull();
+  });
+
+  it('refuses a pending object over 25 MB without fetching it, and deletes it', async () => {
+    const big = new Uint8Array(26 * 1024 * 1024);
+    big.set([0x25, 0x50, 0x44, 0x46, 0x2d]);
+    const { source, uploadUrl } = await withBrand(brand, (tx) => createUpload(tx, brand, { filename: 'big.pdf', mime: PDF, bytes: 10 }));
+    expect((await fetch(uploadUrl, { method: 'PUT', body: big, headers: { 'content-type': PDF } })).ok).toBe(true);
+    const complete = () => withBrand(brand, (tx) => completeUpload(tx, brand, source.id));
+    vi.mocked(getObject).mockClear();
+    await expect(complete()).rejects.toBeInstanceOf(ValidationError);
+    expect(getObject).not.toHaveBeenCalled();
+    await expect(getObject(`${source.objectKey}.pending`)).rejects.toThrow();
   });
 
   it('refuses a type outside the list and a file over 25 MB', async () => {
