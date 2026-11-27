@@ -1,9 +1,15 @@
 /* Prachaar landing page: page CSS only (inside visuals, --p-h per card group, the brand mark).
    Loaded after the kit (assets/system.css ... icons/icon.css) and the :root palette block. */
 
-/* the brand mark: the dealt ring, inline in the hero's h1 */
-.ly-mark--ring { background: radial-gradient(circle closest-side, transparent 0 44%, var(--ink) 45%); }
-.ly-mark--ring::before, .ly-mark--ring::after { display: none; }
+/* the logo (src/components/brand.tsx): the lockup in the bar, and large in the close */
+.nav__logo .logo { display: block; height: 40px; width: auto; }
+@media (max-width: 639px) { .nav__logo .logo { height: 32px; } }
+/* under 400px the bar keeps the P mark alone (the small version), so the menu button stays on screen */
+.nav__logo .logo--small { display: none; }
+@media (max-width: 399px) { .nav__logo .logo--full { display: none; } .nav__logo .logo--small { display: block; } }
+/* the close's lockup: under half the wrap (a signature), the full column on a phone */
+.close__lockup > svg { display: block; width: 49%; height: auto; }
+@media (max-width: 639px) { .close__lockup > svg { width: 100%; } }
 
 /* ---------------------------------------------------------------- hero window (centred hero) */
 /* the frame's ground, and the still behind the window when WebGL is off or the shader has not linked:
@@ -145,8 +151,5 @@
 .d-win .loop-pause:focus-visible { outline-color: var(--theme-inv-action); }
 /* the centred hero's notice pill sits off the phone's lines; the h1 says the same */
 @media (max-width: 639px) { .hero--centred .pill { display: none; } }
-/* under 1024: the footer's three link columns share the row after the name (on a phone too, so the
-   close and its links stay one screen) */
-@media (max-width: 1023px) { .closing__links .footer__col { grid-column: span 4; } }
 /* the name's clip stays on x (its nowrap guard): Geist's line box (1.3em) outgrows the .86 leading, so a y clip cuts it */
 .closing .close__word { overflow-y: visible; }

@@ -3,6 +3,7 @@ import HeroAurora from '@/components/hero-aurora';
 import BriefFanout from '@/components/brief-fanout';
 import AIToolApproval from '@/components/kokonutui/ai-tool-approval';
 import { BudgetCard } from '@/components/watermelon/budget-card';
+import { Lockup, Mark } from '@/components/brand';
 
 /* type: software
    deal: hero centred, nav nav-centre (nav-cards re-dealt: no photographs), close close-word,
@@ -61,7 +62,7 @@ export default function Home() {
       <header className="nav nav--centre">
         <div className="wrap nav__bar">
           <a className="skip-link" href="#top">Skip to content</a>
-          <a className="nav__logo" href="#top"><span className="mark" data-mark="ring" aria-hidden="true" />Prachaar</a>
+          <a className="nav__logo" href="#top"><Lockup className="logo logo--full" id="nav-logo" /><Mark className="logo logo--small" /></a>
           <nav className="nav__links" aria-label="Main">
             <div className="nav__item"><a className="nav__link" href="#queue">Queue</a></div>
             <div className="nav__item">
@@ -347,16 +348,13 @@ export default function Home() {
               <div><h2 id="close-h">One queue for your marketing</h2><p className="t-lead">Start with one brand and one week of posts.</p></div>
               <a className="btn btn--primary" href="#apply">Join the pilot</a>
             </div>
-            <p className="close__word" aria-hidden="true">Prachaar</p>
+            <div className="close__word close__lockup" aria-hidden="true"><Lockup id="close-logo" /></div>
           </div>
           <div className="closing__links">
             <div className="grid">
-              <div className="span-6 stack-4">
-                <a className="nav__logo" href="#top"><span className="mark" data-mark="ring" aria-hidden="true" />Prachaar</a>
-              </div>
-              <div className="span-2 footer__col"><h3>Product</h3><ul><li><a href="#queue">Queue</a></li><li><a href="#features">Features</a></li><li><a href="#channels">Channels</a></li></ul></div>
-              <div className="span-2 footer__col"><h3>Pilot</h3><ul><li><a href="#apply">Application</a></li><li><a href="#questions">Questions</a></li></ul></div>
-              <div className="span-2 footer__col"><h3>Contact</h3><ul><li><a href="mailto:hello@prachaar.example">Email us</a></li></ul></div>
+              <div className="span-4 footer__col"><h3>Product</h3><ul><li><a href="#queue">Queue</a></li><li><a href="#features">Features</a></li><li><a href="#channels">Channels</a></li></ul></div>
+              <div className="span-4 footer__col"><h3>Pilot</h3><ul><li><a href="#apply">Application</a></li><li><a href="#questions">Questions</a></li></ul></div>
+              <div className="span-4 footer__col"><h3>Contact</h3><ul><li><a href="mailto:hello@prachaar.example">Email us</a></li></ul></div>
             </div>
             <div className="footer__legal">
               <span>&copy; 2026 Prachaar</span>

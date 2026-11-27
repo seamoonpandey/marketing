@@ -13,7 +13,8 @@ One git repo of independent projects. Each top-level project has its own `packag
 
 - Name: Prachaar (Nepali for publicity; the owner's choice). Buyer: brands in Nepal. Main action: "Join the pilot".
 - Positioning: a marketing team that runs on AI, sold on better marketing, saved time and control, not on the technology.
-- Mark: the ring (`web/public/favicon.svg`). Type: Geist and Geist Mono. Radius soft. Never violet.
+- Logo: the lockup is the mascot (a robot in a dhaka topi with a megaphone) beside the wordmark, whose P is the mark: a speech bubble with a play triangle. The P mark alone is the small version and the favicon. On the site use `web/src/components/brand.tsx` (`Lockup`, `Wordmark`, `Mark`: inline SVG in the active theme's colours); static teal files for social and print are in `web/public/brand/`. Wordmark letters: Geist Black, outlined.
+- Type: Geist and Geist Mono. Radius soft. Never violet.
 - Copy: plain, category first, no invented proof, prices only from the brief.
 
 ## Colour and themes
