@@ -10,6 +10,7 @@
 @source "../../components/studio";
 @source "../../components/approve";
 @source "../../components/publish";
+@source "../../components/home";
 
 @theme inline {
   --font-sans: var(--font-geist), var(--font-devanagari), system-ui, sans-serif;

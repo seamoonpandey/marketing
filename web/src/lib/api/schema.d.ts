@@ -6247,6 +6247,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/brands/{brandId}/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Home"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -8097,6 +8143,87 @@ export interface components {
             posted: boolean;
             /** @description Required when posted is true. */
             url?: string;
+        };
+        Home: {
+            brand: {
+                id: string;
+                name: string;
+                timezone: string;
+            };
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            now: string;
+            /** @description Most urgent first. */
+            items: components["schemas"]["HomeItem"][];
+            /** @description The next posts to go out, soonest first. */
+            upcoming: {
+                title: string;
+                /**
+                 * @description ISO 8601 timestamp
+                 * @example 2026-11-27T06:00:00.000Z
+                 */
+                at: string;
+                href: string;
+            }[];
+            /** @description Modules that did not answer; their items are left out. */
+            partial: components["schemas"]["HomeModule"][];
+            /** @description Set while the brand is paused in Approve. */
+            paused: {
+                reason: string | null;
+                /**
+                 * @description ISO 8601 timestamp
+                 * @example 2026-11-27T06:00:00.000Z
+                 */
+                at: string | null;
+            } | null;
+            modules: {
+                module: components["schemas"]["HomeModule"];
+                /** @description Null when the module did not answer. */
+                status: string | null;
+                href: string;
+            }[];
+            /** @description This month (UTC). Null when the costs could not be read. */
+            costs: {
+                month: string;
+                total: components["schemas"]["HomeMoney"];
+                byModule: {
+                    /** @enum {string} */
+                    module: "brand" | "research" | "plan" | "studio";
+                    cost: components["schemas"]["HomeMoney"];
+                }[];
+            } | null;
+        };
+        HomeItem: {
+            /** @description What sort of thing it is, for example `publish_manual` or `facts_review`. */
+            kind: string;
+            module: components["schemas"]["HomeModule"];
+            title: string;
+            /** @description One plain sentence saying why it needs attention. */
+            detail: string;
+            /** @description How many things the item stands for; null for a single thing. */
+            count: number | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            due: string | null;
+            urgency: components["schemas"]["HomeUrgency"];
+            /** @description The app path that deals with it. */
+            href: string;
+        };
+        /**
+         * @description The module that owns the item. `brand` is the knowledge module.
+         * @enum {string}
+         */
+        HomeModule: "publish" | "approve" | "studio" | "plan" | "research" | "brand";
+        /** @enum {string} */
+        HomeUrgency: "now" | "today" | "soon" | "later";
+        /** @description Decimal strings: usd to 4 places, npr to 2. */
+        HomeMoney: {
+            usd: string;
+            npr: string;
         };
     };
     responses: never;

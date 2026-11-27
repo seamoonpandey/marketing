@@ -6749,6 +6749,269 @@
           "posted"
         ],
         "description": "posted true: published with this link. posted false: sent again now, with the same idempotency key so the platform cannot post it twice."
+      },
+      "Home": {
+        "type": "object",
+        "properties": {
+          "brand": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "timezone": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "timezone"
+            ]
+          },
+          "now": {
+            "type": "string",
+            "example": "2026-11-27T06:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeItem"
+            },
+            "description": "Most urgent first."
+          },
+          "upcoming": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string",
+                  "example": "2026-11-27T06:00:00.000Z",
+                  "description": "ISO 8601 timestamp"
+                },
+                "href": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title",
+                "at",
+                "href"
+              ]
+            },
+            "description": "The next posts to go out, soonest first."
+          },
+          "partial": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeModule"
+            },
+            "description": "Modules that did not answer; their items are left out."
+          },
+          "paused": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "2026-11-27T06:00:00.000Z",
+                "description": "ISO 8601 timestamp"
+              }
+            },
+            "required": [
+              "reason",
+              "at"
+            ],
+            "description": "Set while the brand is paused in Approve."
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "$ref": "#/components/schemas/HomeModule"
+                },
+                "status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Null when the module did not answer."
+                },
+                "href": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module",
+                "status",
+                "href"
+              ]
+            }
+          },
+          "costs": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "month": {
+                "type": "string"
+              },
+              "total": {
+                "$ref": "#/components/schemas/HomeMoney"
+              },
+              "byModule": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "module": {
+                      "type": "string",
+                      "enum": [
+                        "brand",
+                        "research",
+                        "plan",
+                        "studio"
+                      ]
+                    },
+                    "cost": {
+                      "$ref": "#/components/schemas/HomeMoney"
+                    }
+                  },
+                  "required": [
+                    "module",
+                    "cost"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "month",
+              "total",
+              "byModule"
+            ],
+            "description": "This month (UTC). Null when the costs could not be read."
+          }
+        },
+        "required": [
+          "brand",
+          "now",
+          "items",
+          "upcoming",
+          "partial",
+          "paused",
+          "modules",
+          "costs"
+        ]
+      },
+      "HomeItem": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "What sort of thing it is, for example `publish_manual` or `facts_review`."
+          },
+          "module": {
+            "$ref": "#/components/schemas/HomeModule"
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string",
+            "description": "One plain sentence saying why it needs attention."
+          },
+          "count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "How many things the item stands for; null for a single thing."
+          },
+          "due": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-11-27T06:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "urgency": {
+            "$ref": "#/components/schemas/HomeUrgency"
+          },
+          "href": {
+            "type": "string",
+            "description": "The app path that deals with it."
+          }
+        },
+        "required": [
+          "kind",
+          "module",
+          "title",
+          "detail",
+          "count",
+          "due",
+          "urgency",
+          "href"
+        ]
+      },
+      "HomeModule": {
+        "type": "string",
+        "enum": [
+          "publish",
+          "approve",
+          "studio",
+          "plan",
+          "research",
+          "brand"
+        ],
+        "description": "The module that owns the item. `brand` is the knowledge module."
+      },
+      "HomeUrgency": {
+        "type": "string",
+        "enum": [
+          "now",
+          "today",
+          "soon",
+          "later"
+        ]
+      },
+      "HomeMoney": {
+        "type": "object",
+        "properties": {
+          "usd": {
+            "type": "string"
+          },
+          "npr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "usd",
+          "npr"
+        ],
+        "description": "Decimal strings: usd to 4 places, npr to 2."
       }
     },
     "parameters": {}
@@ -13534,6 +13797,46 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/home": {
+      "get": {
+        "tags": [
+          "home"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Home"
                 }
               }
             }

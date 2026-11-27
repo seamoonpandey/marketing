@@ -8,3 +8,4 @@ export { dueJobs, sendJob } from './send.ts';
 export { getJob, type Job } from './jobs.ts';
 export { listPublished } from './summary.ts';
 export { nextState, type JobState, type Outcome } from './state.ts';
+export { summary } from './summary.ts';
