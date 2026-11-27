@@ -1,5 +1,7 @@
 # Approve module: implementation plan
 
+> This is the plan the module was built from, kept for reference. `docs/structure.md` and the code are the current truth.
+
 > **For the agents executing this plan:** work on branch `product/approve`. One agent runs tasks 1 to 5 (server) in the worktree `.claude/worktrees/approve`. A second agent runs task 6 (screens) in its own worktree from the committed contract. Each task: write the listed tests, watch them fail, implement, run the check, commit.
 
 **Goal:** the approval gate: a queue of ready Studio drafts, an exact-version preview, approvals bound to a payload hash, and one function that says whether a draft has a valid approval.

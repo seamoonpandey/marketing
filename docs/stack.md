@@ -442,3 +442,23 @@ This follows from the spec's scope-creep risk (§24): build orchestration, knowl
 | 9 | RPO and RTO (NFR-014) | Nightly dump (RPO 24 h) vs adding WAL archiving to R2 |
 | 10 | What NPR 300 per video includes (decision 18) | Whether R2, compute, GPU rent and licence amortisation go into the per-asset cost |
 | 11 | App and API hostnames | nginx site, certificates, cookie domain |
+
+## What changed during the build
+
+Where the built system differs from this document. The code and `docs/structure.md` are current.
+
+| This document says | The built system | Why |
+|---|---|---|
+| Static images and carousels with Satori and resvg-js | `server/src/render/slide.ts` draws with `sharp` (libvips, Pango text) and bundled Noto Sans fonts; `video.ts` joins the frames with the FFmpeg CLI | Satori does not shape Devanagari, and Nepali copy must render correctly (Studio design, section 3). `sharp` was already installed |
+| A second entrypoint `src/media.ts`, a `media` queue and a `marketing-media` pm2 process | One entrypoint, `src/main.ts`, one queue `default`, no media process. Renders run in the API process | A separate media worker was left out of the first build (Studio design, "Not in this sprint") |
+| `src/render/` used by the media entrypoint only | `src/render/` is called by `domain/studio` inside the API process | Same |
+| `src/connectors/` holding the connector contract and adapters | The contract and the `manual` and `mock` connectors are in `src/domain/publish/connectors/`; there are no platform adapters | The connector is Publish's own seam; real adapters wait for platform credentials (Publish design) |
+| `src/domain/` holds brands, knowledge, content, approvals, publishing, crm, analytics, costs, audit | It holds `brands`, `sources`, `costs`, `audit`, `knowledge`, `research`, `plan`, `studio`, `approve`, `publish`, `home`. There is no `content`, `crm` or `analytics` | The modules were built in the order work flows (`docs/architecture.md`); Leads and Results are not built |
+| `src/workflows/` holds WF-001 to WF-024 | One file per module that runs in the background: `brand-import`, `research-watch`, `plan-draft`, `studio-run`, `publish-run` | Only the runs the built modules need exist |
+| `src/` has `db`, `contracts`, `domain`, `workflows`, `ai`, `connectors`, `render` | Also `http/` (errors, router, brand-param schema) and `storage/` (S3 client, object keys, presigned URLs), plus `config.ts`, `modules.ts` and `log.ts` | Shared code that no module owns |
+| Better Auth, with `brand_memberships` roles | Not installed. No login; one tenant from `TENANT_SLUG`, actor `operator` | The owner decided on no auth for the first build (Brand design) |
+| OpenTelemetry to OpenObserve, `@ai-sdk/otel` | Not installed. Logs are pino to stdout | Not part of the first build |
+| Whisper.cpp, Piper, Ollama, Nodemailer | Not installed | Not part of the first build; Studio leaves out voice and speech, Approve leaves out reminders (their designs) |
+| pgvector for brand-filtered retrieval | The pgvector image is used in `docker-compose.dev.yml`, but no table has a vector column | No module needed retrieval |
+| API on 127.0.0.1:3041, web on 3040 | Development defaults are API 3141 (`PORT`) and web 3140 (`web/playwright.config.ts`); production ports are set by `PORT` and `pnpm start -p` | Development only; production takes its port from `PORT` |
+| `deploy/vps/` with copies of what is installed on the box | Not in the repository yet | No deployment has been made |

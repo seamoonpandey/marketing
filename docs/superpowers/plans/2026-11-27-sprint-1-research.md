@@ -1,5 +1,7 @@
 # Sprint 1 Research module: implementation plan
 
+> This is the plan the module was built from, kept for reference. `docs/structure.md` and the code are the current truth.
+
 > **For the agent executing this plan:** work in the worktree `.claude/worktrees/research` on branch `product/research`. One agent runs the whole plan, server tasks first. Each task: write the listed tests, watch them fail, implement, run the check, commit. Track the tasks with the checkboxes.
 
 **Goal:** competitor research: watch each competitor's pages weekly, turn each real change into an observation with before and after quotes, and from those produce opportunities and a battlecard the owner approves.

@@ -1,5 +1,7 @@
 # Publish module: implementation plan
 
+> This is the plan the module was built from, kept for reference. `docs/structure.md` and the code are the current truth.
+
 > **For the agents executing this plan:** work on branch `product/publish`. One agent runs tasks 1 to 6 (server) in the worktree `.claude/worktrees/publish`. A second agent runs task 7 (screens) in its own worktree from the committed contract. Each task: write the listed tests, watch them fail, implement, run the check, commit.
 
 **Goal:** schedule approved drafts to channels and send them through a connector, with a state machine that never posts twice and never posts something whose approval is no longer valid.

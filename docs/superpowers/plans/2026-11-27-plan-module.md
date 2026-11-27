@@ -1,5 +1,7 @@
 # Plan module: implementation plan
 
+> This is the plan the module was built from, kept for reference. `docs/structure.md` and the code are the current truth.
+
 > **For the agents executing this plan:** work on branch `product/plan`. One agent runs tasks 1 to 6 (server) in the worktree `.claude/worktrees/plan`. A second agent runs task 7 (screens) in its own worktree from the committed contract. Each task: write the listed tests, watch them fail, implement, run the check, commit. Track the tasks with the checkboxes.
 
 **Goal:** planning: campaign briefs and a weekly content calendar, drafted by the model from approved facts and accepted opportunities, checked for balance, and approved by the owner.

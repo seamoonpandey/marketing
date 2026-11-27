@@ -1,5 +1,7 @@
 # Sprint 1 Brand module: implementation plan
 
+> This is the plan the module was built from, kept for reference. `docs/structure.md` and the code are the current truth.
+
 > **For the agents executing this plan:** work in the worktree `.claude/worktrees/brand` on branch `product/brand`. One agent runs tasks 1 to 6 (server). A second agent then runs task 7 (web) in the same worktree. Each task: write the listed tests, watch them fail, implement, run the check, commit. Track the tasks with the checkboxes.
 
 **Goal:** brand onboarding: import a brand's website and files into facts that carry their sources, let the owner approve each fact, and show the approved brand with a readiness score.

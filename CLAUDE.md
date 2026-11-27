@@ -4,10 +4,42 @@ Product: Prachaar, the AI Marketing Operating System. `docs/AI_Marketing_Operati
 
 ## Repo layout
 
-One git repo of independent projects. Each top-level project has its own `package.json`, lockfile, build and deploy; nothing is shared through a workspace. Run commands inside the project folder.
+One git repo of independent projects. Each top-level project has its own `package.json`, lockfile, build and deploy; nothing is shared through a workspace. Run commands inside the project folder. `docs/structure.md` is the layout and the shared contracts, `docs/architecture.md` is how the product works, `docs/status.md` is what is built, what is not, and what a deployment must set.
 
-- `web/`: Next.js 16 (App Router). The landing page is `src/app/(marketing)/` (its own root layout, prerendered static at `/`); the product UI will get its own route group. `pnpm dev`, `pnpm build`, `pnpm start -p 3040`. Read `web/AGENTS.md` first: this Next.js version differs from older ones.
-- `server/` (planned, `docs/stack.md`): the API and its background workers. Web talks to it only through its OpenAPI contract.
+- `web/`: Next.js 16 (App Router). The landing page is `src/app/(marketing)/` (its own root layout, prerendered static at `/`). The product is `src/app/(app)/app/` (URL prefix `/app`, its own root layout), one folder per module under `b/[brandId]/`, with components in `src/components/<module>/` and the shared ones in `src/components/app/`. Read `web/AGENTS.md` first: this Next.js version differs from older ones.
+- `server/`: the Hono API, its DBOS workflows and the render engine, on Postgres. Modules are in `src/domain/`: `brands`, `sources`, `costs`, `audit` (the base), `knowledge` (Brand), `research`, `plan`, `studio`, `approve`, `publish`, `home`. Web talks to it only through `server/openapi.json`.
+
+## Run it locally
+
+Node 24 or later, pnpm 12.11.2. Run `pnpm install` in `server/` and in `web/`.
+
+| Step | Command (from the project folder) |
+|---|---|
+| Containers: Postgres (pgvector, 127.0.0.1:5436) and SeaweedFS (S3, 127.0.0.1:8333) | `docker compose -f docker-compose.dev.yml up -d` in `server/` (`colima start` first on a Mac) |
+| Environment | `cp .env.example .env` in `server/`. The defaults match the containers and `AI_MODEL=mock`, which makes no paid call |
+| Database | `pnpm db:reset` in `server/` drops and recreates the database in `DATABASE_URL` from the schema, with grants and the tenant. `pnpm db:migrate` then `pnpm seed` applies the committed migrations instead |
+| API | `pnpm dev` in `server/`, port 3141 (`PORT`) |
+| Web | `pnpm dev -p 3140` in `web/`. It proxies `/api` to `API_PORT` (default 3141) |
+| Server tests | `pnpm test` in `server/`. Unit tests need nothing; `*.int.test.ts` need both containers and give every file its own database. `render.real.int.test.ts` and the video test also want `ffmpeg` on the PATH (the video test skips without it) |
+| Server checks | `pnpm typecheck`, `pnpm openapi:check` |
+| End to end | `pnpm e2e` in `web/`. It starts its own API (`server/scripts/e2e-server.ts`, database `mkt_e2e_<API_PORT>`, mock model) and `next dev` on `WEB_PORT` and `API_PORT` (3140 and 3141 by default), so stop your own dev servers or set other ports first. One worker. `pnpm exec playwright test e2e/*.stub.spec.ts` runs only the specs against a stubbed API, about a minute (`web/README.md`). The full suite's time has not been recorded |
+| Web checks | `pnpm exec tsc --noEmit`, `pnpm build` |
+
+Tests never call a paid model: `vitest.config.ts` forces `AI_MODEL=mock`.
+
+## Rules the code cannot show
+
+- **Brand data:** every query on a brand-owned table runs inside `withBrand(brandId, tx => …)` (`server/src/db/tenant.ts`). Row-level security reads the setting it makes; outside it you see no rows. Every brand-owned table declares `brandPolicies`.
+- **Module boundaries:** read another module only through its `index.ts`. Approve, Publish and Home each have one place for what they read from another module (`approve/studio.ts`, `publish/reads.ts`, Home's `readers`).
+- **Models:** every model call goes through `extract` in `server/src/ai`. It checks the monthly cap, prices, records the cost and gives the model no tools. Never import an AI SDK or call a provider elsewhere.
+- **Publishing:** anything that publishes calls `validApproval` (`domain/approve`) and sends nothing without an approval. Never retry a send whose outcome is unknown.
+- **Facts:** use `approvedFacts`, never the facts table, to read what a brand has approved. A fact needs a source and a quote that `verifyQuote` finds in the source.
+- **Migrations are generated:** change `server/src/db/schema/`, then `pnpm db:generate`. Never write or edit a migration by hand. Grants and functions Drizzle cannot express go in `server/src/db/setup.ts`. Do not use `drizzle-kit push`: it drops RLS clauses.
+- **Generated files are regenerated, never merged:** `server/openapi.json` (`pnpm openapi`), `web/src/lib/api/schema.d.ts` (`pnpm api:types`) and both `pnpm-lock.yaml`. After a merge or rebase, regenerate them.
+- **A new module** registers itself in `server/src/modules.ts`, `server/src/db/schema/index.ts`, `web/src/nav.ts` and `web/src/app/(app)/app.css` (`@source`). See `docs/structure.md`. Every new route also needs an entry in `server/src/isolation.int.test.ts`, which fails for a route it does not know.
+- **Text:** there is no shared text normaliser. `normalizeQuote` (sources), `plain` (approve) and the Studio and Plan checks each have their own; do not compare user text with a bare `===` where one of them applies.
+- **Workflow executors:** two API processes must never share a DBOS executor ID. Under pm2 cluster mode `NODE_APP_INSTANCE` gives each its own.
+- **Tests:** `*.test.ts` beside the code; Postgres or storage means `*.int.test.ts`. Never import `drizzle-kit/api` in a test file (it breaks pdf.js); the schema SQL comes from `server/test/global-setup.ts`.
 
 ## Brand
 

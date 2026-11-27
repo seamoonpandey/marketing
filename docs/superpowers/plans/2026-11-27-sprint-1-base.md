@@ -1,5 +1,7 @@
 # Sprint 1 base: implementation plan
 
+> This is the plan the module was built from, kept for reference. `docs/structure.md` and the code are the current truth.
+
 > **For the agent executing this plan:** one agent runs the whole plan on branch `product/base`, task by task. Each task: write the listed tests, watch them fail, implement, run the check, commit. Track the tasks with the checkboxes.
 
 **Goal:** the shared foundation that the Brand and Research branches build on: the `server/` project, tenancy, the engine parts and the product's web shell.

@@ -1,5 +1,7 @@
 # Studio module: implementation plan
 
+> This is the plan the module was built from, kept for reference. `docs/structure.md` and the code are the current truth.
+
 > **For the agents executing this plan:** three agents work in parallel on branch family `product/studio`. The **domain agent** runs tasks 1 to 6 in `.claude/worktrees/studio`. The **render agent** runs task R in `.claude/worktrees/studio-render`. The **screens agent** runs task 7 in its own worktree from the committed contract. Each task: write the listed tests, watch them fail, implement, run the check, commit.
 
 **Goal:** turn each approved plan item into a draft: copy whose claims cite approved facts, plus rendered images, slides or video from brand templates, with checks that decide whether it can be marked ready.
