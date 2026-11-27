@@ -6,6 +6,9 @@
 @source "../../components/app";
 @source "../../components/brand";
 @source "../../components/research";
+@source "../../components/plan";
+@source "../../components/studio";
+@source "../../components/approve";
 @source "../../components/publish";
 
 @theme inline {

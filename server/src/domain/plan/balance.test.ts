@@ -40,6 +40,13 @@ describe('checkBalance', () => {
     expect(normalizeIdea('Save 5.0')).not.toBe(normalizeIdea('Save 50'));
   });
 
+  it('duplicate_idea and incomplete see through invisible characters and full-width letters', () => {
+    for (const idea of ['Shawl​ story', 'Shawl­ story', 'Ｓｈａｗｌ story'])
+      expect(rule(run([item({ idea: 'Shawl story' }), item({ idea, day: '2026-11-30' })]), 'duplicate_idea')).toHaveLength(1);
+    expect(rule(run([item({ idea: '​' })]), 'incomplete')).toHaveLength(1);
+    expect(rule(run([item({ cta: '​' })]), 'incomplete')).toHaveLength(1);
+  });
+
   it('unknown_fact (blocking): a cited fact that is not approved; not an approved one', () => {
     expect(rule(run([item({ factIds: [F1, F2] })]), 'unknown_fact')).toEqual([expect.objectContaining({ blocking: true })]);
     expect(rule(run([item({ factIds: [F1] })]), 'unknown_fact')).toEqual([]);

@@ -43,7 +43,7 @@ Rules:
 7. If the data is not enough, plan fewer items instead of guessing.`;
 
 // A `<` inside data could close a block early; JSON keeps it as an escape.
-const data = (tag: string, v: unknown) => `<${tag}>\n${JSON.stringify(v).replaceAll('<', '\\u003c')}\n</${tag}>`;
+export const data = (tag: string, v: unknown) => `<${tag}>\n${JSON.stringify(v).replaceAll('<', '\\u003c')}\n</${tag}>`;
 
 export async function weekContext(brandId: string, weekStart: string) {
   return withBrand(brandId, async (tx) => {
@@ -92,21 +92,30 @@ export async function estimateWeekCost(brandId: string, weekStart: string, facts
 
 const oneOf = <T extends string>(list: readonly T[], v: string | undefined): T | null => (list as readonly string[]).includes(v ?? '') ? (v as T) : null;
 
-/**
- * One model call, then the items it may keep: a day inside the week, a channel from the settings, no more
- * per channel than its posts per week. Fact and campaign ids that were not in the input are removed.
- */
-export async function draftWeek(brandId: string, runId: string, weekStart: string, facts: ApprovedFact[]): Promise<{ counts: PlanCounts; cost: Money }> {
+/** The model call, with the context it was given. A step of its own, so a retry of the store does not pay for it again. */
+export async function draftWeek(brandId: string, runId: string, weekStart: string, facts: ApprovedFact[]) {
   const c = await checkWeekDraft(brandId, weekStart, facts);
   const { object, cost } = await extract({
     brandId, runType: 'plan_week', runId, system: SYSTEM, parts: weekParts(weekStart, c, facts), schema: Answer, maxOutputTokens: WEEK_MAX_OUTPUT,
   });
+  return { c, items: object.items, cost };
+}
+
+// Postgres text cannot hold a NUL byte.
+const clean = (s: string, max: number) => s.replaceAll('\0', '').trim().slice(0, max);
+
+/**
+ * The items the model's answer may keep: a day inside the week, a channel from the settings, no more
+ * per channel than its posts per week. Fact and campaign ids that were not in the input are removed.
+ */
+export async function storeWeek(brandId: string, runId: string, weekStart: string, facts: ApprovedFact[], d: Awaited<ReturnType<typeof draftWeek>>): Promise<PlanCounts> {
+  const { c } = d;
   const known = new Set(facts.map((f) => f.id).filter((id) => UUID.test(id)));
   const campaignIds = new Set(c.campaigns.map((k) => k.id));
   const room = new Map(c.settings.channels.map((s) => [s.channel as string, s.postsPerWeek]));
   const kept: (typeof planItems.$inferInsert)[] = [];
   let dropped = 0;
-  for (const m of object.items) {
+  for (const m of d.items) {
     const left = room.get(m.channel) ?? 0;
     if (!Number.isInteger(m.dayOffset) || m.dayOffset < 0 || m.dayOffset > 6 || left < 1) { dropped++; continue; }
     room.set(m.channel, left - 1);
@@ -114,7 +123,7 @@ export async function draftWeek(brandId: string, runId: string, weekStart: strin
       brandId, weekPlanId: '', day: addDays(weekStart, m.dayOffset), channel: m.channel as (typeof channels)[number],
       format: oneOf(formats, m.format), pillar: oneOf(pillars, m.pillar), funnel: oneOf(funnels, m.funnel), intent: oneOf(intents, m.intent),
       campaignId: m.campaignId && campaignIds.has(m.campaignId) ? m.campaignId : null,
-      idea: m.idea.trim().slice(0, 2000), cta: m.cta.trim().slice(0, 500), factIds: [...new Set(m.factIds.filter((f) => known.has(f)))],
+      idea: clean(m.idea, 2000), cta: clean(m.cta, 500), factIds: [...new Set(m.factIds.filter((f) => known.has(f)))],
       position: kept.length, origin: 'model',
     });
   }
@@ -126,7 +135,7 @@ export async function draftWeek(brandId: string, runId: string, weekStart: strin
     if (kept.length) await tx.insert(planItems).values(kept.map((k) => ({ ...k, weekPlanId: plan!.id })));
     await audit(tx, { brandId, actor: 'system', action: 'plan.week.draft', objectType: 'week_plan', objectId: plan!.id, objectVersion: plan!.version, result: 'ok', reason: `${kept.length} items, ${dropped} dropped` });
   });
-  return { counts, cost };
+  return counts;
 }
 
 /** Moves a still-active run to its end state. A run that already ended (cancelled) is left alone. */

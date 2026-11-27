@@ -3429,6 +3429,19 @@
         ],
         "description": "The most the draft can cost. Show it before starting."
       },
+      "PlanApprove": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "description": "The version of the draft the owner is looking at. The server approves only when it is still the current draft, else 409."
+      },
       "PlanWeekView": {
         "type": "object",
         "properties": {
@@ -4572,6 +4585,20 @@
             "type": "boolean",
             "description": "False when the item was deleted or its week went back to draft: the draft is stale, readable, and cannot be regenerated."
           },
+          "weekStart": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "example": "2026-11-29",
+                "description": "A calendar date, YYYY-MM-DD"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The first day of the plan item's week, so a screen can link back to it; null when the item was deleted."
+          },
           "channel": {
             "type": "string"
           },
@@ -4649,6 +4676,7 @@
           "versions",
           "planItem",
           "planApproved",
+          "weekStart",
           "channel",
           "languages",
           "missingLanguages",
@@ -5001,6 +5029,819 @@
           }
         },
         "description": "Every change makes a new version (origin owner), clears the renders of the new version and sets a ready draft back to draft. Claims citing no approved fact move to leftOut."
+      },
+      "ApproveSummary": {
+        "type": "object",
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/ApproveCounts"
+          },
+          "paused": {
+            "type": "boolean"
+          },
+          "pausedReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pausedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-11-27T06:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "monthDecisions": {
+            "type": "integer",
+            "description": "Approvals and rejections recorded this calendar month (UTC)."
+          }
+        },
+        "required": [
+          "counts",
+          "paused",
+          "pausedReason",
+          "pausedAt",
+          "monthDecisions"
+        ]
+      },
+      "ApproveCounts": {
+        "type": "object",
+        "properties": {
+          "waiting": {
+            "type": "integer"
+          },
+          "approved": {
+            "type": "integer"
+          },
+          "rejected": {
+            "type": "integer"
+          },
+          "invalid": {
+            "type": "integer"
+          },
+          "expired": {
+            "type": "integer"
+          },
+          "paused": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "waiting",
+          "approved",
+          "rejected",
+          "invalid",
+          "expired",
+          "paused"
+        ]
+      },
+      "ApproveQueue": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApproveSummary"
+              },
+              {
+                "description": "Counts over the whole queue, whatever the state filter."
+              }
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApproveQueueItem"
+            },
+            "description": "Ready drafts and drafts with a decision, by day, then risk (high first). Drafts Studio no longer has come last."
+          }
+        },
+        "required": [
+          "summary",
+          "items"
+        ]
+      },
+      "ApproveQueueItem": {
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ApproveState"
+          },
+          "stateReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "draft": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApproveQueueDraft"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when Studio no longer has the draft: only its decisions remain."
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApproveDecision"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The newest decision, of any version."
+          }
+        },
+        "required": [
+          "draftId",
+          "state",
+          "stateReason",
+          "draft",
+          "latest"
+        ]
+      },
+      "ApproveState": {
+        "type": "string",
+        "enum": [
+          "waiting",
+          "approved",
+          "rejected",
+          "invalid",
+          "expired",
+          "paused"
+        ],
+        "description": "Worked out on every read, never stored. waiting: ready, no decision for its current version. approved: valid now. rejected: rejected for its current version. invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved, a used asset lost its rights, Studio now reports a blocking issue, or the draft turned high risk after a bulk or note-less approval. expired: approved, past its expiry. paused: approved and otherwise valid while the brand is paused."
+      },
+      "ApproveQueueDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "description": "The current version."
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudioKind"
+              },
+              {
+                "description": "post: copy only. static: one image. carousel: 2 to 10 slides. video: a script and a rendered video."
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready"
+            ]
+          },
+          "channel": {
+            "type": "string"
+          },
+          "day": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "example": "2026-11-29",
+            "description": "The day it is planned to go out."
+          },
+          "weekStart": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "example": "2026-11-29",
+            "description": "The first day of the brand's plan week holding day. A bulk approval stays inside one."
+          },
+          "excerpt": {
+            "type": "string",
+            "description": "The start of the first caption, at most 140 characters."
+          },
+          "thumbnailUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Presigned URL of the first rendered image; null when there is none."
+          },
+          "risk": {
+            "$ref": "#/components/schemas/ApproveRisk"
+          },
+          "riskReasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "payloadHash": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Hash of the exact payload; null while the draft is not ready."
+          },
+          "blockingCount": {
+            "type": "integer"
+          },
+          "viewed": {
+            "type": "boolean",
+            "description": "This exact payload has been opened in the preview. A bulk approval needs it."
+          },
+          "canApprove": {
+            "type": "boolean"
+          },
+          "cannotApproveReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "noteRequired": {
+            "type": "boolean",
+            "description": "True for high risk: approving needs a review note of at least 20 characters."
+          },
+          "bulkReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why this item cannot join any bulk approval, or null. Items that can still join only others with the same channel, risk and weekStart."
+          }
+        },
+        "required": [
+          "version",
+          "kind",
+          "status",
+          "channel",
+          "day",
+          "weekStart",
+          "excerpt",
+          "thumbnailUrl",
+          "risk",
+          "riskReasons",
+          "payloadHash",
+          "blockingCount",
+          "viewed",
+          "canApprove",
+          "cannotApproveReason",
+          "noteRequired",
+          "bulkReason"
+        ]
+      },
+      "ApproveRisk": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "description": "high needs a review note of at least 20 characters and never joins a bulk approval."
+      },
+      "ApproveDecision": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "draftId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "description": "The draft version decided on."
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ]
+          },
+          "payloadHash": {
+            "type": "string"
+          },
+          "risk": {
+            "$ref": "#/components/schemas/ApproveRisk"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The rejection reason; null for an approval."
+          },
+          "reviewNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedBy": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "type": "string",
+            "example": "2026-11-27T06:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-11-27T06:00:00.000Z",
+            "description": "When an approval stops being valid; null for a rejection."
+          },
+          "bulkId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Shared by every approval of one bulk approval."
+          }
+        },
+        "required": [
+          "id",
+          "draftId",
+          "version",
+          "decision",
+          "payloadHash",
+          "risk",
+          "reason",
+          "reviewNote",
+          "decidedBy",
+          "decidedAt",
+          "expiresAt",
+          "bulkId"
+        ],
+        "description": "A decision is never edited; the newest one on the current version counts. On one version: an approval that expired or became invalid can be approved again (renewed, with every check), an approval can be withdrawn by a rejection, and a rejected version can be approved after all."
+      },
+      "ApprovePreview": {
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ApproveState"
+          },
+          "stateReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paused": {
+            "type": "boolean",
+            "description": "The brand is paused: an approval given now is stored but not valid until resumed."
+          },
+          "draft": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApprovePreviewDraft"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when Studio no longer has the draft: only its decisions remain."
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApproveDecision"
+            },
+            "description": "Every decision on this draft, newest first."
+          }
+        },
+        "required": [
+          "draftId",
+          "state",
+          "stateReason",
+          "paused",
+          "draft",
+          "history"
+        ],
+        "description": "The exact version that would go out. Reading it records that this payload was viewed."
+      },
+      "ApprovePreviewDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudioKind"
+              },
+              {
+                "description": "post: copy only. static: one image. carousel: 2 to 10 slides. video: a script and a rendered video."
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready"
+            ]
+          },
+          "channel": {
+            "type": "string"
+          },
+          "day": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "example": "2026-11-29",
+            "description": "A calendar date, YYYY-MM-DD"
+          },
+          "weekStart": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "example": "2026-11-29",
+            "description": "A calendar date, YYYY-MM-DD"
+          },
+          "pillar": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "campaignId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudioContent"
+              },
+              {
+                "description": "The current version's copy in each language, slide text or scenes, template and ratios."
+              }
+            ]
+          },
+          "leftOut": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioLeftOut"
+            }
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioFinding"
+            },
+            "description": "Blocking first."
+          },
+          "blockingCount": {
+            "type": "integer"
+          },
+          "facts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApproveFactRef"
+            }
+          },
+          "missingFactIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Cited facts that are not approved today."
+          },
+          "renders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApproveRender"
+            },
+            "description": "Every file of the current version, in the order Studio keeps them."
+          },
+          "risk": {
+            "$ref": "#/components/schemas/ApproveRisk"
+          },
+          "riskReasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "payloadHash": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Send it back to approve or reject; null while the draft is not ready."
+          },
+          "expiresIfApproved": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-11-27T06:00:00.000Z",
+            "description": "The expiry an approval given now would get; null while it cannot be approved."
+          },
+          "noteRequired": {
+            "type": "boolean"
+          },
+          "canApprove": {
+            "type": "boolean"
+          },
+          "cannotApproveReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "canReject": {
+            "type": "boolean"
+          },
+          "cannotRejectReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "version",
+          "kind",
+          "status",
+          "channel",
+          "day",
+          "weekStart",
+          "pillar",
+          "campaignId",
+          "content",
+          "leftOut",
+          "findings",
+          "blockingCount",
+          "facts",
+          "missingFactIds",
+          "renders",
+          "risk",
+          "riskReasons",
+          "payloadHash",
+          "expiresIfApproved",
+          "noteRequired",
+          "canApprove",
+          "cannotApproveReason",
+          "canReject",
+          "cannotRejectReason"
+        ]
+      },
+      "ApproveFactRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string"
+          },
+          "subjectName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "field": {
+            "type": "string"
+          },
+          "value": {},
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-11-27T06:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "section",
+          "subjectName",
+          "field",
+          "unit",
+          "expiresAt"
+        ],
+        "description": "A cited fact that is approved today."
+      },
+      "ApproveRender": {
+        "type": "object",
+        "properties": {
+          "ratio": {
+            "type": "string"
+          },
+          "width": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "overflow": {
+            "type": "boolean"
+          },
+          "index": {
+            "type": "integer",
+            "description": "The slide or scene number, from 0. A video is index 0."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "description": "Presigned download URL, valid for about 15 minutes. Images open inline; a video is an attachment."
+          }
+        },
+        "required": [
+          "ratio",
+          "width",
+          "height",
+          "overflow",
+          "index",
+          "type",
+          "url"
+        ]
+      },
+      "ApproveApprove": {
+        "type": "object",
+        "properties": {
+          "payloadHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "The payloadHash the queue or the preview returned, sent back unchanged."
+          },
+          "reviewNote": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Required for high risk: at least 20 characters, not counting spaces at the ends or invisible characters."
+          }
+        },
+        "required": [
+          "payloadHash"
+        ]
+      },
+      "ApproveReject": {
+        "type": "object",
+        "properties": {
+          "payloadHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "The payloadHash the queue or the preview returned, sent back unchanged."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "payloadHash",
+          "reason"
+        ]
+      },
+      "ApproveBulkResult": {
+        "type": "object",
+        "properties": {
+          "bulkId": {
+            "type": "string"
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApproveDecision"
+            }
+          }
+        },
+        "required": [
+          "bulkId",
+          "decisions"
+        ]
+      },
+      "ApproveBulk": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "draftId": {
+                  "type": "string"
+                },
+                "payloadHash": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$",
+                  "description": "The payloadHash the queue or the preview returned, sent back unchanged."
+                }
+              },
+              "required": [
+                "draftId",
+                "payloadHash"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "description": "Every item must be waiting, not high risk, opened in the preview at this payload, and share one channel, one risk and one weekStart. One failure approves none."
+      },
+      "ApproveSettingsView": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApproveSettings"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "paused": {
+                "type": "boolean"
+              },
+              "pausedReason": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "pausedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "2026-11-27T06:00:00.000Z",
+                "description": "ISO 8601 timestamp"
+              }
+            },
+            "required": [
+              "paused",
+              "pausedReason",
+              "pausedAt"
+            ]
+          }
+        ]
+      },
+      "ApproveSettings": {
+        "type": "object",
+        "properties": {
+          "maxAgeDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90,
+            "description": "How many days an approval stays valid at most. Default 14."
+          },
+          "approvers": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "maxItems": 20,
+            "description": "Names of the people who approve."
+          }
+        },
+        "required": [
+          "maxAgeDays",
+          "approvers"
+        ]
+      },
+      "ApprovePause": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
+        ]
       },
       "PublishSummary": {
         "type": "object",
@@ -9816,6 +10657,16 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanApprove"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -9823,6 +10674,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlanBriefView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -10084,6 +10945,16 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanApprove"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -11122,6 +11993,597 @@
             }
           },
           "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/approve/summary": {
+      "get": {
+        "tags": [
+          "approve"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApproveSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/approve/queue": {
+      "get": {
+        "tags": [
+          "approve"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/ApproveState"
+            },
+            "required": false,
+            "description": "Worked out on every read, never stored. waiting: ready, no decision for its current version. approved: valid now. rejected: rejected for its current version. invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved, a used asset lost its rights, Studio now reports a blocking issue, or the draft turned high risk after a bulk or note-less approval. expired: approved, past its expiry. paused: approved and otherwise valid while the brand is paused.",
+            "name": "state",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApproveQueue"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/approve/queue/{draftId}": {
+      "get": {
+        "tags": [
+          "approve"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "draftId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovePreview"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/approve/queue/{draftId}/approve": {
+      "post": {
+        "tags": [
+          "approve"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "draftId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveApprove"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovePreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/approve/queue/{draftId}/reject": {
+      "post": {
+        "tags": [
+          "approve"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "draftId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveReject"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovePreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/approve/bulk-approve": {
+      "post": {
+        "tags": [
+          "approve"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveBulk"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Every item approved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApproveBulkResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/approve/settings": {
+      "get": {
+        "tags": [
+          "approve"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApproveSettingsView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "approve"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApproveSettingsView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/approve/pause": {
+      "post": {
+        "tags": [
+          "approve"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovePause"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Paused: no approval is valid until resumed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApproveSettingsView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/approve/resume": {
+      "post": {
+        "tags": [
+          "approve"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovePause"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resumed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApproveSettingsView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {

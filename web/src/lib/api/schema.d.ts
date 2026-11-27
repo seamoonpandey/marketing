@@ -3569,7 +3569,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanApprove"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -3578,6 +3582,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["PlanBriefView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
                     };
                 };
                 /** @description Error: `{ error: { code, message } }` */
@@ -3815,7 +3828,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanApprove"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -4777,6 +4794,570 @@ export interface paths {
                 };
                 /** @description Error: `{ error: { code, message } }` */
                 409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/approve/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApproveSummary"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/approve/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Worked out on every read, never stored. waiting: ready, no decision for its current version. approved: valid now. rejected: rejected for its current version. invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved, a used asset lost its rights, Studio now reports a blocking issue, or the draft turned high risk after a bulk or note-less approval. expired: approved, past its expiry. paused: approved and otherwise valid while the brand is paused. */
+                    state?: components["schemas"]["ApproveState"];
+                };
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApproveQueue"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/approve/queue/{draftId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    draftId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApprovePreview"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/approve/queue/{draftId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    draftId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ApproveApprove"];
+                };
+            };
+            responses: {
+                /** @description Approved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApprovePreview"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/approve/queue/{draftId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    draftId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ApproveReject"];
+                };
+            };
+            responses: {
+                /** @description Rejected */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApprovePreview"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/approve/bulk-approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ApproveBulk"];
+                };
+            };
+            responses: {
+                /** @description Every item approved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApproveBulkResult"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/approve/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApproveSettingsView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ApproveSettings"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApproveSettingsView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/approve/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ApprovePause"];
+                };
+            };
+            responses: {
+                /** @description Paused: no approval is valid until resumed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApproveSettingsView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/approve/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ApprovePause"];
+                };
+            };
+            responses: {
+                /** @description Resumed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApproveSettingsView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6575,6 +7156,10 @@ export interface components {
             estimate: components["schemas"]["PlanMoney"];
             remaining: components["schemas"]["PlanMoney"] & unknown;
         };
+        /** @description The version of the draft the owner is looking at. The server approves only when it is still the current draft, else 409. */
+        PlanApprove: {
+            version: number;
+        };
         PlanWeekView: {
             /**
              * @description A calendar date, YYYY-MM-DD
@@ -6877,6 +7462,8 @@ export interface components {
             planItem: components["schemas"]["StudioPlanItem"] | null;
             /** @description False when the item was deleted or its week went back to draft: the draft is stale, readable, and cannot be regenerated. */
             planApproved: boolean;
+            /** @description The first day of the plan item's week, so a screen can link back to it; null when the item was deleted. */
+            weekStart: string | null;
             channel: string;
             /** @description The brand languages. */
             languages: string[];
@@ -6985,6 +7572,234 @@ export interface components {
             ratios?: components["schemas"]["StudioRatio"][];
             /** @description The version the editor started from; a different current version answers 409 so an edit never overwrites a newer one. */
             baseVersion?: number;
+        };
+        ApproveSummary: {
+            counts: components["schemas"]["ApproveCounts"];
+            paused: boolean;
+            pausedReason: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            pausedAt: string | null;
+            /** @description Approvals and rejections recorded this calendar month (UTC). */
+            monthDecisions: number;
+        };
+        ApproveCounts: {
+            waiting: number;
+            approved: number;
+            rejected: number;
+            invalid: number;
+            expired: number;
+            paused: number;
+        };
+        ApproveQueue: {
+            summary: components["schemas"]["ApproveSummary"] & unknown;
+            /** @description Ready drafts and drafts with a decision, by day, then risk (high first). Drafts Studio no longer has come last. */
+            items: components["schemas"]["ApproveQueueItem"][];
+        };
+        ApproveQueueItem: {
+            draftId: string;
+            state: components["schemas"]["ApproveState"];
+            stateReason: string | null;
+            /** @description null when Studio no longer has the draft: only its decisions remain. */
+            draft: components["schemas"]["ApproveQueueDraft"] | null;
+            /** @description The newest decision, of any version. */
+            latest: components["schemas"]["ApproveDecision"] | null;
+        };
+        /**
+         * @description Worked out on every read, never stored. waiting: ready, no decision for its current version. approved: valid now. rejected: rejected for its current version. invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved, a used asset lost its rights, Studio now reports a blocking issue, or the draft turned high risk after a bulk or note-less approval. expired: approved, past its expiry. paused: approved and otherwise valid while the brand is paused.
+         * @enum {string}
+         */
+        ApproveState: "waiting" | "approved" | "rejected" | "invalid" | "expired" | "paused";
+        ApproveQueueDraft: {
+            /** @description The current version. */
+            version: number;
+            kind: components["schemas"]["StudioKind"] & unknown;
+            /** @enum {string} */
+            status: "draft" | "ready";
+            channel: string;
+            /**
+             * @description The day it is planned to go out.
+             * @example 2026-11-29
+             */
+            day: string;
+            /**
+             * @description The first day of the brand's plan week holding day. A bulk approval stays inside one.
+             * @example 2026-11-29
+             */
+            weekStart: string;
+            /** @description The start of the first caption, at most 140 characters. */
+            excerpt: string;
+            /** @description Presigned URL of the first rendered image; null when there is none. */
+            thumbnailUrl: string | null;
+            risk: components["schemas"]["ApproveRisk"];
+            riskReasons: string[];
+            /** @description Hash of the exact payload; null while the draft is not ready. */
+            payloadHash: string | null;
+            blockingCount: number;
+            /** @description This exact payload has been opened in the preview. A bulk approval needs it. */
+            viewed: boolean;
+            canApprove: boolean;
+            cannotApproveReason: string | null;
+            /** @description True for high risk: approving needs a review note of at least 20 characters. */
+            noteRequired: boolean;
+            /** @description Why this item cannot join any bulk approval, or null. Items that can still join only others with the same channel, risk and weekStart. */
+            bulkReason: string | null;
+        };
+        /**
+         * @description high needs a review note of at least 20 characters and never joins a bulk approval.
+         * @enum {string}
+         */
+        ApproveRisk: "low" | "medium" | "high";
+        /** @description A decision is never edited; the newest one on the current version counts. On one version: an approval that expired or became invalid can be approved again (renewed, with every check), an approval can be withdrawn by a rejection, and a rejected version can be approved after all. */
+        ApproveDecision: {
+            id: string;
+            draftId: string;
+            /** @description The draft version decided on. */
+            version: number;
+            /** @enum {string} */
+            decision: "approved" | "rejected";
+            payloadHash: string;
+            risk: components["schemas"]["ApproveRisk"];
+            /** @description The rejection reason; null for an approval. */
+            reason: string | null;
+            reviewNote: string | null;
+            decidedBy: string;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            decidedAt: string;
+            /**
+             * @description When an approval stops being valid; null for a rejection.
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            expiresAt: string | null;
+            /** @description Shared by every approval of one bulk approval. */
+            bulkId: string | null;
+        };
+        /** @description The exact version that would go out. Reading it records that this payload was viewed. */
+        ApprovePreview: {
+            draftId: string;
+            state: components["schemas"]["ApproveState"];
+            stateReason: string | null;
+            /** @description The brand is paused: an approval given now is stored but not valid until resumed. */
+            paused: boolean;
+            /** @description null when Studio no longer has the draft: only its decisions remain. */
+            draft: components["schemas"]["ApprovePreviewDraft"] | null;
+            /** @description Every decision on this draft, newest first. */
+            history: components["schemas"]["ApproveDecision"][];
+        };
+        ApprovePreviewDraft: {
+            version: number;
+            kind: components["schemas"]["StudioKind"] & unknown;
+            /** @enum {string} */
+            status: "draft" | "ready";
+            channel: string;
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            day: string;
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            weekStart: string;
+            pillar: string | null;
+            campaignId: string | null;
+            content: components["schemas"]["StudioContent"] & unknown;
+            leftOut: components["schemas"]["StudioLeftOut"][];
+            /** @description Blocking first. */
+            findings: components["schemas"]["StudioFinding"][];
+            blockingCount: number;
+            facts: components["schemas"]["ApproveFactRef"][];
+            /** @description Cited facts that are not approved today. */
+            missingFactIds: string[];
+            /** @description Every file of the current version, in the order Studio keeps them. */
+            renders: components["schemas"]["ApproveRender"][];
+            risk: components["schemas"]["ApproveRisk"];
+            riskReasons: string[];
+            /** @description Send it back to approve or reject; null while the draft is not ready. */
+            payloadHash: string | null;
+            /**
+             * @description The expiry an approval given now would get; null while it cannot be approved.
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            expiresIfApproved: string | null;
+            noteRequired: boolean;
+            canApprove: boolean;
+            cannotApproveReason: string | null;
+            canReject: boolean;
+            cannotRejectReason: string | null;
+        };
+        /** @description A cited fact that is approved today. */
+        ApproveFactRef: {
+            id: string;
+            section: string;
+            subjectName: string | null;
+            field: string;
+            value?: unknown;
+            unit: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            expiresAt: string | null;
+        };
+        ApproveRender: {
+            ratio: string;
+            width: number;
+            height: number;
+            overflow: boolean;
+            /** @description The slide or scene number, from 0. A video is index 0. */
+            index: number;
+            /** @enum {string} */
+            type: "image" | "video";
+            /** @description Presigned download URL, valid for about 15 minutes. Images open inline; a video is an attachment. */
+            url: string;
+        };
+        ApproveApprove: {
+            /** @description The payloadHash the queue or the preview returned, sent back unchanged. */
+            payloadHash: string;
+            /** @description Required for high risk: at least 20 characters, not counting spaces at the ends or invisible characters. */
+            reviewNote?: string;
+        };
+        ApproveReject: {
+            /** @description The payloadHash the queue or the preview returned, sent back unchanged. */
+            payloadHash: string;
+            reason: string;
+        };
+        ApproveBulkResult: {
+            bulkId: string;
+            decisions: components["schemas"]["ApproveDecision"][];
+        };
+        /** @description Every item must be waiting, not high risk, opened in the preview at this payload, and share one channel, one risk and one weekStart. One failure approves none. */
+        ApproveBulk: {
+            items: {
+                draftId: string;
+                /** @description The payloadHash the queue or the preview returned, sent back unchanged. */
+                payloadHash: string;
+            }[];
+        };
+        ApproveSettingsView: components["schemas"]["ApproveSettings"] & {
+            paused: boolean;
+            pausedReason: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            pausedAt: string | null;
+        };
+        ApproveSettings: {
+            /** @description How many days an approval stays valid at most. Default 14. */
+            maxAgeDays: number;
+            /** @description Names of the people who approve. */
+            approvers: string[];
+        };
+        ApprovePause: {
+            reason: string;
         };
         PublishSummary: {
             /**
