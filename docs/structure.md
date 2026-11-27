@@ -247,3 +247,26 @@ Keeping token use down:
 - One agent per branch phase. Tests are the gate for each task; there is no reviewer agent per task.
 - Agents hand back a note of at most 150 words: what passed, what was skipped, base changes, added dependencies.
 - All tests use the mock model.
+
+## 8. Plan module (module 3)
+
+Branch `product/plan`, built from `product/research`. Plan: `docs/superpowers/plans/2026-11-27-plan-module.md`. Design: `docs/superpowers/specs/2026-11-27-plan-design.md`.
+
+Paths tagged **plan**:
+
+| Path | Holds |
+|---|---|
+| `server/src/db/schema/plan.ts` | Settings, campaigns, briefs, week plans, items, runs |
+| `server/src/contracts/plan.ts` | Request and response schemas |
+| `server/src/domain/plan/` | Settings, campaigns, briefs, the balance check, drafting, routes |
+| `server/src/workflows/plan-draft.ts` | The draft workflow |
+| `server/test/fixtures/plan/` | Fixtures |
+| `web/src/app/(app)/app/b/[brandId]/plan/**` | Screens |
+| `web/src/components/plan/` | Components |
+| `web/e2e/plan*.spec.ts` | End-to-end tests |
+
+The module registers itself with one line each in `server/src/modules.ts`, `server/src/db/schema/index.ts` and `web/src/nav.ts`. API paths start `/api/brands/{brandId}/plan/`.
+
+Plan reads other modules only through `approvedFacts` (`domain/knowledge`) and `listOpportunities` (`domain/research`).
+
+Ports: server work uses web 3940 and API 3941; screens use 4040 and 4041; the full-flow test uses 4140 and 4141.
