@@ -14,11 +14,18 @@ export const QUEUE = 'default';
 export const APPLICATION_VERSION = '1';
 
 /**
+ * This process's DBOS executor ID. At launch an executor recovers the unfinished workflows recorded under its own
+ * ID, so two processes must never share one: each pm2 cluster instance is api-<NODE_APP_INSTANCE>, and a single
+ * process without pm2 is `local`. After lowering the instance count, recover the removed IDs with DBOS.recoverWorkflows.
+ */
+export const executorId = (instance = config.NODE_APP_INSTANCE) => (instance === undefined ? 'local' : `api-${instance}`);
+
+/**
  * Launches DBOS against its system database and registers the queue. Workflows must be
  * registered (by importing src/modules.ts) before this runs.
  */
 export async function launchWorkflows(systemDatabaseUrl = config.DBOS_SYSTEM_DATABASE_URL): Promise<void> {
-  DBOS.setConfig({ name: 'prachaar', systemDatabaseUrl, applicationVersion: APPLICATION_VERSION, logLevel: 'warn' });
+  DBOS.setConfig({ name: 'prachaar', systemDatabaseUrl, applicationVersion: APPLICATION_VERSION, executorID: executorId(), logLevel: 'warn' });
   await DBOS.launch();
   await DBOS.registerQueue(QUEUE);
 }

@@ -1,7 +1,7 @@
 import { DBOS } from '@dbos-inc/dbos-sdk';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { launchTestWorkflows, testDb, type TestDb } from '../../test/helpers.ts';
-import { QUEUE, retryWorkflow } from './index.ts';
+import { executorId, QUEUE, retryWorkflow } from './index.ts';
 
 const ran = { first: 0, second: 0 };
 let failSecond = true;
@@ -33,6 +33,11 @@ afterAll(async () => {
 });
 
 describe('workflows', () => {
+  it('names each pm2 instance its own executor, so one never recovers the workflows another is running', () => {
+    expect(DBOS.executorID).toBe('local');
+    expect([executorId('0'), executorId('1'), executorId(undefined)]).toEqual(['api-0', 'api-1', 'local']);
+  });
+
   it('retries from the failed step without re-running the first', async () => {
     const handle = await DBOS.startWorkflow(twoSteps, { queueName: QUEUE })('run');
     await expect(handle.getResult()).rejects.toThrow('second step fails once');

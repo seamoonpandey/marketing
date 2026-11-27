@@ -14,6 +14,8 @@ const schema = z.object({
   AI_MONTHLY_CAP_NPR: z.string().regex(/^\d+(\.\d+)?$/).default('5000'),
   USD_NPR: z.string().regex(/^\d+(\.\d+)?$/).default('155.08'),
   TENANT_SLUG: z.string().default('xenextech'),
+  // pm2 sets it per cluster instance (0, 1, …); it names this process's DBOS executor (workflows/index.ts).
+  NODE_APP_INSTANCE: z.string().regex(/^\d+$/).optional(),
 });
 
 export type Config = z.infer<typeof schema>;
