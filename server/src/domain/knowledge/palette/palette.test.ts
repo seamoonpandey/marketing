@@ -61,4 +61,10 @@ describe('palette', () => {
       </head><body style="--accent: #e85d27"></body></html>`;
     expect(cssColours(html)).toEqual(['#0f5257', '#c3d7e5', '#141414', '#ffffff', '#e85d27']);
   });
+
+  it('reads a hostile page of dashes in linear time, so a homepage cannot stall the server', () => {
+    const start = performance.now();
+    expect(cssColours(`<style>${'-'.repeat(100_000)}</style><style>--a:#0f5257</style>`)).toEqual(['#0f5257']);
+    expect(performance.now() - start).toBeLessThan(1000);
+  });
 });

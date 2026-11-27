@@ -77,7 +77,8 @@ export function cssColours(html: string): string[] {
     ...root.querySelectorAll('style').map((s) => s.text),
     ...root.querySelectorAll('[style]').map((e) => e.getAttribute('style') ?? ''),
   ].join('\n');
-  for (const m of css.matchAll(/--[\w-]+\s*:\s*([^;{}]+)/g)) values.push(m[1]!);
+  // The lookbehind starts a name only at its first dash; without it a run of dashes backtracks quadratically.
+  for (const m of css.matchAll(/(?<![\w-])--[\w-]+\s*:\s*([^;{}]+)/g)) values.push(m[1]!);
   const hexes = values.map(cssHex).filter((h): h is string => h !== null);
   return [...new Set(hexes)].slice(0, 12);
 }
