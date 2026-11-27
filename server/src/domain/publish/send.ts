@@ -19,6 +19,7 @@ import { isMissed, MISSED, type Outcome } from './state.ts';
 export type SendDeps = { reads?: Reads; connector?: Connector; now?: () => Date; sleep?: (seconds: number) => Promise<void> };
 
 const RECONCILE_AFTER = [60, 300, 900];
+const step = <T>(name: string, fn: () => Promise<T>) => DBOS.runStep(fn, { name });
 const due = sql`coalesce(${publishJobs.nextAttemptAt}, ${publishJobs.scheduledAt})`;
 
 export type DueJob = { brandId: string; jobId: string; idempotencyKey: string; attempts: number; dueAt: string };
@@ -108,14 +109,21 @@ export async function sendJob(brandId: string, jobId: string, deps: SendDeps = {
   const now = deps.now ?? (() => new Date());
   const sleep = deps.sleep ?? ((s: number) => DBOS.sleep(s * 1000));
   const token = DBOS.workflowID ?? randomUUID();
-  const step = <T>(name: string, fn: () => Promise<T>) => DBOS.runStep(fn, { name });
   const done = async (o: Outcome) => {
     await step('apply', async () => apply(brandId, jobId, token, o, now()));
     return current(brandId, jobId);
   };
 
-  // 1. Claim.
-  const claimed = await step('claim', () => withBrand(brandId, (tx) => claim(tx, brandId, jobId, token, now())));
+  // 1. Claim. Only a run that made the claim itself may send: a resumed run gets the claim from the stored step while
+  // its first run may still be sending, so it leaves the job publishing rather than send beside it.
+  let claimedHere = false;
+  const claimed = await step('claim', () =>
+    withBrand(brandId, async (tx) => {
+      const c = await claim(tx, brandId, jobId, token, now());
+      claimedHere = c !== null;
+      return c;
+    }),
+  );
   if (!claimed) return current(brandId, jobId);
 
   let sending = false;
@@ -123,14 +131,7 @@ export async function sendJob(brandId: string, jobId: string, deps: SendDeps = {
     // 2. A job more than 24 hours past its time is not sent.
     if (await step('missed', async () => isMissed(new Date(claimed.dueAt), now()))) return await done({ type: 'gate_refused', reason: MISSED });
 
-    // 3. The gate.
-    const gated = await step('gate', async () => {
-      const r = deps.reads ?? (await reads());
-      return withBrand(brandId, async (tx) => gate(tx, brandId, await getJob(tx, brandId, jobId), r));
-    });
-    if (!gated.ok) return await done({ type: 'gate_refused', reason: gated.reason });
-
-    // 4. The channel.
+    // 3. The channel.
     const channel = await step('channel', () =>
       withBrand(brandId, async (tx) => {
         const job = await getJob(tx, brandId, jobId);
@@ -142,10 +143,28 @@ export async function sendJob(brandId: string, jobId: string, deps: SendDeps = {
     if (channel.status !== 'connected')
       return await done({ type: 'channel_unavailable', reason: channel.status === 'disabled' ? 'The channel is disabled' : 'The channel needs reconnecting' });
 
-    // 5. Send, with the job's one idempotency key. Never throws: every answer becomes an outcome.
+    // 4. The gate and the send, in one step: a resumed run replays a finished step's stored answer, so only a gate asked
+    // inside this step is asked right before sending. Sends with the job's one idempotency key, only while this run
+    // still holds the claim. Never throws: every answer becomes an outcome; null is not ours to send.
     const connector = connectorFor(channel, deps.connector);
     sending = true;
-    const outcome = await step('send', async (): Promise<Outcome> => {
+    const outcome = await step('send', async (): Promise<Outcome | null> => {
+      if (!claimedHere) return null;
+      let gated: Outcome | Extract<Gated, { ok: true }> | null;
+      try {
+        const r = deps.reads ?? (await reads());
+        gated = await withBrand(brandId, async (tx): Promise<typeof gated> => {
+          const job = await getJob(tx, brandId, jobId);
+          if (job.state !== 'publishing' || job.workflowId !== token) return null;
+          if ((await findChannel(tx, brandId, job.channelId))?.status !== 'connected') return { type: 'channel_unavailable', reason: 'The channel is no longer connected' };
+          const g = await gate(tx, brandId, job, r);
+          return g.ok ? g : { type: 'gate_refused', reason: g.reason };
+        });
+      } catch (e) {
+        logger.error({ err: e, brandId, jobId }, 'publish: the check before sending failed');
+        return { type: 'error', kind: 'server' }; // nothing was sent
+      }
+      if (!gated || 'type' in gated) return gated;
       try {
         const res = await connector.publish(requestFor(gated.draft, channel), channel.key);
         return res.status === 'manual' ? { type: 'manual' } : { type: 'sent', externalId: res.externalId, url: res.url };
@@ -156,6 +175,7 @@ export async function sendJob(brandId: string, jobId: string, deps: SendDeps = {
         return { type: 'error', kind: 'timeout' };
       }
     });
+    if (!outcome) return current(brandId, jobId);
     let state = await step('apply', async () => apply(brandId, jobId, token, outcome, now()));
 
     // After a timeout, look for the post before anything is sent again; stop at the first clear answer.

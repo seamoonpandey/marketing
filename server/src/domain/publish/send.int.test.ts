@@ -1,4 +1,5 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { DBOS } from '@dbos-inc/dbos-sdk';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { launchTestWorkflows, testDb, type TestDb } from '../../../test/helpers.ts';
 import { withBrand } from '../../db/tenant.ts';
 import { startSend } from '../../workflows/publish-run.ts';
@@ -204,6 +205,100 @@ describe('the scheduler', () => {
       delete testReads.current;
     }
   });
+});
+
+describe('a send held up between its checks and the connector', () => {
+  /** Holds every read of the channels table, which a send makes after claiming the job, until release (or the test ends). */
+  let held = false;
+  async function holdChannels() {
+    await t.adminQuery('begin');
+    await t.adminQuery('lock table channels in access exclusive mode');
+    held = true;
+    return release;
+  }
+  async function release() {
+    if (held) await t.adminQuery('commit');
+    held = false;
+  }
+  const waitingOnLock = (n: number) =>
+    vi.waitFor(async () => expect((await t.adminQuery(`select 1 from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'`)).length).toBeGreaterThanOrEqual(n), { timeout: 10_000, interval: 50 });
+  const settled = (brand: string, id: string) =>
+    vi.waitFor(async () => expect((await read(brand, id)).state).not.toBe('publishing'), { timeout: 10_000, interval: 50 });
+  async function dueNow() {
+    const s = await setup();
+    await t.adminQuery(`update publish_jobs set scheduled_at = now() - interval '5 minutes' where id = $1`, [s.job.id]);
+    const [d] = (await dueJobs(new Date())).filter((x) => x.jobId === s.job.id);
+    return { ...s, due: d! };
+  }
+
+  it('a resumed workflow never sends on the gate answer it replays, nor beside a first run still going', async () => {
+    testReads.current = fake.reads;
+    mockConnector.reset();
+    try {
+      const a = await dueNow();
+      const release = await holdChannels();
+      await startSend(a.due);
+      await waitingOnLock(1);
+      fake.edit(a.draft.id); // the owner edits the draft meanwhile: no approval stands
+      // Another process starts and resumes the workflow from its stored steps while the first run is still going.
+      await DBOS.recoverWorkflows(['local']);
+      await waitingOnLock(2);
+      await release();
+      await settled(a.brand, a.job.id);
+      expect(mockConnector.calls).toEqual([]);
+      expect(['scheduled', 'blocked']).toContain((await read(a.brand, a.job.id)).state);
+    } finally {
+      await release();
+      delete testReads.current;
+    }
+  });
+
+  it('asks the gate right before sending: an approval withdrawn while the send was held sends nothing', async () => {
+    testReads.current = fake.reads;
+    mockConnector.reset();
+    try {
+      const a = await dueNow();
+      await holdChannels();
+      const h = await startSend(a.due);
+      await waitingOnLock(1);
+      fake.edit(a.draft.id);
+      await release();
+      await h.getResult();
+      expect(await read(a.brand, a.job.id)).toMatchObject({ state: 'blocked', error: expect.stringMatching(/approval no longer stands/) });
+      expect(mockConnector.calls).toEqual([]);
+    } finally {
+      await release();
+      delete testReads.current;
+    }
+  });
+
+  it('a workflow resumed while its first run is still inside the connector does not send beside it', async () => {
+    testReads.current = fake.reads;
+    mockConnector.reset();
+    let letGo!: () => void;
+    const inFlight = new Promise<void>((r) => (letGo = r));
+    const publish = mockConnector.publish.bind(mockConnector);
+    mockConnector.publish = async (req, key) => {
+      const r = publish(req, key); // recorded at once, answered when let go
+      await inFlight;
+      return r;
+    };
+    try {
+      const a = await dueNow();
+      const h = await startSend(a.due);
+      await vi.waitFor(() => expect(mockConnector.calls).toHaveLength(1), { timeout: 10_000, interval: 50 });
+      await DBOS.recoverWorkflows(['local']); // another process starts and resumes it
+      await vi.waitFor(async () => {
+        if (mockConnector.calls.length < 2) expect((await DBOS.getWorkflowStatus(h.workflowID))?.status).toBe('SUCCESS');
+      }, { timeout: 10_000, interval: 50 });
+      expect(mockConnector.calls).toHaveLength(1);
+    } finally {
+      letGo();
+      delete (mockConnector as { publish?: unknown }).publish;
+      delete testReads.current;
+    }
+  });
+
 });
 
 describe('the post link a connector answers', () => {
