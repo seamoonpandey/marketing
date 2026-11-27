@@ -693,6 +693,1182 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/brands/{brandId}/research/targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    competitorId?: string;
+                };
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchTarget"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["WatchTargetCreate"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchTarget"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/targets/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["WatchTargetSuggestRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchTargetSuggestions"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/targets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["WatchTargetPatch"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchTarget"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Newest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchRun"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["WatchRunCreate"];
+                };
+            };
+            responses: {
+                /** @description Started */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/runs/{id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/runs/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/runs/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchSchedule"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["WatchScheduleUpdate"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WatchSchedule"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/observations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    competitorId?: string;
+                    type?: components["schemas"]["ObservationType"];
+                    /** @description ISO timestamp; only observations at or after it */
+                    since?: string;
+                    runId?: string;
+                };
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Newest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Observation"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/competitors/{competitorId}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    competitorId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CompetitorProfile"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/opportunities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    status?: "new" | "accepted" | "dismissed";
+                };
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Newest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Opportunity"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/opportunities/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Opportunity"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/opportunities/{id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Opportunity"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/competitors/{competitorId}/battlecard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    competitorId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BattlecardPair"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/competitors/{competitorId}/battlecard/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    competitorId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A new draft version */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Battlecard"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/research/competitors/{competitorId}/battlecard/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    competitorId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Battlecard"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -840,6 +2016,212 @@ export interface components {
             result: "ok" | "denied" | "failed";
             reason: string | null;
             createdAt: string;
+        };
+        WatchTarget: {
+            id: string;
+            competitorId: string;
+            url: string;
+            label: string | null;
+            status: components["schemas"]["WatchTargetStatus"];
+            /** @description Failed runs in a row; the third pauses the page. */
+            failCount: number;
+            lastError: string | null;
+            lastSourceId: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        WatchTargetStatus: "active" | "paused" | "unreachable" | "blocked";
+        WatchTargetCreate: {
+            competitorId: string;
+            url: string;
+            label?: string;
+        };
+        /** @description Pages of the competitor site worth watching, at most 5. */
+        WatchTargetSuggestions: {
+            urls: string[];
+        };
+        WatchTargetSuggestRequest: {
+            competitorId: string;
+        };
+        WatchTargetPatch: {
+            /** @enum {string} */
+            status: "active" | "paused";
+        };
+        WatchRun: {
+            id: string;
+            trigger: components["schemas"]["WatchRunTrigger"];
+            state: components["schemas"]["WatchRunState"];
+            error: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            startedAt: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            finishedAt: string | null;
+            estimate: components["schemas"]["Money"] & (Record<string, never> | null);
+            actual: components["schemas"]["Money"] & (Record<string, never> | null);
+            counts: components["schemas"]["WatchRunCounts"];
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        WatchRunTrigger: "baseline" | "weekly" | "manual";
+        /** @enum {string} */
+        WatchRunState: "running" | "awaiting_approval" | "completed" | "failed_retryable" | "failed_final" | "cancelled";
+        WatchRunCounts: {
+            pages?: number;
+            changed?: number;
+            unchanged?: number;
+            failed?: number;
+            observations?: number;
+            /** @description Model answers dropped because a quote was not in the saved page. */
+            discarded?: number;
+            opportunities?: number;
+        };
+        /** @description The first run of a brand should be a baseline; weekly runs start from the schedule. */
+        WatchRunCreate: {
+            /**
+             * @default manual
+             * @enum {string}
+             */
+            trigger: "baseline" | "manual";
+        };
+        WatchSchedule: {
+            enabled: boolean;
+            /** @description 0 Sunday … 6 Saturday, in the brand timezone */
+            weekday: number;
+            hour: number;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            lastRunAt: string | null;
+        };
+        WatchScheduleUpdate: {
+            enabled: boolean;
+            /** @description 0 Sunday … 6 Saturday, in the brand timezone */
+            weekday: number;
+            hour: number;
+        };
+        Observation: {
+            id: string;
+            competitorId: string;
+            /** @description null when the competitor was deleted; the observation stays. */
+            competitorName: string | null;
+            runId: string;
+            type: components["schemas"]["ObservationType"];
+            summary: string;
+            before: components["schemas"]["ResearchEvidence"];
+            after: components["schemas"]["ResearchEvidence"];
+            url: string;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            observedAt: string;
+            confidence: components["schemas"]["ResearchConfidence"];
+        };
+        /** @enum {string} */
+        ObservationType: "price_change" | "new_offer" | "offer_ended" | "new_product" | "product_removed" | "messaging_change" | "other";
+        ResearchEvidence: {
+            quote: string;
+            /** @description A base source row: GET /brands/{brandId}/sources/{id} */
+            sourceId: string;
+        } | null;
+        /** @enum {string} */
+        ResearchConfidence: "low" | "medium" | "high";
+        CompetitorProfile: {
+            competitorId: string;
+            runId: string;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            createdAt: string;
+            entries: components["schemas"]["ProfileEntry"][];
+            sourceIds: string[];
+        };
+        ProfileEntry: {
+            /** @enum {string} */
+            kind: "positioning" | "product" | "offer" | "cta";
+            text: string;
+            price: string | null;
+            quote: string;
+            url: string;
+            sourceId: string;
+        };
+        Opportunity: {
+            id: string;
+            runId: string | null;
+            title: string;
+            hypothesis: string;
+            suggestedAction: string;
+            whyItMatters: string;
+            /** @description Observations that back it; never empty. */
+            observationIds: string[];
+            confidence: components["schemas"]["ResearchConfidence"];
+            /** @enum {string} */
+            status: "new" | "accepted" | "dismissed";
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            decidedAt: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            createdAt: string;
+        };
+        BattlecardPair: {
+            approved: components["schemas"]["Battlecard"];
+            draft: components["schemas"]["Battlecard"] & unknown;
+        };
+        Battlecard: {
+            id: string;
+            competitorId: string;
+            version: number;
+            /** @enum {string} */
+            status: "draft" | "approved" | "replaced";
+            body: components["schemas"]["BattlecardBody"];
+            /** @description Removed statements; reason is "no approved fact" or "no evidence". */
+            leftOut: {
+                text: string;
+                reason: string;
+            }[];
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            approvedAt: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            createdAt: string;
+        } | null;
+        BattlecardBody: {
+            differ: components["schemas"]["BattlecardStatement"][];
+            proof: components["schemas"]["BattlecardStatement"][];
+            objections: components["schemas"]["BattlecardStatement"][];
+            responses: components["schemas"]["BattlecardStatement"][];
+        };
+        BattlecardStatement: {
+            text: string;
+            factIds?: string[];
+            observationIds?: string[];
+            profileQuote?: string;
         };
     };
     responses: never;
