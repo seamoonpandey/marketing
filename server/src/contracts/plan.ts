@@ -112,7 +112,7 @@ export const WeekPlan = z
 export const PlanItem = z
   .object({
     id: z.string(), weekPlanId: z.string(), day, channel: Channel,
-    format: Format.nullable(), pillar: Pillar.nullable(), funnel: Funnel.nullable(), intent: Intent.nullable(),
+    format: z.union([Format, z.null()]), pillar: z.union([Pillar, z.null()]), funnel: z.union([Funnel, z.null()]), intent: z.union([Intent, z.null()]),
     segmentId: z.string().nullable(), campaignId: z.string().nullable(),
     idea: z.string(), cta: z.string(), factIds: z.array(z.string()), position: z.number().int(), origin: z.enum(['model', 'owner']),
   })
@@ -126,7 +126,7 @@ export const ItemCreate = z
   .openapi('PlanItemCreate', { description: 'day must fall inside the week. An incomplete item is allowed; it blocks approval until completed.' });
 export const ItemPatch = z
   .object({
-    day, channel: Channel, format: Format.nullable(), pillar: Pillar.nullable(), funnel: Funnel.nullable(), intent: Intent.nullable(),
+    day, channel: Channel, format: z.union([Format, z.null()]), pillar: z.union([Pillar, z.null()]), funnel: z.union([Funnel, z.null()]), intent: z.union([Intent, z.null()]),
     segmentId: z.string().nullable(), campaignId: z.string().nullable(),
     idea: z.string().max(2000), cta: z.string().max(500), factIds: z.array(z.string()),
   })

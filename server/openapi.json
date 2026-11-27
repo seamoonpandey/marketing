@@ -2321,26 +2321,44 @@
             "$ref": "#/components/schemas/PlanChannel"
           },
           "format": {
-            "$ref": "#/components/schemas/PlanFormat"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "pillar": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/PlanPillar"
               },
               {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "null"
               }
             ]
           },
           "funnel": {
-            "$ref": "#/components/schemas/PlanFunnel"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanFunnel"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "intent": {
-            "$ref": "#/components/schemas/PlanIntent"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanIntent"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "segmentId": {
             "type": [
@@ -2396,10 +2414,7 @@
         ]
       },
       "PlanFormat": {
-        "type": [
-          "string",
-          "null"
-        ],
+        "type": "string",
         "enum": [
           "text",
           "image",
@@ -2415,15 +2430,11 @@
           "email",
           "landing_page",
           "podcast",
-          "case_study",
-          null
+          "case_study"
         ]
       },
       "PlanFunnel": {
-        "type": [
-          "string",
-          "null"
-        ],
+        "type": "string",
         "enum": [
           "unaware",
           "problem_aware",
@@ -2431,15 +2442,11 @@
           "product_aware",
           "most_aware",
           "customer",
-          "advocate",
-          null
+          "advocate"
         ]
       },
       "PlanIntent": {
-        "type": [
-          "string",
-          "null"
-        ],
+        "type": "string",
         "enum": [
           "teach",
           "demonstrate",
@@ -2449,8 +2456,7 @@
           "objection",
           "capture_lead",
           "activate",
-          "retain",
-          null
+          "retain"
         ]
       },
       "PlanViolation": {
@@ -2572,26 +2578,44 @@
             "$ref": "#/components/schemas/PlanChannel"
           },
           "format": {
-            "$ref": "#/components/schemas/PlanFormat"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanFormat"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "pillar": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/PlanPillar"
               },
               {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "null"
               }
             ]
           },
           "funnel": {
-            "$ref": "#/components/schemas/PlanFunnel"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanFunnel"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "intent": {
-            "$ref": "#/components/schemas/PlanIntent"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanIntent"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "segmentId": {
             "type": [
