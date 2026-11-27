@@ -76,7 +76,9 @@ export async function estimateDrafts(brandId: string, planItemIds: string[], fac
   return estimateCost(config.AI_MODEL, tokens, COPY_MAX_OUTPUT * ids.length);
 }
 
-const cut = (s: string | null | undefined, n: number) => (s ?? '').trim().slice(0, n);
+// Control characters (Postgres cannot store NUL) and bidi controls, which would show the reader digits in another order than the checks read them.
+const UNSAFE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f؜‎‏‪-‮⁦-⁩]/g;
+const cut = (s: string | null | undefined, n: number) => (s ?? '').replace(UNSAFE, '').trim().slice(0, n).toWellFormed();
 const optional = (s: string | null | undefined, n: number) => cut(s, n) || undefined;
 
 const RATIOS: Record<string, Ratio[]> = { instagram: ['1:1', '4:5'], tiktok: ['9:16'], youtube: ['16:9'] };
