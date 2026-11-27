@@ -6,13 +6,14 @@ import { withBrand } from '../../db/tenant.ts';
 import { approvedFacts, enterFact } from '../knowledge/index.ts';
 import { validApproval, type Approval } from './index.ts';
 import { routeStudio } from './routes.ts';
-import { content, fakeStudio, hashOf } from './studio.fake.ts';
+import { content, fakeStudio, fakeTenant, hashOf } from './studio.fake.ts';
 
 let t: TestDb;
 const studio = fakeStudio();
 const real = routeStudio.reads;
 beforeAll(async () => {
   t = await testDb();
+  fakeTenant.id = t.tenantId;
   routeStudio.reads = async () => studio.reads;
 });
 afterAll(async () => {

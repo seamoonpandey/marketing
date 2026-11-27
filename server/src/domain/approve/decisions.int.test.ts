@@ -5,12 +5,13 @@ import { withBrand } from '../../db/tenant.ts';
 import { approve, bulkApprove, recordView, reject, validApproval } from './decisions.ts';
 import { preview } from './queue.ts';
 import { setPaused, setSettings } from './settings.ts';
-import { content, fact, fakeStudio, hashOf } from './studio.fake.ts';
+import { content, fact, fakeStudio, fakeTenant, hashOf } from './studio.fake.ts';
 import type { ReadyDraft, StudioReads } from './studio.ts';
 
 let t: TestDb;
 beforeAll(async () => {
   t = await testDb();
+  fakeTenant.id = t.tenantId;
 });
 afterAll(() => t.close());
 

@@ -1,5 +1,5 @@
 // Risk by fixed rules (design section 3, spec §21.2). False positives only raise the risk, so the
-// rules lean wide: every string in the content is read, and industries match by word start.
+// rules lean wide: every string in the content is read, and industries match whole words.
 import type { ApprovalRisk } from '../../db/schema/approve.ts';
 
 const DASHES = /[‐-―−﹘﹣－]/gu;
@@ -21,9 +21,9 @@ const END = '(?![\\p{L}\\p{M}\\p{N}_])';
 const NUM = '\\p{Nd}[\\p{Nd},.]*'; // \p{Nd} is every script's digits, Devanagari ones included
 const re = (src: string) => new RegExp(src, 'iu');
 
-const REGULATED = re(`${START}(?:health|medic|pharma|financ|bank|insur|invest|legal|safety|employ|politic|child|alcohol|tobacco|gambl)`);
+const REGULATED = re(`${START}(?:${'health|healthcare|medical|medicine|pharmacy|pharmaceutical|clinic|hospital|finance|financial|banking|bank|insurance|investment|legal|law|safety|employment|recruitment|political|politics|children|childcare|alcohol|tobacco|gambling|betting'})${END}`);
 const RULES: { risk: ApprovalRisk; re: RegExp; label: string }[] = [
-  { risk: 'high', re: re(`${START}(?:guarantee[sd]?|cure[sd]?|risk(?: ?- ?| )?free)${END}`), label: 'Promise' },
+  { risk: 'high', re: re(`${START}(?:guarantee[sd]?|cures?|risk(?: ?- ?| )?free)${END}`), label: 'Promise' },
   { risk: 'medium', re: re(`${START}(?:n?rs|npr|रु|रू)\\.? ?${NUM}`), label: 'Price' },
   { risk: 'medium', re: re(`${NUM} ?(?:%|percent${END}|per cent${END}|प्रतिशत)`), label: 'Percentage' },
   { risk: 'medium', re: re(`(?:${START}(?:best|cheapest|lowest|better than)${END}|#1(?!\\p{N})|${START}no\\.? ?1(?!\\p{N}))`), label: 'Comparison' },

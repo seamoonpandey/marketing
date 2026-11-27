@@ -3,7 +3,7 @@ import { and, desc, eq, inArray } from 'drizzle-orm';
 import type { ApprovedFact } from '../../contracts/common.ts';
 import { approvals, approvalViews } from '../../db/schema/approve.ts';
 import { assets } from '../../db/schema/knowledge.ts';
-import type { Tx } from '../../db/tenant.ts';
+import { currentTenantId, type Tx } from '../../db/tenant.ts';
 import { ConflictError, HttpError, NotFoundError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { getSettings as getPlanSettings } from '../plan/index.ts';
@@ -25,6 +25,8 @@ export type RuleContext = {
   /** Assets with a licence recorded and not past their rights expiry, with that expiry. */
   rights: Map<string, Date | null>;
   industry: string | null;
+  /** The only key prefix this brand's renders may live under. */
+  keyPrefix: string;
 };
 
 export async function ruleContext(tx: Tx, brandId: string, facts: ApprovedFact[]): Promise<RuleContext> {
@@ -44,6 +46,7 @@ export async function ruleContext(tx: Tx, brandId: string, facts: ApprovedFact[]
   return {
     now, settings: await getSettings(tx, brandId), facts: live, approvedFactIds: new Set(live.map((f) => f.id)),
     factExpiry: new Map(live.map((f) => [f.id, f.expiresAt ? new Date(f.expiresAt) : null])), rights, industry: industry || null,
+    keyPrefix: `tenant/${await currentTenantId()}/brand/${brandId}/`,
   };
 }
 
@@ -62,6 +65,9 @@ export const expiryFor = (ctx: RuleContext, d: ReadyDraft) =>
     factExpiries: d.factIds.map((id) => ctx.factExpiry.get(id) ?? null), rightsExpiries: d.assetIds.map((id) => ctx.rights.get(id) ?? null),
   });
 
+/** The draft's renders that are not stored under the brand's own prefix. */
+export const foreignRenders = (ctx: RuleContext, d: ReadyDraft) => d.renders.filter((r) => !r.key.startsWith(ctx.keyPrefix));
+
 /** Why a decision on this draft would be refused now, or null. Without sentHash the current payload is assumed (for the screens). */
 export function refusal(ctx: RuleContext, d: ReadyDraft, kind: 'approve' | 'reject', sentHash?: string): string | null {
   const payload = payloadOf(d);
@@ -70,6 +76,7 @@ export function refusal(ctx: RuleContext, d: ReadyDraft, kind: 'approve' | 'reje
   if (kind === 'reject') return null;
   const blocking = d.findings.find((f) => f.blocking);
   if (blocking) return `blocked: ${blocking.message}`;
+  if (foreignRenders(ctx, d).length) return 'a render is not stored under this brand';
   if (d.factIds.some((id) => !ctx.approvedFactIds.has(id))) return 'a cited fact is not approved';
   if (d.assetIds.some((id) => !ctx.rights.has(id))) return 'a used asset has no rights';
   return null;

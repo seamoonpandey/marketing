@@ -89,7 +89,7 @@ describe('riskOf', () => {
   it('is high for a regulated industry and for promise words', () => {
     expect(r('Fresh stock this week', { industry: 'Pharmacy' }).risk).toBe('high');
     expect(r('Fresh stock', { industry: 'Healthcare clinic' }).risk).toBe('high');
-    expect(r('Fresh stock', { industry: 'Alcoholic beverages' }).risk).toBe('high');
+    expect(r('Fresh stock', { industry: 'Alcohol and tobacco' }).risk).toBe('high');
     expect(r('Results Guaranteed.').risk).toBe('high');
     expect(r('We guarantee it').risk).toBe('high');
     expect(r('Herbal cure for colds').risk).toBe('high');
@@ -97,6 +97,16 @@ describe('riskOf', () => {
     const high = r('Guaranteed — the best price: Rs 4,500', { industry: 'Pharmacy', pillar: 'offer' });
     expect(high.risk).toBe('high');
     expect(high.reasons.join(' | ')).toMatch(/Pharmacy.*Guaranteed/);
+  });
+
+  it('matches industries by whole word, case-insensitively', () => {
+    for (const i of ['Healthcare clinic', 'Private bank', 'HEALTH', 'Law firm', 'Online betting']) expect(r('Fresh stock', { industry: i }).risk, i).toBe('high');
+    for (const i of ['Healthy bakery', 'Bankside café', 'Lawn care', 'Investigative journalism']) expect(r('Fresh stock', { industry: i }).risk, i).toBe('low');
+  });
+
+  it('does not treat "cured" as a promise, but keeps cure, cures and the guarantees', () => {
+    expect(r('Home-cured olives').risk).toBe('low');
+    for (const t of ['cure', 'It cures', 'guarantee', 'guarantees', 'guaranteed', 'risk-free', 'risk free']) expect(r(t).risk, t).toBe('high');
   });
 
   it('cannot be slipped past with case, width, invisible characters, odd spaces or dashes', () => {

@@ -8,7 +8,7 @@ import type { Tx } from '../../db/tenant.ts';
 import { NotFoundError } from '../../http/errors.ts';
 import { presignDownload } from '../../storage/index.ts';
 import { getSettings as getPlanSettings } from '../plan/index.ts';
-import { alreadyDecided, expiryFor, history, recordView, refusal, riskOfDraft, ruleContext, stateOf, weekStartOf, type RuleContext } from './decisions.ts';
+import { alreadyDecided, expiryFor, foreignRenders, history, recordView, refusal, riskOfDraft, ruleContext, stateOf, weekStartOf, type RuleContext } from './decisions.ts';
 import { payloadHash, payloadOf } from './hash.ts';
 import type { Approval, ApprovalState } from './state.ts';
 import { draftOf, type ReadyDraft, type StudioReads } from './studio.ts';
@@ -40,11 +40,11 @@ function decidability(ctx: RuleContext, d: ReadyDraft, latest: Approval | null) 
     hash, risk,
     cannotApprove: refusal(ctx, d, 'approve') ?? alreadyDecided(ctx, d, latest, 'approve'),
     cannotReject: refusal(ctx, d, 'reject') ?? alreadyDecided(ctx, d, latest, 'reject'),
-    blockingCount: d.findings.filter((f) => f.blocking).length,
+    blockingCount: d.findings.filter((f) => f.blocking).length + (foreignRenders(ctx, d).length ? 1 : 0),
   };
 }
 
-const firstImage = (d: ReadyDraft) => d.renders.find((r) => r.type !== 'video');
+const firstImage = (ctx: RuleContext, d: ReadyDraft) => d.renders.find((r) => r.type !== 'video' && r.key.startsWith(ctx.keyPrefix));
 
 /** Ready drafts and drafts with a decision, each with its state today; counts over all of them, items filtered by state. */
 export async function queue(tx: Tx, brandId: string, facts: ApprovedFact[], studio: StudioReads, filter: { state?: ApprovalState } = {}): Promise<z.infer<typeof C.Queue>> {
@@ -75,7 +75,7 @@ export async function queue(tx: Tx, brandId: string, facts: ApprovedFact[], stud
     if (d) {
       const x = decidability(ctx, d, l);
       const viewed = !!x.hash && seen.has(`${d.id}:${d.currentVersion}:${x.hash}`);
-      const img = firstImage(d);
+      const img = firstImage(ctx, d);
       draft = {
         version: d.currentVersion, kind: d.kind as Kind, status: d.status, channel: d.channel, day: d.day, weekStart: weekStartOf(d.day, weekStarts),
         excerpt: excerptOf(d.content), thumbnailUrl: img ? await presignDownload(img.key) : null,
@@ -122,13 +122,13 @@ export async function preview(
       version: d.currentVersion, kind: d.kind as Kind, status: d.status, channel: d.channel, day: d.day,
       weekStart: weekStartOf(d.day, (await getPlanSettings(tx, brandId)).weekStarts), pillar: d.pillar, campaignId: d.campaignId,
       content: d.content as z.infer<typeof C.PreviewDraft>['content'], leftOut: d.leftOut as z.infer<typeof C.PreviewDraft>['leftOut'],
-      findings: [...d.findings].sort((a, b) => Number(b.blocking) - Number(a.blocking)) as z.infer<typeof C.PreviewDraft>['findings'],
+      findings: [...d.findings, ...(foreignRenders(ctx, d).length ? [{ check: 'render_location', blocking: true, where: 'renders', message: 'A rendered file is not stored under this brand, so it is left out of this preview.' }] : [])].sort((a, b) => Number(b.blocking) - Number(a.blocking)) as z.infer<typeof C.PreviewDraft>['findings'],
       blockingCount: x.blockingCount,
       facts: ctx.facts.filter((f) => cited.has(f.id)).map((f) => ({
         id: f.id, section: f.section, subjectName: f.subjectName, field: f.field, value: f.value, unit: f.unit, expiresAt: f.expiresAt,
       })),
       missingFactIds: d.factIds.filter((id) => !ctx.approvedFactIds.has(id)),
-      renders: await Promise.all(d.renders.map(async (r, i) => ({
+      renders: await Promise.all(d.renders.filter((r) => r.key.startsWith(ctx.keyPrefix)).map(async (r, i) => ({
         ratio: r.ratio, width: r.width, height: r.height, overflow: r.overflow, index: r.index ?? i, type: r.type ?? 'image', url: await presignDownload(r.key),
       }))),
       risk: x.risk.risk, riskReasons: x.risk.reasons, payloadHash: x.hash,

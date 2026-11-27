@@ -4,13 +4,14 @@ import { createApp } from '../../app.ts';
 import { withBrand } from '../../db/tenant.ts';
 import { approve } from './decisions.ts';
 import { routeStudio } from './routes.ts';
-import { content, fakeStudio, hashOf } from './studio.fake.ts';
+import { content, fakeStudio, fakeTenant, hashOf } from './studio.fake.ts';
 
 let t: TestDb;
 const studio = fakeStudio();
 const real = routeStudio.reads;
 beforeAll(async () => {
   t = await testDb();
+  fakeTenant.id = t.tenantId;
   routeStudio.reads = async () => studio.reads;
 });
 afterAll(async () => {
@@ -89,6 +90,21 @@ describe('approve API', () => {
     expect((await call('GET', `/brands/${brand}/approve/queue`)).body.items[0].draft).toMatchObject({ version: 2, viewed: false, bulkReason: 'open its preview first' });
     for (let i = 0; i < 2; i++) await call('GET', p);
     expect(await views(d.id)).toEqual([1, 2]);
+  });
+
+  it("leaves out a render stored outside the brand's own prefix, and refuses to approve it", async () => {
+    const brand = await t.makeBrand();
+    const other = await t.makeBrand();
+    const own = { ...studio.put(brand).renders[0]! };
+    const foreign = { ...own, index: 1, key: own.key.replace(`/brand/${brand}/`, `/brand/${other}/`) };
+    const d = studio.put(brand, { kind: 'carousel', renders: [{ ...own }, foreign] });
+    const p = `/brands/${brand}/approve`;
+    const pv = (await call('GET', `${p}/queue/${d.id}`)).body;
+    expect(pv.draft.renders).toHaveLength(1);
+    expect(pv.draft).toMatchObject({ blockingCount: 1, canApprove: false });
+    expect(pv.draft.findings.some((f: any) => f.blocking)).toBe(true);
+    expect((await call('GET', `${p}/queue`)).body.items.find((i: any) => i.draftId === d.id).draft).toMatchObject({ blockingCount: 1, canApprove: false });
+    expect((await call('POST', `${p}/queue/${d.id}/approve`, { payloadHash: hashOf(d) })).status).toBe(409);
   });
 
   it('validates every body and query and answers 400 with the base error shape', async () => {

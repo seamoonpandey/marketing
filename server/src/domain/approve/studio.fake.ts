@@ -14,6 +14,9 @@ export const fact = (id: string, over: Partial<ApprovedFact> = {}): ApprovedFact
   language: 'en', sourceId: null, verifiedAt: '2026-11-01T00:00:00Z', expiresAt: null, ...over,
 });
 
+/** The tenant the fake's render keys belong to; tests set it to the test database's tenant. */
+export const fakeTenant = { id: 't' };
+
 export const hashOf = (d: ReadyDraft) => payloadHash(payloadOf(d)!);
 
 export function fakeStudio() {
@@ -35,7 +38,7 @@ export function fakeStudio() {
       const d: ReadyDraft = {
         id: randomUUID(), planItemId: randomUUID(), kind: 'static', status: 'ready', currentVersion: 1, readyVersion: 1, channel: 'facebook',
         day: '2026-12-01', pillar: 'product', campaignId: null, content: content(), leftOut: [], findings: [],
-        renders: [{ ratio: '1:1', key: `tenant/t/brand/${brandId}/asset/${randomUUID()}.png`, width: 1080, height: 1080, overflow: false, sha256: 'a'.repeat(64), index: 0, type: 'image' }],
+        renders: [{ ratio: '1:1', key: `tenant/${fakeTenant.id}/brand/${brandId}/asset/${randomUUID()}.png`, width: 1080, height: 1080, overflow: false, sha256: 'a'.repeat(64), index: 0, type: 'image' }],
         factIds: [], assetIds: [], ...over,
       };
       drafts.set(key(brandId, d.id), d);
