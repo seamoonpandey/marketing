@@ -14,7 +14,7 @@ const tags = ['approve'];
 const P = '/brands/{brandId}/approve';
 const body = <T extends z.ZodType>(schema: T) => ({ body: { required: true, content: { 'application/json': { schema } } } });
 const DraftParams = BrandParams.extend({ draftId: z.string().openapi({ param: { name: 'draftId', in: 'path' } }) });
-const conflict = json(ErrorBody, 'Refused. The message `changed since you opened it` means the draft changed: reload the preview.');
+const conflict = json(ErrorBody, 'Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`.');
 
 /** Where the routes get Studio from. Tests swap reads for a fake, as with fetchGuard. */
 export const routeStudio = { reads: studioReads };

@@ -4,7 +4,7 @@ import type { ApprovedFact } from '../../contracts/common.ts';
 import { approvals, approvalViews } from '../../db/schema/approve.ts';
 import { assets } from '../../db/schema/knowledge.ts';
 import type { Tx } from '../../db/tenant.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../http/errors.ts';
+import { ConflictError, HttpError, NotFoundError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { getSettings as getPlanSettings } from '../plan/index.ts';
 import { payloadHash, payloadOf } from './hash.ts';
@@ -14,6 +14,8 @@ import { approvalState, expiryOf, type Approval } from './state.ts';
 import { draftOf, isUuid, studioReads, type ReadyDraft, type StudioReads } from './studio.ts';
 
 export const CHANGED = 'changed since you opened it';
+/** A 409; its code is `changed` when the payload changed since the screen showed it, so screens need not match the message. */
+const refused = (why: string, message = why) => (why === CHANGED ? new HttpError(409, 'changed', message) : new ConflictError(message));
 const DAY = 86_400_000;
 const MIN_NOTE = 20;
 
@@ -129,7 +131,7 @@ export async function approve(
   const d = await mustDraft(studio, tx, brandId, i.draftId, ctx);
   const latest = await latestOf(tx, brandId, d.id);
   const why = refusal(ctx, d, 'approve', i.payloadHash) ?? alreadyDecided(ctx, d, latest, 'approve');
-  if (why) throw new ConflictError(why);
+  if (why) throw refused(why);
   if (riskOfDraft(ctx, d).risk === 'high' && noteLength(i.reviewNote) < MIN_NOTE)
     throw new ConflictError(`high risk: a review note of at least ${MIN_NOTE} characters is needed`);
   return store(tx, approvalOf(ctx, brandId, d, i.payloadHash, i.reviewNote, null, nextSeq(d, latest)));
@@ -145,7 +147,7 @@ export async function reject(
   const d = await mustDraft(studio, tx, brandId, i.draftId, ctx);
   const latest = await latestOf(tx, brandId, d.id);
   const why = refusal(ctx, d, 'reject', i.payloadHash) ?? alreadyDecided(ctx, d, latest, 'reject');
-  if (why) throw new ConflictError(why);
+  if (why) throw refused(why);
   return store(tx, {
     brandId, objectType: 'studio_draft', objectId: d.id, objectVersion: d.currentVersion, seq: nextSeq(d, latest), payloadHash: i.payloadHash, decision: 'rejected',
     reason, risk: riskOfDraft(ctx, d).risk, decidedBy: 'operator', decidedAt: ctx.now, expiresAt: null, bulkId: null,
@@ -186,7 +188,7 @@ export async function bulkApprove(
       ?? alreadyDecided(ctx, d, latest, 'approve')
       ?? (riskOfDraft(ctx, d).risk === 'high' ? 'high risk: approve it on its own with a review note' : null)
       ?? (seen.has(`${d.id}:${d.currentVersion}:${hash}`) ? null : 'open its preview first');
-    if (why) throw new ConflictError(`${d.id}: ${why}`);
+    if (why) throw refused(why, `${d.id}: ${why}`);
   }
   const weekStarts = (await getPlanSettings(tx, brandId)).weekStarts;
   if (new Set(loaded.map((x) => x.d.channel)).size > 1) throw new ConflictError('A bulk approval needs one channel');

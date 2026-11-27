@@ -140,7 +140,11 @@ describe('approve API', () => {
     expect(Date.parse(pv.draft.expiresIfApproved) - Date.now()).toBeGreaterThan(13.9 * 86_400_000);
 
     const stale = await call('POST', `${p}/queue/${d.id}/approve`, { payloadHash: '0'.repeat(64) });
-    expect(stale).toMatchObject({ status: 409, body: { error: { code: 'conflict', message: 'changed since you opened it' } } });
+    expect(stale).toMatchObject({ status: 409, body: { error: { code: 'changed', message: 'changed since you opened it' } } });
+    expect(await call('POST', `${p}/queue/${d.id}/reject`, { payloadHash: '0'.repeat(64), reason: 'No' }))
+      .toMatchObject({ status: 409, body: { error: { code: 'changed', message: 'changed since you opened it' } } });
+    expect(await call('POST', `${p}/bulk-approve`, { items: [{ draftId: d.id, payloadHash: '0'.repeat(64) }] }))
+      .toMatchObject({ status: 409, body: { error: { code: 'changed', message: `${d.id}: changed since you opened it` } } });
     const done = await call('POST', `${p}/queue/${d.id}/approve`, { payloadHash: pv.draft.payloadHash });
     expect(done).toMatchObject({
       status: 200,
@@ -181,7 +185,7 @@ describe('approve API', () => {
     const q = (await call('GET', `${p}/queue`)).body.items;
     expect(q.find((i: any) => i.draftId === risky.id).draft).toMatchObject({ risk: 'high', noteRequired: true, bulkReason: expect.stringMatching(/high risk/) });
     const refused = await call('POST', `${p}/bulk-approve`, { items: [x, risky].map((d) => ({ draftId: d.id, payloadHash: hashOf(d) })) });
-    expect(refused.status).toBe(409);
+    expect(refused).toMatchObject({ status: 409, body: { error: { code: 'conflict' } } }); // only a changed payload has the code changed
     const ok = await call('POST', `${p}/bulk-approve`, { items: [x, y].map((d) => ({ draftId: d.id, payloadHash: hashOf(d) })) });
     expect(ok).toMatchObject({ status: 200, body: { bulkId: expect.any(String), decisions: [{ draftId: x.id }, { draftId: y.id }] } });
     expect(ok.body.decisions[1].bulkId).toBe(ok.body.bulkId);

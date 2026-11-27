@@ -11253,7 +11253,7 @@
             }
           },
           "409": {
-            "description": "Refused. The message `changed since you opened it` means the draft changed: reload the preview.",
+            "description": "Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11331,7 +11331,7 @@
             }
           },
           "409": {
-            "description": "Refused. The message `changed since you opened it` means the draft changed: reload the preview.",
+            "description": "Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11401,7 +11401,7 @@
             }
           },
           "409": {
-            "description": "Refused. The message `changed since you opened it` means the draft changed: reload the preview.",
+            "description": "Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`.",
             "content": {
               "application/json": {
                 "schema": {
