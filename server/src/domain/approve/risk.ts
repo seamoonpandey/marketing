@@ -24,17 +24,22 @@ const re = (src: string) => new RegExp(src, 'iu');
 const REGULATED = re(`${START}(?:health|medic|pharma|financ|bank|insur|invest|legal|safety|employ|politic|child|alcohol|tobacco|gambl)`);
 const RULES: { risk: ApprovalRisk; re: RegExp; label: string }[] = [
   { risk: 'high', re: re(`${START}(?:guarantee[sd]?|cure[sd]?|risk(?: ?- ?| )?free)${END}`), label: 'Promise' },
-  { risk: 'medium', re: re(`${START}(?:rs|npr|रु|रू)\\.? ?${NUM}`), label: 'Price' },
+  { risk: 'medium', re: re(`${START}(?:n?rs|npr|रु|रू)\\.? ?${NUM}`), label: 'Price' },
   { risk: 'medium', re: re(`${NUM} ?(?:%|percent${END}|per cent${END}|प्रतिशत)`), label: 'Percentage' },
   { risk: 'medium', re: re(`(?:${START}(?:best|cheapest|lowest|better than)${END}|#1(?!\\p{N})|${START}no\\.? ?1(?!\\p{N}))`), label: 'Comparison' },
 ];
 
+// Cyrillic and Greek letters that look like Latin ones (and Turkish dotless and dotted i), read as those Latin letters.
+const LOOKALIKE = 'АВЕКМНОРСТУХІЈЅӀаеорсухіјѕԁһԛԝӏΑΒΕΖΗΙΚΜΝΟΡΤΥΧαιονρυκıİ';
+const LATIN = 'ABEKMHOPCTYXIJSIaeopcyxijsdhqwlABEZHIKMNOPTYXaiovpukiI';
+const latin = (s: string) => s.replace(new RegExp(`[${LOOKALIKE}]`, 'gu'), (c) => LATIN[LOOKALIKE.indexOf(c)]!);
+
 export function riskOf(i: { text: string; pillar: string | null; industry: string | null }): { risk: ApprovalRisk; reasons: string[] } {
   const high: string[] = [];
   const medium: string[] = [];
-  const industry = i.industry && plain(i.industry);
+  const industry = i.industry && latin(plain(i.industry));
   if (industry && REGULATED.test(industry)) high.push(`Regulated industry "${industry}"`);
-  const text = plain(i.text);
+  const text = latin(plain(i.text));
   for (const r of RULES) {
     const m = r.re.exec(text);
     if (m) (r.risk === 'high' ? high : medium).push(`${r.label} "${m[0]}"`);

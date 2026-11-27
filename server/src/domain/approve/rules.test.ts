@@ -104,8 +104,15 @@ describe('riskOf', () => {
     for (const t of ['better than the rest', 'better\n than', 'No.1 in Thamel', '#1 shawl']) expect(r(t).risk, t).toBe('medium');
   });
 
+  it('cannot be slipped past with Cyrillic or Greek letters that look like Latin ones', () => {
+    // а, С, і, е, Р are Cyrillic; Α is Greek.
+    for (const t of ['Results guаranteed', 'Сure for colds', 'A rіsk-free trial', 'GUΑRANTEED']) expect(r(t).risk, t).toBe('high');
+    expect(r('Fresh stock', { industry: 'Рharmacy' }).risk).toBe('high');
+    expect(r('thе bеst shawl').risk).toBe('medium');
+  });
+
   it('is medium for a price, a percentage, a comparison word or a comparison or offer pillar', () => {
-    for (const t of ['Only Rs 4,500', 'Only Rs.4500', 'NPR 4500 only', 'रु ४५०० मात्र', '१५% छुट', '20 % off', 'the best shawl', 'cheapest in town', 'lowest price', 'better than mass-made', 'Nepal’s #1 shawl', 'No. 1 in Thamel'])
+    for (const t of ['Only Rs 4,500', 'Only Rs.4500', 'NPR 4500 only', 'Only NRs 4,500', 'NRs.4500', 'ने.रु. ४५००', '₨ 4500', 'रु ४५०० मात्र', '१५% छुट', '20 % off', 'the best shawl', 'cheapest in town', 'lowest price', 'better than mass-made', 'Nepal’s #1 shawl', 'No. 1 in Thamel'])
       expect(r(t).risk, t).toBe('medium');
     expect(r('Plain copy', { pillar: 'offer' }).risk).toBe('medium');
     expect(r('Plain copy', { pillar: 'comparison' }).risk).toBe('medium');
