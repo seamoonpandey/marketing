@@ -1,0 +1,30 @@
+/* Tailwind for the React islands only (Kokonut UI, Watermelon UI, React Bits). No global preflight:
+   the page's system is the kit's (public/assets). Utilities are scanned from src/components only, so
+   kit class names such as start-7 never turn into Tailwind utilities. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "../../components";
+
+/* dark: only under an explicit .dark class, never from the OS setting (the page is light) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: var(--font-text);
+  --font-mono: var(--font-mono);
+}
+
+/* preflight, scoped to the islands */
+@layer base {
+  .tw *, .tw ::before, .tw ::after { box-sizing: border-box; border: 0 solid; margin: 0; padding: 0; }
+  .tw button, .tw input { font: inherit; color: inherit; letter-spacing: inherit; background: transparent; }
+  .tw button { cursor: pointer; }
+  .tw :is(h1, h2, h3, h4, h5, h6, p) { font-size: inherit; font-weight: inherit; line-height: inherit; }
+  .tw :is(ul, ol) { list-style: none; }
+  .tw :is(img, svg, canvas) { display: block; }
+  .tw code { font-family: var(--font-mono); }
+}
+
+/* the kit's unlayered element rules (button, p, .card p, :where(.ui) button) would beat every layered
+   utility: hand each island element back to the layers, svg excepted (its attributes draw the icons) */
+.tw.tw.tw :not(svg, svg *), .tw.tw.tw :not(svg, svg *)::before, .tw.tw.tw :not(svg, svg *)::after { all: revert-layer; }

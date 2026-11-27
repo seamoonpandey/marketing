@@ -1,0 +1,4 @@
+# web is its own project (not part of a workspace); this file only holds pnpm settings
+allowBuilds:
+  sharp: true
+  unrs-resolver: false
