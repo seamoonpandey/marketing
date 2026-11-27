@@ -598,6 +598,1282 @@
           "reason",
           "createdAt"
         ]
+      },
+      "SectionDef": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/SectionKey"
+          },
+          "label": {
+            "type": "string"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/SubjectType"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldDef"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "subject",
+          "fields"
+        ]
+      },
+      "SectionKey": {
+        "type": "string",
+        "enum": [
+          "identity",
+          "business_model",
+          "products",
+          "audience",
+          "positioning",
+          "voice",
+          "visual",
+          "legal",
+          "goals"
+        ]
+      },
+      "SubjectType": {
+        "type": "string",
+        "enum": [
+          "brand",
+          "product",
+          "segment"
+        ]
+      },
+      "FieldDef": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "longtext",
+              "number",
+              "money",
+              "enum",
+              "list",
+              "url",
+              "date"
+            ]
+          },
+          "multi": {
+            "type": "boolean",
+            "description": "Several facts may hold this field for one subject; they never conflict."
+          },
+          "asksExpiry": {
+            "type": "boolean",
+            "description": "Ask the owner for an expiry date (prices, offers)."
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The allowed values of an enum field."
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "type",
+          "multi"
+        ]
+      },
+      "ImportRun": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "websiteUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sourceIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every source the run reads: the pages fetched, then the uploads."
+          },
+          "stage": {
+            "$ref": "#/components/schemas/ImportStage"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "running",
+              "awaiting_approval",
+              "completed",
+              "failed_retryable",
+              "failed_final",
+              "cancelled"
+            ]
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "could not read the website"
+          },
+          "blocked": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Set while awaiting approval when the estimate exceeds what is left of the monthly cap; confirm then answers 402."
+          },
+          "estimate": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Money"
+                  },
+                  {
+                    "description": "Decimal strings, never floats."
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The most the extraction can cost; set when the run reaches awaiting_approval."
+          },
+          "actual": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Money"
+                  },
+                  {
+                    "description": "Decimal strings, never floats."
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the model calls cost, failed calls included."
+          },
+          "remaining": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "description": "What the tenant may still spend this month, for CostConfirm."
+              }
+            ]
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ImportCounts"
+          },
+          "startedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "websiteUrl",
+          "sourceIds",
+          "stage",
+          "state",
+          "error",
+          "blocked",
+          "estimate",
+          "actual",
+          "remaining",
+          "counts",
+          "startedAt",
+          "finishedAt",
+          "createdAt"
+        ]
+      },
+      "ImportStage": {
+        "type": "string",
+        "enum": [
+          "fetch",
+          "estimate",
+          "extract",
+          "verify",
+          "done"
+        ]
+      },
+      "ImportCounts": {
+        "type": "object",
+        "properties": {
+          "pages": {
+            "type": "integer",
+            "description": "Website pages read."
+          },
+          "pagesFailed": {
+            "type": "integer"
+          },
+          "files": {
+            "type": "integer",
+            "description": "Uploaded files in the run."
+          },
+          "batches": {
+            "type": "integer",
+            "description": "Model calls planned."
+          },
+          "unverified": {
+            "type": "integer",
+            "description": "Facts whose quote was found in the source."
+          },
+          "inferred": {
+            "type": "integer"
+          },
+          "conflicts": {
+            "type": "integer"
+          },
+          "unchanged": {
+            "type": "integer"
+          },
+          "dropped": {
+            "type": "integer",
+            "description": "Answers for fields not in the catalogue, or with an invalid value."
+          },
+          "colours": {
+            "type": "integer",
+            "description": "Palette colours added."
+          }
+        },
+        "required": [
+          "pages",
+          "pagesFailed",
+          "files",
+          "batches",
+          "unverified",
+          "inferred",
+          "conflicts",
+          "unchanged",
+          "dropped",
+          "colours"
+        ]
+      },
+      "ImportCreate": {
+        "type": "object",
+        "properties": {
+          "websiteUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2048,
+            "format": "uri"
+          },
+          "sourceIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "description": "Completed uploads to read."
+          }
+        },
+        "description": "A website, uploads, or both. The run fetches, estimates, then waits for confirm."
+      },
+      "FactList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            }
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass as `cursor` for the next page."
+          }
+        },
+        "required": [
+          "items",
+          "next"
+        ]
+      },
+      "Fact": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "This version. Approve, edit, reject and resolve each add a version with a new id."
+          },
+          "section": {
+            "$ref": "#/components/schemas/SectionKey"
+          },
+          "subjectType": {
+            "$ref": "#/components/schemas/SubjectType"
+          },
+          "subjectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subjectName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "field": {
+            "type": "string"
+          },
+          "fieldLabel": {
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/FactValue"
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The currency of a money value, the unit of a number."
+          },
+          "language": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FactStatus"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "stated",
+              "inferred",
+              "owner"
+            ],
+            "description": "`owner`: typed or edited by the owner."
+          },
+          "confidence": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "The model's confidence, 0 to 1; null for the owner's input."
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactSource"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set only when `quote` was found in this source's text. Null for inferred facts and owner input."
+          },
+          "quote": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Verbatim from `source`, checked by the server."
+          },
+          "page": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "The page of an uploaded PDF the quote is on, as the model gave it."
+          },
+          "warning": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "quote not found in source"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "supersedesId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isCurrent": {
+            "type": "boolean",
+            "description": "False for an older version; acting on it answers 409."
+          },
+          "verifiedBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verifiedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "importRunId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "section",
+          "subjectType",
+          "subjectId",
+          "subjectName",
+          "field",
+          "fieldLabel",
+          "value",
+          "unit",
+          "language",
+          "status",
+          "origin",
+          "confidence",
+          "source",
+          "quote",
+          "page",
+          "warning",
+          "version",
+          "supersedesId",
+          "isCurrent",
+          "verifiedBy",
+          "verifiedAt",
+          "expiresAt",
+          "importRunId",
+          "createdAt"
+        ]
+      },
+      "FactValue": {
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            "maxItems": 100
+          }
+        ],
+        "description": "text, longtext, url, date (YYYY-MM-DD) and enum fields hold a string; list fields an array of strings; number and money fields a number, or the source's own text (such as \"रु ४,५००\"), which is never parsed."
+      },
+      "FactStatus": {
+        "type": "string",
+        "enum": [
+          "approved",
+          "unverified",
+          "inferred",
+          "conflicting",
+          "expired",
+          "rejected"
+        ],
+        "description": "`expired` is computed: approved, with expiresAt in the past."
+      },
+      "FactSource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "page",
+              "upload"
+            ]
+          },
+          "uri": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "A page has `title`; an upload has `filename` and `pages`."
+          },
+          "downloadUrl": {
+            "type": "string",
+            "description": "Short-lived. Anything but a raster image downloads as an attachment."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "uri",
+          "meta",
+          "downloadUrl"
+        ]
+      },
+      "FactCreate": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "$ref": "#/components/schemas/SectionKey"
+          },
+          "subjectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Required for products and audience (a subject of that type); absent for the brand's own sections."
+          },
+          "field": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "value": {
+            "$ref": "#/components/schemas/FactValue"
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "language": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 10
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-12-31T18:15:00Z"
+          }
+        },
+        "required": [
+          "section",
+          "field",
+          "value",
+          "language"
+        ],
+        "description": "The owner's own value: stored approved, origin owner."
+      },
+      "ApproveBatch": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 500
+          }
+        },
+        "required": [
+          "ids"
+        ],
+        "description": "Approves quote-checked (`unverified`) facts only. Any other status, or an older version, refuses the whole batch (409)."
+      },
+      "FactPatch": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/FactValue"
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-12-31T18:15:00Z"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "description": "Adds an approved version. Omitted unit or expiresAt keep theirs; null clears them."
+      },
+      "FactReject": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "ConflictResolve": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/ConflictKeep"
+          },
+          {
+            "$ref": "#/components/schemas/ConflictTypeValue"
+          }
+        ],
+        "description": "Keep one fact, or type the right value. Every other current fact on that subject and field is rejected."
+      },
+      "ConflictKeep": {
+        "type": "object",
+        "properties": {
+          "keepFactId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "keepFactId"
+        ]
+      },
+      "ConflictTypeValue": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "$ref": "#/components/schemas/SectionKey"
+          },
+          "subjectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Required for products and audience (a subject of that type); absent for the brand's own sections."
+          },
+          "field": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "value": {
+            "$ref": "#/components/schemas/FactValue"
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "language": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 10
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-12-31T18:15:00Z"
+          }
+        },
+        "required": [
+          "section",
+          "field",
+          "value",
+          "language"
+        ]
+      },
+      "Subject": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "product",
+              "segment"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name",
+          "createdAt"
+        ]
+      },
+      "SubjectCreate": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "product",
+              "segment"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "type",
+          "name"
+        ]
+      },
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AssetKind"
+          },
+          "variant": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "white on transparent"
+          },
+          "rights": {
+            "$ref": "#/components/schemas/AssetRights"
+          },
+          "licensed": {
+            "type": "boolean",
+            "description": "True when rights.licence is filled in."
+          },
+          "source": {
+            "$ref": "#/components/schemas/FactSource"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sourceId",
+          "kind",
+          "variant",
+          "rights",
+          "licensed",
+          "source",
+          "createdAt"
+        ]
+      },
+      "AssetKind": {
+        "type": "string",
+        "enum": [
+          "logo",
+          "font",
+          "photo",
+          "other"
+        ]
+      },
+      "AssetRights": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Creator or owner."
+          },
+          "licence": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Readiness needs this on every asset."
+          },
+          "territory": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "maxItems": 30
+          },
+          "commercialUse": {
+            "type": "boolean"
+          },
+          "paidUse": {
+            "type": "boolean"
+          },
+          "term": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "expiresAt": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "attribution": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "modelRelease": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AssetCreate": {
+        "type": "object",
+        "properties": {
+          "sourceId": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AssetKind"
+          },
+          "variant": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "rights": {
+            "$ref": "#/components/schemas/AssetRights"
+          }
+        },
+        "required": [
+          "sourceId",
+          "kind"
+        ],
+        "description": "Registers a completed upload as an asset."
+      },
+      "AssetUpdate": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/AssetKind"
+          },
+          "variant": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "rights": {
+            "$ref": "#/components/schemas/AssetRights"
+          }
+        },
+        "description": "`rights` replaces the stored rights."
+      },
+      "Palette": {
+        "type": "object",
+        "properties": {
+          "colours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaletteColour"
+            }
+          },
+          "contrasts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Contrast"
+            },
+            "description": "Every colour with role text against every colour with role background."
+          }
+        },
+        "required": [
+          "colours",
+          "contrasts"
+        ]
+      },
+      "PaletteColour": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "hex": {
+            "type": "string",
+            "example": "#0f5257"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaletteRole"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "logo",
+              "site",
+              "guide",
+              "owner"
+            ]
+          },
+          "share": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Share of the logo's opaque pixels, 0 to 1; null for site and owner colours."
+          },
+          "rgb": {
+            "type": "object",
+            "properties": {
+              "r": {
+                "type": "integer"
+              },
+              "g": {
+                "type": "integer"
+              },
+              "b": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "r",
+              "g",
+              "b"
+            ]
+          },
+          "cmyk": {
+            "type": "object",
+            "properties": {
+              "c": {
+                "type": "integer"
+              },
+              "m": {
+                "type": "integer"
+              },
+              "y": {
+                "type": "integer"
+              },
+              "k": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "c",
+              "m",
+              "y",
+              "k"
+            ],
+            "description": "Percentages from a naive conversion: approximate, label it so."
+          }
+        },
+        "required": [
+          "id",
+          "hex",
+          "role",
+          "origin",
+          "share",
+          "rgb",
+          "cmyk"
+        ]
+      },
+      "PaletteRole": {
+        "type": "string",
+        "enum": [
+          "primary",
+          "secondary",
+          "accent",
+          "text",
+          "background"
+        ]
+      },
+      "Contrast": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "background": {
+            "type": "string"
+          },
+          "ratio": {
+            "type": "number",
+            "description": "WCAG 2 contrast ratio, 2 decimals."
+          },
+          "aa": {
+            "type": "boolean",
+            "description": "At least 4.5: body text passes AA."
+          },
+          "aaLarge": {
+            "type": "boolean",
+            "description": "At least 3: large text passes AA."
+          }
+        },
+        "required": [
+          "text",
+          "background",
+          "ratio",
+          "aa",
+          "aaLarge"
+        ]
+      },
+      "PaletteUpdate": {
+        "type": "object",
+        "properties": {
+          "colours": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hex": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$",
+                  "example": "#0f5257"
+                },
+                "role": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/PaletteRole"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "hex",
+                "role"
+              ]
+            },
+            "maxItems": 32
+          }
+        },
+        "required": [
+          "colours"
+        ],
+        "description": "The whole palette: listed colours keep their origin and share and take the given role; new ones are the owner's; unlisted ones are removed."
+      },
+      "Readiness": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer",
+            "description": "0 to 100. Not rescaled: 70 is the most this sprint can reach."
+          },
+          "band": {
+            "type": "string",
+            "enum": [
+              "blocked",
+              "draft_only",
+              "limited_pilot",
+              "automation"
+            ],
+            "description": "Any gate makes it blocked."
+          },
+          "gates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "fixPath": {
+                  "type": "string",
+                  "description": "App path that fixes it, e.g. /app/b/{brandId}/brand/review?section=products"
+                }
+              },
+              "required": [
+                "label",
+                "fixPath"
+              ]
+            },
+            "description": "Mandatory blockers; shown above the score."
+          },
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "weight": {
+                  "type": "integer"
+                },
+                "earned": {
+                  "type": "number"
+                },
+                "note": {
+                  "type": "string",
+                  "example": "Set up with Publish"
+                },
+                "criteria": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "pass": {
+                        "type": "boolean"
+                      },
+                      "fixPath": {
+                        "type": "string",
+                        "description": "App path that fixes it, e.g. /app/b/{brandId}/brand/review?section=products"
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "pass",
+                      "fixPath"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "weight",
+                "earned",
+                "criteria"
+              ]
+            }
+          }
+        },
+        "required": [
+          "score",
+          "band",
+          "gates",
+          "dimensions"
+        ]
+      },
+      "BrandBook": {
+        "type": "object",
+        "properties": {
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "$ref": "#/components/schemas/SectionKey"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "facts": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Fact"
+                  }
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "facts"
+              ]
+            },
+            "description": "Every catalogue section, in catalogue order, with its current approved, unexpired facts."
+          },
+          "palette": {
+            "$ref": "#/components/schemas/Palette"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Asset"
+            }
+          },
+          "competitors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Competitor"
+            }
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/Readiness"
+          }
+        },
+        "required": [
+          "sections",
+          "palette",
+          "assets",
+          "competitors",
+          "readiness"
+        ]
       }
     },
     "parameters": {}
@@ -1293,6 +2569,1429 @@
                   "items": {
                     "$ref": "#/components/schemas/AuditEvent"
                   }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/catalogue": {
+      "get": {
+        "tags": [
+          "knowledge"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SectionDef"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/imports": {
+      "get": {
+        "tags": [
+          "imports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The 20 newest runs, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportRun"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created: the run fetches, estimates, then waits at awaiting_approval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRun"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/imports/{runId}": {
+      "get": {
+        "tags": [
+          "imports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "runId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRun"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/imports/{runId}/confirm": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "description": "Starts the paid extraction. 402 when the estimate exceeds what is left of the monthly cap; 409 unless awaiting approval.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "runId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRun"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/imports/{runId}/cancel": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "runId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRun"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/imports/{runId}/retry": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "description": "Resumes a failed_retryable run from the step that failed; finished model calls are not repeated.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "runId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRun"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/facts": {
+      "get": {
+        "tags": [
+          "facts"
+        ],
+        "description": "Current versions only, oldest first.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/SectionKey"
+            },
+            "required": false,
+            "name": "section",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/FactStatus"
+            },
+            "required": false,
+            "description": "`expired` is computed: approved, with expiresAt in the past.",
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "subjectId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Default 100."
+            },
+            "required": false,
+            "description": "Default 100.",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "facts"
+        ],
+        "description": "For a single-valued field that already has a current fact, this edits it (a new version); 409 while it is conflicting.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FactCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Fact"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/facts/approve-batch": {
+      "post": {
+        "tags": [
+          "facts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveBatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The approved versions, in the order given",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Fact"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/facts/{id}": {
+      "patch": {
+        "tags": [
+          "facts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FactPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The new, approved version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Fact"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/facts/{id}/approve": {
+      "post": {
+        "tags": [
+          "facts"
+        ],
+        "description": "409 for a conflicting fact (resolve it) or an older version.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The new, approved version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Fact"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/facts/{id}/reject": {
+      "post": {
+        "tags": [
+          "facts"
+        ],
+        "description": "409 for a conflicting fact (resolve it) or an older version.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FactReject"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The new, rejected version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Fact"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/facts/{id}/history": {
+      "get": {
+        "tags": [
+          "facts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every version of the fact, oldest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Fact"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/conflicts/resolve": {
+      "post": {
+        "tags": [
+          "facts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConflictResolve"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The approved fact",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Fact"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/subjects": {
+      "get": {
+        "tags": [
+          "subjects"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "product",
+                "segment"
+              ]
+            },
+            "required": false,
+            "name": "type",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Subject"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "subjects"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created, or the existing subject of that type and name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/assets": {
+      "get": {
+        "tags": [
+          "assets"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Asset"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "assets"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/assets/{id}": {
+      "patch": {
+        "tags": [
+          "assets"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/palette": {
+      "get": {
+        "tags": [
+          "palette"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Palette"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "palette"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaletteUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Palette"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/readiness": {
+      "get": {
+        "tags": [
+          "readiness"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Readiness"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/book": {
+      "get": {
+        "tags": [
+          "readiness"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandBook"
                 }
               }
             }
