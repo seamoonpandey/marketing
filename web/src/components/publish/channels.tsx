@@ -5,6 +5,7 @@ import { Async, MutationError, PageHeader, StateBlock, StatusBadge, useBrandId }
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { PLATFORMS, useAct, useCapabilities, useChannels, type Platform } from './lib';
 import { label } from '@/lib/labels';
+import { formatDateOnly } from '@/lib/time';
 
 type Channel = Schemas['PublishChannel'];
 const CHANNEL_STATUS: Record<Channel['status'], { badge: string; label: string; next: string }> = {
@@ -47,7 +48,7 @@ export function Channels() {
                         <td className="num px-3 py-2">{c.textLimit === null ? 'No limit' : `${c.textLimit} characters`}</td>
                         <td className="px-3 py-2">{c.ratios.join(', ')}</td>
                         <td className="num px-3 py-2">{c.maxMedia}</td>
-                        <td className="px-3 py-2">{c.verified ? `Verified ${c.lastVerified ?? ''}` : 'Not yet verified'}</td>
+                        <td className="px-3 py-2">{c.verified ? c.lastVerified ? `Verified ${formatDateOnly(c.lastVerified)}` : 'Verified' : 'Not yet verified'}</td>
                       </tr>
                     ))}
                   </tbody>

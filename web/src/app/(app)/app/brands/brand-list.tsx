@@ -2,10 +2,8 @@
 
 import { ArrowRight, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { PageHeader, StateBlock, StatusBadge, useBrands } from '@/components/app';
+import { PageHeader, StateBlock, StatusBadge, Time, useBrands } from '@/components/app';
 import { ApiError } from '@/lib/api/client';
-
-const added = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
 export function BrandList() {
   const brands = useBrands();
@@ -58,7 +56,7 @@ export function BrandList() {
                   <span className="truncate text-sm text-muted">{b.website ? b.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : 'No website yet'}</span>
                 </span>
                 {b.status === 'archived' ? <StatusBadge status="archived" /> : null}
-                <span className="num hidden text-sm text-muted sm:block">Added {added.format(new Date(b.createdAt))}</span>
+                <span className="num hidden text-sm text-muted sm:block">Added <Time iso={b.createdAt} tz={b.timezone} year /></span>
                 <ArrowRight className="size-4 shrink-0 text-muted transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-ink" strokeWidth={1.75} aria-hidden />
               </Link>
             </li>

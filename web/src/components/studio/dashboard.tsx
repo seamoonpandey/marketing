@@ -1,11 +1,11 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, CircleAlert, FileText, ImageOff, Sparkles } from 'lucide-react';
+import { CircleAlert, FileText, ImageOff, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { Async, CostConfirm, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, CostConfirm, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId, WeekNav } from '@/components/app';
 import { api, unwrap, type Money } from '@/lib/api/client';
 import { cancelRun, fetchRun, retryRun, runKey, useAct, useOverview, type Overview, type OverviewItem } from './lib';
 import { addDays, formatYmd, weekRange } from '@/lib/time';
@@ -49,12 +49,10 @@ function Week({ brandId, o, onWeek }: { brandId: string; o: Overview; onWeek: (w
   return (
     <div className="grid gap-6">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-line py-3">
-        <nav aria-label="Week" className="flex items-center gap-1.5">
-          <button type="button" className="btn btn-quiet px-2" onClick={() => onWeek(prev)} aria-label="Previous week"><ChevronLeft className="size-4" aria-hidden /></button>
-          <p className="min-w-44 text-center font-semibold" aria-live="polite"><span className="sr-only">Week of </span>{weekRange(o.weekStart)}</p>
-          <button type="button" className="btn btn-quiet px-2" onClick={() => onWeek(next)} aria-label="Next week"><ChevronRight className="size-4" aria-hidden /></button>
-          <button type="button" className="btn btn-secondary ml-1" onClick={() => onWeek()}>This week</button>
-        </nav>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <WeekNav prev={{ onClick: () => onWeek(prev) }} next={{ onClick: () => onWeek(next) }} today={{ onClick: () => onWeek() }} />
+          <p className="font-semibold" aria-live="polite"><span className="sr-only">Week of </span>{weekRange(o.weekStart)}</p>
+        </div>
         <p className="text-sm text-muted">Studio copy this month: <strong className="font-semibold text-ink"><MoneyText value={o.monthCost} /></strong></p>
       </div>
 
@@ -134,7 +132,7 @@ function GenerateRun({ brandId, runId, onSettled }: { brandId: string; runId: st
     <div className="grid gap-2">
       <RunProgress queryKey={key} fetchRun={() => fetchRun(brandId, runId)} onCancel={() => cancelRun(brandId, runId)} onRetry={() => retryRun(brandId, runId)} label="Writing drafts" />
       {state === 'completed' && c ? (
-        <p className="text-sm" role="status">
+        <p className="text-sm text-muted" role="status">
           {c.drafted ?? 0} drafted{c.failed ? `, ${c.failed} failed` : ''}.
           {run.data?.actual ? <> Cost <MoneyText value={run.data.actual} />.</> : null}
         </p>
@@ -155,7 +153,7 @@ function ItemCard({ brandId, i, canDraft, onDraft }: { brandId: string; i: Overv
         <div className="grid gap-1.5">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <p className="text-sm font-semibold">{title}</p>
-            {draft ? <StatusBadge status={draft.status === 'ready' ? 'completed' : 'draft'} label={draft.status === 'ready' ? 'Ready' : 'Draft'} /> : <StatusBadge status="not_drafted" label="Not drafted" />}
+            {draft ? <StatusBadge status={draft.status === 'ready' ? 'completed' : 'draft'} label={draft.status === 'ready' ? 'Ready' : undefined} /> : <StatusBadge status="not_drafted" />}
             {draft && draft.blockingCount > 0 ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-danger"><CircleAlert className="size-3.5" aria-hidden />{draft.blockingCount} blocking</span>
             ) : null}

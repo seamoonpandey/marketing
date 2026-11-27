@@ -5,7 +5,7 @@ import {
 
 type Tone = 'neutral' | 'progress' | 'attention' | 'success' | 'danger';
 
-/** Fact statuses (§5.1, plus Research's external_research) and run states (Appendix B). */
+/** Fact statuses (§5.1, plus Research's external_research), run states (Appendix B), and the states modules share: waiting, approved, blocked, failed. */
 const STATUSES: Record<string, { label: string; tone: Tone; icon: LucideIcon }> = {
   approved: { label: 'Approved', tone: 'success', icon: CircleCheck },
   unverified: { label: 'Unverified', tone: 'attention', icon: CircleHelp },
@@ -20,6 +20,12 @@ const STATUSES: Record<string, { label: string; tone: Tone; icon: LucideIcon }> 
   failed_retryable: { label: 'Failed, can retry', tone: 'danger', icon: RotateCcw },
   failed_final: { label: 'Failed', tone: 'danger', icon: CircleX },
   cancelled: { label: 'Cancelled', tone: 'neutral', icon: CircleDashed },
+  // Meanings shared by several modules, so like states look alike everywhere.
+  waiting: { label: 'Waiting', tone: 'attention', icon: Hourglass },
+  blocked: { label: 'Blocked', tone: 'danger', icon: Ban },
+  draft: { label: 'Draft', tone: 'neutral', icon: CircleDashed },
+  paused: { label: 'Paused', tone: 'neutral', icon: CircleDashed },
+  not_drafted: { label: 'Not drafted', tone: 'neutral', icon: CircleDashed },
   active: { label: 'Active', tone: 'success', icon: CircleCheck },
   archived: { label: 'Archived', tone: 'neutral', icon: CircleDashed },
 };

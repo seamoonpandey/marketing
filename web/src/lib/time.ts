@@ -60,3 +60,5 @@ export const weekdayOf = (ymd: string) => utc(ymd).getUTCDay();
 export const weekStartOf = (ymd: string, first: number) => addDays(ymd, -((weekdayOf(ymd) - first + 7) % 7));
 /** "29 Nov – 5 Dec 2026" for the week that starts on `start`. */
 export const weekRange = (start: string) => `${formatYmd(start)} – ${formatYmd(addDays(start, 6), { day: 'numeric', month: 'short', year: 'numeric' })}`;
+/** The date part of an ISO string as a calendar date with its year ("31 Dec 2026"): for "valid until" dates the owner typed as a day. */
+export const formatDateOnly = (iso: string) => formatYmd(iso.slice(0, 10), { day: 'numeric', month: 'short', year: 'numeric' });

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CircleAlert, ShieldAlert, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { StatusBadge, useAct as useBrandAct } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
+import { formatYmd } from '@/lib/time';
 
 export type State = Schemas['ApproveState'];
 export type Risk = Schemas['ApproveRisk'];
@@ -42,18 +43,14 @@ export const useAct = <V, R>(b: string, fn: (v: V) => Promise<R>) => useBrandAct
 // ---- formatting ------------------------------------------------------------------------------
 
 /** A YYYY-MM-DD day, written without shifting it through the viewer's time zone. */
-export const fmtDay = (day: string) =>
-  new Date(`${day}T00:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
-export const fmtWhen = (iso: string) =>
-  new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-export const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+export const fmtDay = (day: string) => formatYmd(day, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // ---- small shared parts ----------------------------------------------------------------------
 
 // The shared badge knows fact and run statuses; each approval state borrows the closest one's tone and icon.
 const BORROWED: Record<State, string> = {
-  waiting: 'awaiting_approval', approved: 'approved', rejected: 'rejected', invalid: 'failed_final', expired: 'expired', paused: 'cancelled',
+  waiting: 'waiting', approved: 'approved', rejected: 'rejected', invalid: 'blocked', expired: 'expired', paused: 'paused',
 };
 export function StateTag({ state }: { state: State }) {
   return (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Async, MutationError, StatusBadge } from '@/components/app';
+import { Async, MutationError, StateBlock, StatusBadge } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
 import { useAct, useTargets } from './lib';
 
@@ -32,7 +32,7 @@ export function WatchList({ brandId, competitorId, site }: { brandId: string; co
           return (
             <>
               {list.length === 0 ? (
-                <p className="panel p-4 text-sm text-muted">No pages yet. Pricing, offers and the home page are the ones worth watching{site ? '; let Prachaar suggest them from the site' : ''}.</p>
+                <StateBlock state="empty" size="inline" title="No pages yet">Pricing, offers and the home page are the ones worth watching{site ? '; let Prachaar suggest them from the site' : ''}.</StateBlock>
               ) : (
                 <ul className="panel divide-y divide-line" aria-label="Watched pages">
                   {list.map((t) => (

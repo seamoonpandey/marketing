@@ -4,7 +4,7 @@ import { Download, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
-import { Async, CopyButton, MutationError, PageHeader, StateBlock, Time, useBrandId } from '@/components/app';
+import { Async, BackLink, CopyButton, MutationError, PageHeader, StateBlock, Time, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { jobPath, JobBadge, STATE, useAct, useJob, type Job } from './lib';
 import { dayKey, timeLabel, wallToIso } from '@/lib/time';
@@ -32,7 +32,7 @@ function Body({ brandId, d }: { brandId: string; d: Detail }) {
   const manual = job.actions.confirmManual;
   return (
     <>
-      <Link href={`/app/b/${brandId}/publish`} className="mb-3 inline-block text-sm text-muted underline">Back to Publish</Link>
+      <BackLink href={`/app/b/${brandId}/publish`}>Back to Publish</BackLink>
       <PageHeader
         title={manual ? `Post this on ${ch ? label(ch.platform) : 'the channel'}` : `${ch ? label(ch.platform) : 'Channel removed'} post`}
         description={

@@ -15,12 +15,7 @@ export function Dashboard() {
       <PageHeader
         title="Publish"
         description="Posts go out at the time you choose. Today every channel is posted by hand: you get the finished copy and image, post it, and paste the link back."
-        actions={
-          <>
-            <Link href={`/app/b/${brandId}/publish/settings`} className="btn btn-secondary">Settings</Link>
-            <Link href={`/app/b/${brandId}/publish/calendar`} className="btn btn-primary">Schedule a draft</Link>
-          </>
-        }
+        actions={<Link href={`/app/b/${brandId}/publish/calendar`} className="btn btn-primary">Schedule a draft</Link>}
       />
       <Async q={q} what="publishing overview">
         {(s) => {

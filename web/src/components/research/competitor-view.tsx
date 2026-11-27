@@ -1,9 +1,9 @@
 'use client';
 
-import { ChevronLeft, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Async, PageHeader, SourceQuote, StateBlock, useBrandId } from '@/components/app';
+import { Async, BackLink, PageHeader, SourceQuote, StateBlock, useBrandId } from '@/components/app';
 import { ApiError } from '@/lib/api/client';
 import { BattlecardSection } from './battlecard';
 import { useCompetitors, useObservations, useProfile } from './lib';
@@ -28,9 +28,7 @@ export function CompetitorView() {
           );
         return (
           <>
-            <Link href={`/app/b/${brandId}/research`} className="mb-3 inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
-              <ChevronLeft className="size-4" aria-hidden />Research
-            </Link>
+            <BackLink href={`/app/b/${brandId}/research`}>Back to Research</BackLink>
             <PageHeader
               title={c.name}
               description={<>{c.kind[0]!.toUpperCase() + c.kind.slice(1)} competitor{c.site ? <> · <span className="break-all">{c.site.replace(/^https?:\/\//, '')}</span></> : null}</>}

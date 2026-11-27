@@ -3,12 +3,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, History, Pencil, TriangleAlert, X } from 'lucide-react';
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
-import { SourceQuote, StatusBadge } from '@/components/app';
-import { api, unwrap, type Schemas } from '@/lib/api/client';
+import { MutationError, SourceQuote, StatusBadge, Time } from '@/components/app';
+import { api, errorMessage, type Schemas, unwrap } from '@/lib/api/client';
 import { putFacts, refreshAll, Value, valueText, type Fact, type FieldDef } from './data';
+import { formatDateOnly } from '@/lib/time';
 import { expiryIso, parseValue, toInput, ValueInput } from './value-input';
-
-const date = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 /** The calls a fact card makes. Each puts the answer straight into the cached list. */
 export function useFactActions(brandId: string) {
@@ -53,7 +52,7 @@ export function ValueExtras({ id, field, unit, setUnit, expiry, setExpiry }: { i
 
 function History_({ brandId, id }: { brandId: string; id: string }) {
   const h = useQuery({ queryKey: ['kb', brandId, 'history', id], queryFn: () => unwrap(api.GET('/api/brands/{brandId}/knowledge/facts/{id}/history', { params: { path: { brandId, id } } })) });
-  if (h.isError) return <p role="alert" className="text-sm text-danger">{h.error.message}</p>;
+  if (h.isError) return <MutationError error={h.error} />;
   if (!h.data) return <p className="text-sm text-muted">Loading history…</p>;
   return (
     <ol aria-label="Versions, newest first" className="grid gap-1.5 text-sm">
@@ -62,7 +61,7 @@ function History_({ brandId, id }: { brandId: string; id: string }) {
           <span className="num text-muted">v{v.version}</span>
           <StatusBadge status={v.status} />
           <span lang={v.language} className="min-w-0 break-words">{valueText(v.value, v.unit)}</span>
-          <span className="text-muted">{v.verifiedBy ? `${v.verifiedBy}, ` : ''}{date(v.verifiedAt ?? v.createdAt)}</span>
+          <span className="text-muted">{v.verifiedBy ? `${v.verifiedBy}, ` : ''}<Time iso={v.verifiedAt ?? v.createdAt} year /></span>
         </li>
       ))}
     </ol>
@@ -105,7 +104,7 @@ export function FactCard({ brandId, fact, field, showSubject }: { brandId: strin
       setMode('view');
       if (keep && nextId) requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-fact-row="${nextId}"]`)?.focus());
     } catch (e) {
-      setError((e as Error).message);
+      setError(errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -170,7 +169,7 @@ export function FactCard({ brandId, fact, field, showSubject }: { brandId: strin
         <Value value={fact.value} unit={fact.unit} lang={fact.language} className="text-lg leading-snug font-medium" />
       )}
 
-      {fact.expiresAt && mode !== 'edit' ? <p className="text-sm text-muted">Valid until {date(fact.expiresAt)}</p> : null}
+      {fact.expiresAt && mode !== 'edit' ? <p className="text-sm text-muted">Valid until {formatDateOnly(fact.expiresAt)}</p> : null}
 
       {fact.warning ? (
         <p className="flex items-start gap-2 rounded-md bg-[color-mix(in_oklab,var(--theme-highlight)_30%,transparent)] px-3 py-2 text-sm">
@@ -184,7 +183,7 @@ export function FactCard({ brandId, fact, field, showSubject }: { brandId: strin
       {fact.source && fact.quote ? (
         <SourceQuote quote={fact.quote} source={fact.source} page={fact.page ?? undefined} />
       ) : fact.origin === 'owner' ? (
-        <p className="text-sm text-muted">Entered by you{fact.verifiedAt ? `, ${date(fact.verifiedAt)}` : ''}</p>
+        <p className="text-sm text-muted">Entered by you{fact.verifiedAt ? <>, <Time iso={fact.verifiedAt} year /></> : null}</p>
       ) : null}
 
       {mode === 'reject' ? (
@@ -206,7 +205,7 @@ export function FactCard({ brandId, fact, field, showSubject }: { brandId: strin
         </form>
       ) : null}
 
-      {error ? <p role="alert" className="text-sm font-medium text-danger">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
 
       {mode === 'view' && fact.status !== 'conflicting' ? (
         <div className="flex flex-wrap items-center gap-2">
@@ -253,7 +252,7 @@ export function ConflictGroup({ brandId, facts, field, onResolved }: { brandId: 
       await actions.resolve(body);
       onResolved?.();
     } catch (e) {
-      setError((e as Error).message);
+      setError(errorMessage(e));
       setBusy(false);
     }
   }
@@ -301,7 +300,7 @@ export function ConflictGroup({ brandId, facts, field, onResolved }: { brandId: 
           Neither: type the right value
         </button>
       )}
-      {error ? <p role="alert" className="text-sm font-medium text-danger">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
     </li>
   );
 }

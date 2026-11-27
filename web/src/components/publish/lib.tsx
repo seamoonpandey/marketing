@@ -49,12 +49,12 @@ export const PLATFORMS: Platform[] = ['facebook', 'instagram', 'tiktok', 'youtub
 
 /** Each state, what it means and what the owner can do about it. */
 export const STATE: Record<JobState, { label: string; badge: string; meaning: string; next: string }> = {
-  scheduled: { label: 'Scheduled', badge: 'expired', meaning: 'Waiting for its time.', next: 'You can move it to another time or cancel it.' },
+  scheduled: { label: 'Scheduled', badge: 'waiting', meaning: 'Waiting for its time.', next: 'You can move it to another time or cancel it.' },
   publishing: { label: 'Sending', badge: 'running', meaning: 'A send is in progress.', next: 'Nothing to do; this page updates when it ends.' },
   awaiting_manual: { label: 'Post by hand', badge: 'awaiting_approval', meaning: 'Its time has come and this channel is posted by hand.', next: 'Copy the text, download the image, post it, then paste the link.' },
   published: { label: 'Published', badge: 'completed', meaning: 'It is out.', next: 'Open the post from its link.' },
   unknown: { label: 'Outcome unknown', badge: 'unverified', meaning: 'The system could not tell whether the post went out.', next: 'Check the channel, then say whether it was posted.' },
-  blocked: { label: 'Blocked', badge: 'conflicting', meaning: 'Nothing was sent: the approval or the channel said no at send time.', next: 'Fix the cause, then retry or move it.' },
+  blocked: { label: 'Blocked', badge: 'blocked', meaning: 'Nothing was sent: the approval or the channel said no at send time.', next: 'Fix the cause, then retry or move it.' },
   failed: { label: 'Failed', badge: 'failed_final', meaning: 'Sending failed.', next: 'Retry it if allowed, or post it by hand and confirm.' },
   cancelled: { label: 'Cancelled', badge: 'cancelled', meaning: 'You stopped it.', next: 'Nothing will be sent. Schedule the draft again if you want it out.' },
 };

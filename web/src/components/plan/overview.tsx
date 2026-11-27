@@ -29,7 +29,7 @@ export function Overview() {
                           <h3 className="font-semibold">{i === 0 ? 'This week' : 'Next week'}</h3>
                           <p className="text-sm text-muted">{weekRange(w.weekStart)}</p>
                         </div>
-                        <StatusBadge status={w.status === 'none' ? 'unplanned' : w.status} label={w.status === 'none' ? 'Not drafted' : w.status === 'draft' ? 'Draft' : 'Approved'} />
+                        <StatusBadge status={w.status === 'none' ? 'not_drafted' : w.status} />
                       </div>
                       <p className="num text-sm">
                         <span className="text-2xl font-semibold">{w.itemCount}</span> idea{w.itemCount === 1 ? '' : 's'}

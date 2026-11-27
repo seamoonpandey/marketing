@@ -1,10 +1,10 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Plus, TriangleAlert } from 'lucide-react';
+import { Plus, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { Async, MutationError, PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, MutationError, PageHeader, StateBlock, StatusBadge, Time, useBrandId, WeekNav } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
 import { DraftWeek } from './draft-week';
 import { ItemDialog } from './item-dialog';
@@ -30,11 +30,11 @@ export function Calendar() {
         description={weekStart ? weekRange(weekStart) : undefined}
         actions={
           weekStart ? (
-            <nav aria-label="Week" className="flex items-center gap-1.5">
-              <Link className="btn btn-secondary" href={`${base}/calendar?week=${addDays(weekStart, -7)}`}><ChevronLeft className="size-4" aria-hidden />Previous week</Link>
-              {thisWeek && weekStart !== thisWeek ? <Link className="btn btn-quiet" href={`${base}/calendar?week=${thisWeek}`}>This week</Link> : null}
-              <Link className="btn btn-secondary" href={`${base}/calendar?week=${addDays(weekStart, 7)}`}>Next week<ChevronRight className="size-4" aria-hidden /></Link>
-            </nav>
+            <WeekNav
+              prev={{ href: `${base}/calendar?week=${addDays(weekStart, -7)}` }}
+              next={{ href: `${base}/calendar?week=${addDays(weekStart, 7)}` }}
+              today={thisWeek && weekStart !== thisWeek ? { href: `${base}/calendar?week=${thisWeek}` } : null}
+            />
           ) : null
         }
       />
@@ -69,11 +69,11 @@ function WeekView({ brandId, w, thisWeek }: { brandId: string; w: Week; thisWeek
     <div className="grid gap-6">
       <section aria-label="Approval" className="panel flex flex-wrap items-center justify-between gap-x-6 gap-y-3 p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <StatusBadge status={status === 'none' ? 'unplanned' : status} label={status === 'none' ? 'Not drafted' : approved ? 'Approved' : 'Draft'} />
+          <StatusBadge status={status === 'none' ? 'not_drafted' : status} />
           <span className="num text-sm text-muted">{w.items.length} idea{w.items.length === 1 ? '' : 's'}</span>
         </div>
         {approved ? (
-          <p className="text-sm text-muted">Approved{w.plan?.approvedAt ? ` on ${formatYmd(w.plan.approvedAt.slice(0, 10), { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}. Changing an idea sets the week back to draft.</p>
+          <p className="text-sm text-muted">Approved{w.plan?.approvedAt ? <> on <Time iso={w.plan.approvedAt} year /></> : null}. Changing an idea sets the week back to draft.</p>
         ) : (
           <div className="flex flex-wrap items-center gap-3">
             <p id="approve-reason" className={`max-w-[48ch] text-sm ${w.canApprove ? 'text-muted' : 'font-medium'}`}>

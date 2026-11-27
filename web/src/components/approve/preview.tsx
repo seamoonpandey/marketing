@@ -1,14 +1,14 @@
 'use client';
 
-import { ArrowLeft, CircleAlert, Clock3, Lock } from 'lucide-react';
-import Link from 'next/link';
+import { CircleAlert, Clock3, Lock } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { Async, MutationError, StateBlock, useBrandId } from '@/components/app';
-import { api, ApiError, unwrap, type Schemas } from '@/lib/api/client';
-import { cap, fmtDate, fmtDay, fmtWhen, Notice, NOTE_MIN, RiskTag, StateTag, useAct, usePreview, type Preview } from './lib';
+import { Async, BackLink, MutationError, PageHeader, StateBlock, Time, useBrandId } from '@/components/app';
+import { api, hasStatus, unwrap, type Schemas } from '@/lib/api/client';
+import { cap, fmtDay, Notice, NOTE_MIN, RiskTag, StateTag, useAct, usePreview, type Preview } from './lib';
 import { Media } from './media';
-import { languageName } from '@/lib/labels';
+import { label, languageName } from '@/lib/labels';
+import { formatDateOnly } from '@/lib/time';
 
 type Draft = NonNullable<Preview['draft']>;
 
@@ -26,7 +26,7 @@ export function PreviewScreen() {
   }, [hash]);
   return (
     <>
-      <Link href={`/app/b/${brandId}/approve`} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"><ArrowLeft className="size-4" aria-hidden />Back to the queue</Link>
+      <BackLink href={`/app/b/${brandId}/approve`}>Back to the queue</BackLink>
       <Async q={q} what="preview">
         {(p) => (
           <div className="grid gap-6">
@@ -51,12 +51,16 @@ function Body({ brandId, draftId, p, d, onChanged, onDecided }: { brandId: strin
   const copies = d.content.copies;
   return (
     <>
-      <header className="grid gap-2">
-        <div className="flex flex-wrap items-center gap-2"><StateTag state={p.state} /><RiskTag risk={d.risk} /></div>
-        <h1 className="text-2xl leading-tight font-semibold">Approve version {d.version}</h1>
-        <p className="text-muted">Goes out on <strong className="font-semibold text-ink">{cap(d.channel)}</strong> on <strong className="font-semibold text-ink">{fmtDay(d.day)}</strong>. {cap(d.kind)}{d.pillar ? `, ${d.pillar}` : ''}.</p>
-        {p.stateReason ? <p className="text-sm break-words text-muted">{p.stateReason}</p> : null}
-      </header>
+      <PageHeader
+        title={`Approve version ${d.version}`}
+        description={
+          <>
+            Goes out on <strong className="font-semibold text-ink">{label(d.channel)}</strong> on <strong className="font-semibold text-ink">{fmtDay(d.day)}</strong>. {label(d.kind)}{d.pillar ? `, ${label(d.pillar)}` : ''}.
+            {p.stateReason ? <span className="mt-1 block text-sm break-words">{p.stateReason}</span> : null}
+          </>
+        }
+        actions={<><StateTag state={p.state} /><RiskTag risk={d.risk} /></>}
+      />
       <div className="grid items-start gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="grid gap-8">
           <section aria-labelledby="as-h" className="panel grid gap-5 p-5 sm:p-6">
@@ -88,12 +92,12 @@ function Facts({ d }: { d: Draft }) {
   return (
     <section aria-labelledby="facts-h" className="grid gap-3">
       <h2 id="facts-h" className="text-xl font-semibold">Facts it cites</h2>
-      {d.facts.length === 0 && d.missingFactIds.length === 0 ? <p className="text-muted">It cites no facts.</p> : (
+      {d.facts.length === 0 && d.missingFactIds.length === 0 ? <StateBlock state="empty" size="inline" title="It cites no facts" /> : (
         <ul aria-label="Cited facts" className="panel divide-y divide-line">
           {d.facts.map((f) => (
             <li key={f.id} className="grid gap-0.5 px-4 py-3">
               <span className="font-medium break-words">{f.subjectName ? `${f.subjectName}: ` : ''}{f.field} = {typeof f.value === 'string' || typeof f.value === 'number' ? String(f.value) : JSON.stringify(f.value)}{f.unit ? ` ${f.unit}` : ''}</span>
-              <span className="text-sm text-muted">{cap(f.section)} · approved{f.expiresAt ? `, valid until ${fmtDate(f.expiresAt)}` : ''}</span>
+              <span className="text-sm text-muted">{label(f.section)} · approved{f.expiresAt ? `, valid until ${formatDateOnly(f.expiresAt)}` : ''}</span>
             </li>
           ))}
           {d.missingFactIds.map((id) => <li key={id} className="px-4 py-3 text-sm text-danger">A cited fact ({id}) is not approved today.</li>)}
@@ -145,9 +149,9 @@ function Decision({ brandId, draftId, p, d, onChanged, onDecided }: { brandId: s
     act.mutate({ to, body }, {
       onSuccess: () => { setRejecting(false); onDecided(); },
       // Never retried: a refused decision reloads the preview (onSettled) and asks for another look.
-      onError: (e) => { if (e instanceof ApiError && e.status === 409) onChanged(e.code === 'changed' ? 'This draft changed since you opened it.' : `Not done: ${e.message}.`); },
+      onError: (e) => { if (hasStatus(e, 409)) onChanged(e.code === 'changed' ? 'This draft changed since you opened it.' : `Not done: ${e.message}.`); },
     });
-  const conflict = act.error instanceof ApiError && act.error.status === 409;
+  const conflict = hasStatus(act.error, 409);
   const first = p.state === 'waiting';
   // A lapsed (expired or no longer valid) or rejected version the server would take a new approval for.
   const again = !first && (p.state === 'expired' || p.state === 'invalid' || p.state === 'rejected') && d.canApprove;
@@ -192,7 +196,7 @@ function Decision({ brandId, draftId, p, d, onChanged, onDecided }: { brandId: s
         {!first ? <p className="text-sm">The same version can be approved again. Every check runs again, on what is shown here.</p> : null}
         <p>You are approving <strong className="font-semibold">version {d.version}</strong>, exactly as shown. <span className="text-muted">Fingerprint <code className="font-mono text-xs">{hash.slice(0, 10)}</code></span></p>
         <p className="flex items-start gap-2 text-sm"><Lock className="mt-0.5 size-4 shrink-0" aria-hidden />If anyone edits this draft afterwards, your approval is undone and it returns here to be approved again.</p>
-        {d.expiresIfApproved ? <p className="flex items-start gap-2 text-sm text-muted"><Clock3 className="mt-0.5 size-4 shrink-0" aria-hidden />An approval given now is valid until {fmtWhen(d.expiresIfApproved)}.</p> : null}
+        {d.expiresIfApproved ? <p className="flex items-start gap-2 text-sm text-muted"><Clock3 className="mt-0.5 size-4 shrink-0" aria-hidden />An approval given now is valid until <Time iso={d.expiresIfApproved} year />.</p> : null}
       </div>
       <div className="grid gap-1.5">
         <RiskTag risk={d.risk} />
@@ -243,14 +247,14 @@ function History({ decisions }: { decisions: Preview['history'] }) {
   return (
     <section aria-labelledby="hist-h" className="grid gap-3">
       <h2 id="hist-h" className="text-xl font-semibold">Decision history</h2>
-      {decisions.length === 0 ? <p className="text-muted">No decision has been made on this draft.</p> : (
+      {decisions.length === 0 ? <StateBlock state="empty" size="inline" title="No decision has been made on this draft" /> : (
         <ol className="panel divide-y divide-line">
           {decisions.map((h) => (
             <li key={h.id} className="grid gap-1 px-4 py-3">
-              <p className="font-medium"><span className={h.decision === 'approved' ? 'text-success' : 'text-ink'}>{cap(h.decision)}</span> version {h.version} by {h.decidedBy}<span className="font-normal text-muted"> · {fmtWhen(h.decidedAt)}</span></p>
+              <p className="font-medium"><span className={h.decision === 'approved' ? 'text-success' : 'text-ink'}>{cap(h.decision)}</span> version {h.version} by {h.decidedBy}<span className="font-normal text-muted"> · <Time iso={h.decidedAt} year /></span></p>
               {h.reason ? <p className="text-sm break-words">Reason: {h.reason}</p> : null}
               {h.reviewNote ? <p className="text-sm break-words">Review note: {h.reviewNote}</p> : null}
-              <p className="text-sm text-muted">{cap(h.risk)} risk{h.expiresAt ? ` · valid until ${fmtDate(h.expiresAt)}` : ''}{h.bulkId ? ' · approved in bulk' : ''}</p>
+              <p className="text-sm text-muted">{cap(h.risk)} risk{h.expiresAt ? <> · valid until <Time iso={h.expiresAt} year /></> : null}{h.bulkId ? ' · approved in bulk' : ''}</p>
             </li>
           ))}
         </ol>

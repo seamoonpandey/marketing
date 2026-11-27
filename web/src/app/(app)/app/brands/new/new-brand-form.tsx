@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { PageHeader } from '@/components/app';
+import { MutationError, PageHeader } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
 
 export function NewBrandForm() {
@@ -64,9 +64,7 @@ export function NewBrandForm() {
             <option value="ne">नेपाली (Nepali)</option>
           </select>
         </div>
-        {create.isError ? (
-          <p role="alert" className="text-sm font-medium text-danger">{create.error.message}</p>
-        ) : null}
+        <MutationError error={create.error} />
         <div className="flex flex-wrap gap-2 pt-1">
           <button type="submit" className="btn btn-primary" disabled={create.isPending || !name.trim()}>
             {create.isPending ? 'Adding…' : 'Add brand'}

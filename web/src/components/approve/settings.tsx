@@ -1,8 +1,6 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Async, MutationError, PageHeader, useBrandId } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
@@ -16,7 +14,6 @@ export function SettingsView() {
   });
   return (
     <>
-      <Link href={`/app/b/${brandId}/approve`} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"><ArrowLeft className="size-4" aria-hidden />Back to the queue</Link>
       <PageHeader title="Approve settings" description="Who approves, and how long an approval stays valid before it has to be given again." />
       <Async q={q} what="settings">{(s) => <Form brandId={brandId} approvers={s.approvers} days={s.maxAgeDays} />}</Async>
     </>

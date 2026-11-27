@@ -1,12 +1,11 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Async, MutationError, PageHeader, StateBlock, useBrandId } from '@/components/app';
+import { Async, MutationError, PageHeader, StateBlock, useBrandId, WeekNav } from '@/components/app';
 import { api, ApiError, unwrap, type Schemas } from '@/lib/api/client';
 import { JobBadge, useAct, useJobs, useSchedulable } from './lib';
-import { addDays, dayKey, timeLabel, wallToIso } from '@/lib/time';
+import { addDays, dayKey, formatYmd, timeLabel, wallToIso } from '@/lib/time';
 import { label } from '@/lib/labels';
 
 type Schedulable = Schemas['PublishSchedulable'];
@@ -28,15 +27,13 @@ function Week({ brandId, s }: { brandId: string; s: Schedulable }) {
   const [start, setStart] = useState(() => dayKey(new Date(), tz));
   const jobs = useJobs(brandId, wallToIso(start, '00:00', tz), wallToIso(addDays(start, 7), '00:00', tz), true);
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
-  const label = (d: string) => new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(`${d}T00:00:00Z`)).replace(',', '');
+  const dayName = (d: string) => formatYmd(d, { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '');
   return (
     <div className="grid gap-10">
       <section aria-labelledby="wk-h" className="grid gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 id="wk-h" className="mr-auto text-xl font-semibold">{label(days[0]!)} to {label(days[6]!)} <span className="text-base font-normal text-muted">{tz}</span></h2>
-          <button type="button" className="btn btn-secondary" aria-label="Previous week" onClick={() => setStart(addDays(start, -7))}><ChevronLeft className="size-4" aria-hidden /></button>
-          <button type="button" className="btn btn-secondary" onClick={() => setStart(dayKey(new Date(), tz))}>This week</button>
-          <button type="button" className="btn btn-secondary" aria-label="Next week" onClick={() => setStart(addDays(start, 7))}><ChevronRight className="size-4" aria-hidden /></button>
+          <h2 id="wk-h" className="mr-auto text-xl font-semibold">{dayName(days[0]!)} to {dayName(days[6]!)} <span className="text-base font-normal text-muted">{tz}</span></h2>
+          <WeekNav prev={{ onClick: () => setStart(addDays(start, -7)) }} next={{ onClick: () => setStart(addDays(start, 7)) }} today={{ onClick: () => setStart(dayKey(new Date(), tz)) }} />
         </div>
         <Async q={jobs} what="week">
           {(l) => (
@@ -44,8 +41,8 @@ function Week({ brandId, s }: { brandId: string; s: Schedulable }) {
               {days.map((d) => {
                 const here = l.jobs.filter((j) => dayKey(j.scheduledAt, tz) === d);
                 return (
-                  <li key={d} aria-label={label(d)} className="panel grid content-start gap-2 p-2.5 md:min-h-32">
-                    <h3 className="text-sm font-semibold">{label(d)}</h3>
+                  <li key={d} aria-label={dayName(d)} className="panel grid content-start gap-2 p-2.5 md:min-h-32">
+                    <h3 className="text-sm font-semibold">{dayName(d)}</h3>
                     {here.length ? (
                       <ul className="grid gap-2">
                         {here.map((j) => (

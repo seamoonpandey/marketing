@@ -1,11 +1,11 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CircleAlert, CircleCheck, Film, ImageIcon, Info, Plus, Save, Trash2 } from 'lucide-react';
+import { CircleAlert, CircleCheck, Film, ImageIcon, Info, Plus, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState, type MutableRefObject } from 'react';
-import { Async, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, BackLink, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { Preview } from './preview';
 import { CHECK_LABEL, LANGUAGE_LABEL, NO_COST, cancelRun, fetchRun, retryRun, runKey, useAct, useAssets, useDraft, useTemplates, whyUnavailable, type Asset, type DraftView, type Ratio, type Template } from './lib';
@@ -74,16 +74,14 @@ function Screen({ brandId, v }: { brandId: string; v: DraftView }) {
 
   return (
     <>
-      <Link href={`/app/b/${brandId}/studio${v.weekStart ? `?week=${v.weekStart}` : ''}`} className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
-        <ArrowLeft className="size-4" aria-hidden />Back to Studio
-      </Link>
+      <BackLink href={`/app/b/${brandId}/studio${v.weekStart ? `?week=${v.weekStart}` : ''}`}>Back to Studio</BackLink>
       <PageHeader
         title={title}
         description={
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span>{label(v.channel)} · {label(v.draft.kind)}</span>
             <span className="num">Version {v.version.version}, written by {v.version.origin === 'model' ? 'the model' : 'you'}</span>
-            <StatusBadge status={isReady ? 'completed' : 'draft'} label={isReady ? `Ready as version ${v.draft.readyVersion}` : 'Draft'} />
+            <StatusBadge status={isReady ? 'completed' : 'draft'} label={isReady ? `Ready as version ${v.draft.readyVersion}` : undefined} />
           </span>
         }
         actions={

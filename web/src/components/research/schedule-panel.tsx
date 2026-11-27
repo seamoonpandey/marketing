@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Async, MutationError, StateBlock } from '@/components/app';
+import { Async, MutationError, StateBlock, Time } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
-import { formatDate, useAct, useSchedule } from './lib';
+import { useAct, useSchedule } from './lib';
 import { WEEKDAYS } from '@/lib/time';
 
 const DAY = 86_400_000;
@@ -44,7 +44,7 @@ function Form({ brandId, s }: { brandId: string; s: { enabled: boolean; weekday:
           </select>
         </div>
       </div>
-      <p className="text-sm text-muted">In the brand’s time zone. Last run: {formatDate(s.lastRunAt)}.</p>
+      <p className="text-sm text-muted">In the brand’s time zone. Last run: {s.lastRunAt ? <Time iso={s.lastRunAt} year /> : 'never'}.</p>
       {stale ? <StateBlock state="stale" size="inline" title="The last run was over a week ago">A weekly run may be waiting for approval, or it failed. Check the run above.</StateBlock> : null}
       <div className="flex items-center gap-3">
         <button type="submit" className="btn btn-secondary" disabled={!dirty || save.isPending}>{save.isPending ? 'Saving…' : 'Save schedule'}</button>

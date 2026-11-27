@@ -22,10 +22,6 @@ export const TYPE_LABEL: Record<Schemas['ObservationType'], string> = {
   other: 'Other change',
 };
 
-export function formatDate(iso: string | null | undefined): string {
-  return iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'never';
-}
-
 // ---- queries -------------------------------------------------------------------------------
 
 export const useCompetitors = (b: string) =>

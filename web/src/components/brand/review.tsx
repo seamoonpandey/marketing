@@ -5,8 +5,8 @@ import { GitCompareArrows, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useId, useMemo, useState } from 'react';
-import { Async, PageHeader, StateBlock, useBrand, useBrandId } from '@/components/app';
-import { api, unwrap } from '@/lib/api/client';
+import { Async, MutationError, PageHeader, StateBlock, useBrand, useBrandId } from '@/components/app';
+import { api, errorMessage, unwrap } from '@/lib/api/client';
 import { refreshAll, useCatalogue, useCompetitors, useFacts, useSubjects, type Fact, type SectionDef } from './data';
 import { ConflictGroup, FactCard, useFactActions, ValueExtras } from './fact-card';
 import { expiryIso, parseValue, ValueInput } from './value-input';
@@ -147,7 +147,7 @@ function SectionView({ brandId, section, facts, filter, setFilter }: { brandId: 
       await actions.batch(eligible.map((f) => f.id));
       setNote({ ok: true, text: `Approved ${eligible.length} fact${eligible.length > 1 ? 's' : ''}.` });
     } catch (e) {
-      setNote({ ok: false, text: (e as Error).message });
+      setNote({ ok: false, text: errorMessage(e) });
     } finally {
       setBusy(false);
       setConfirming(false);
@@ -324,7 +324,7 @@ function AddFact({ brandId, section, startOpen }: { brandId: string; section: Se
             <option value="ne">नेपाली (Nepali)</option>
           </select>
         </div>
-        {add.isError ? <p role="alert" className="text-sm font-medium text-danger">{add.error.message}</p> : null}
+        <MutationError error={add.error} />
         <div>
           <button type="submit" className="btn btn-primary" disabled={add.isPending || !text.trim() || (creating && !newName.trim())}>
             {add.isPending ? 'Adding…' : 'Add and approve'}
@@ -402,7 +402,7 @@ function CompetitorsPanel({ brandId }: { brandId: string }) {
             <input id={`${id}-s`} className="input" inputMode="url" value={site} placeholder="example.com.np" onChange={(e) => setSite(e.target.value)} />
           </div>
         </div>
-        {add.isError ? <p role="alert" className="text-sm font-medium text-danger">{add.error.message}</p> : null}
+        <MutationError error={add.error} />
         <div><button type="submit" className="btn btn-primary" disabled={add.isPending || !name.trim()}>{add.isPending ? 'Adding…' : 'Add competitor'}</button></div>
       </form>
     </section>

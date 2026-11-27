@@ -13,3 +13,5 @@ export { useAct } from './use-act';
 export { CopyButton } from './copy-button';
 export { ModuleTabs } from './module-tabs';
 export { Time } from './time';
+export { BackLink } from './back-link';
+export { WeekNav } from './week-nav';
