@@ -32,16 +32,15 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ label, totalBudget, spen
       <div className={`${cornerClass} top-0 left-0 z-40 border-t-[1.6px] border-l-[1.6px]`} />
       <div className={`${cornerClass} top-0 right-0 z-40 border-t-[1.6px] border-r-[1.6px]`} />
       <div className="relative w-full border-[1.6px] border-black/8 bg-white font-sans text-black shadow-sm">
-        <div className="p-6 pb-4">
+        <div className="p-5 pb-4">
           <div className="mb-1 flex items-start justify-between">
             <p className="text-[15px] text-zinc-600">{label}</p>
             <span className="border-[1.6px] border-zinc-200 px-3 py-1 text-[13px] text-zinc-600">Cap on</span>
           </div>
-          <p className="mb-6 text-[40px] leading-none font-medium tracking-tight text-zinc-900 tabular-nums">
+          <p className="mb-4 text-[28px] leading-none font-medium tracking-tight text-zinc-900 tabular-nums">
             {npr(totalBudget)}
           </p>
           <div className="space-y-3">
-            <p className="text-[13px] text-zinc-600">Paid generation stops at the cap</p>
             <div className="h-2 w-full overflow-hidden bg-zinc-100">
               <motion.div
                 initial={{ width: 0 }}
@@ -68,8 +67,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ label, totalBudget, spen
           </div>
         </div>
         <div className="h-px w-full bg-black/5" />
-        <div className="space-y-3 p-6 pt-5">
-          <p className="text-[13px] text-zinc-600">By kind of work</p>
+        <div className="space-y-3 p-5 pt-4">
           <div className="flex h-2 gap-2">
             {breakdown.map((item, idx) => (
               <motion.div

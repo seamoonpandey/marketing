@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Product: Pracharo, the AI Marketing Operating System. `AI_Marketing_Operating_System_specs.md` is the requirements baseline (SRS + FRS). Read the sections you touch before building. `docs/stack.md` is the chosen stack and why.
+Product: Pracharo, the AI Marketing Operating System. `docs/AI_Marketing_Operating_System_specs.md` is the requirements baseline (SRS + FRS). Read the sections you touch before building. `docs/stack.md` is the chosen stack and why.
 
 ## Repo layout
 

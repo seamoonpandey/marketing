@@ -47,8 +47,8 @@ const QUEUE = [
 
 const FAQ = [
   ['Does Pracharo post without asking me?', 'No. Posts, replies and messages wait for your approval, and an edited draft has to be approved again.'],
-  ['Will it launch ads or change my budget?', 'No. It prepares ad tests and recommends changes; a person on your team launches them and sets the spend.'],
-  ['Can it promise more sales or followers?', 'No. It reports what each post and campaign brought in, so you keep what works and drop what does not.'],
+  ['Will Pracharo launch ads or change my budget?', 'No. It prepares ad tests and recommends changes; a person on your team launches them and sets the spend.'],
+  ['Can Pracharo promise more sales?', 'No. It reports what each post and campaign brought in, so you keep what works and drop what does not.'],
   ['Does it train AI models on my data?', 'No, not without your written permission. Your brand’s data is kept apart from every other brand’s.'],
   ['Which AI models does it use?', 'Local and open models first. Paid ones run only when a job needs them, with the cost shown before it starts.'],
 ];
@@ -98,7 +98,7 @@ export default function Home() {
           <div className="wrap"><div className="hero-text">
             <div className="hero__c">
               <a className="pill" href="#apply"><span>Pilot</span><span className="muted">Starts with one brand in Nepal</span></a>
-              <h1 id="hero-h" aria-label="AI marketing team for Nepali brands"><span className="ly-mark ly-mark--ring" aria-hidden="true" /> AI marketing team for Nepali brands</h1>
+              <h1 id="hero-h">AI marketing team for Nepali brands</h1>
               <p className="hero__lead">Pracharo’s 20 AI roles research, write, design and schedule your posts. Each job shows its cost in rupees first, and nothing goes public until you approve it.</p>
               <div className="btn-row">
                 <a className="btn btn--primary" href="#apply">Join the pilot</a>
@@ -134,7 +134,7 @@ export default function Home() {
           <div className="wrap">
             <div className="grid">
               <h2 id="queue-h" className="span-5">Today’s marketing work in one ranked queue</h2>
-              <p className="span-6 start-7 muted">Every morning Pracharo ranks the day’s jobs by what they are worth, with the role, the cost and the time due. Open one to read the draft and its checks. <a className="link" href="#approval">See how approval works</a></p>
+              <div className="span-6 start-7 stack-4"><p>Every morning Pracharo ranks the day’s jobs by what they are worth, with the role, the cost and the time due. Open one to read the draft and its checks.</p><p><a className="link" href="#approval">See how approval works</a></p></div>
             </div>
             <div className="ui app fill" role="img" aria-label="The Pracharo queue: ten jobs by role and status beside an open Instagram draft, where one claim is blocked for having no approved source." data-ui-pause-host="">
               <div className="app__pane app__pane--list">
@@ -199,26 +199,26 @@ export default function Home() {
           <div className="wrap">
             <div className="group">
               <div className="section-head">
-                <h2 id="features-h">Four checks before anything is posted. <span className="muted">Formats, approval, cost and competitors.</span></h2>
+                <h2 id="features-h">What Pracharo checks before posting. <span className="muted">Formats, approval, cost and competitors.</span></h2>
               </div>
               <div className="grid">
                 <article className="card card--row card--open span-6 m-nolift" id="formats">
-                  <h3>Turns one brief into seven formats</h3>
-                  <p>An approved brief becomes a landing page, an email, posts, a video script, a carousel, an FAQ and sales notes.</p>
+                  <h3>Turns one marketing brief into seven formats</h3>
+                  <p>An approved brief becomes a landing page, email, posts, video script, carousel, FAQ and sales notes.</p>
                   <div className="panel"><BriefFanout /></div>
                 </article>
                 <article className="card card--row card--open span-6 m-nolift" id="approval">
-                  <h3>Waits for your approval to post</h3>
-                  <p>Nothing reaches Facebook, Instagram or WhatsApp until you approve that exact version. Edit it and it asks again.</p>
-                  <div className="panel"><div className="stage stage--fade-b"><div className="island ui tw" style={v({ '--iw': '224px', '--ib': '32px' })}><AIToolApproval /></div></div></div>
+                  <h3>Holds every AI draft for your approval</h3>
+                  <p>Nothing reaches Facebook, Instagram or WhatsApp until you approve that exact version.</p>
+                  <div className="panel"><div className="stage stage--fade-b"><div className="island ui ui-island tw" style={v({ '--iw': '224px', '--ib': '32px' })}><AIToolApproval /></div></div></div>
                 </article>
               </div>
             </div>
             <div className="grid">
               <article className="card card--row card--open span-6 m-nolift" id="cost">
-                <h3>Shows the cost before it runs</h3>
-                <p>Every job is priced in rupees before it starts. A monthly cap stops paid generation the moment it is reached.</p>
-                <div className="panel"><div className="stage stage--fade-b"><div className="island ui tw" style={v({ '--iw': '230px', '--ib': '32px' })}>
+                <h3>Prices every AI job before it runs</h3>
+                <p>Each job is priced in rupees before it starts, and a monthly cap stops paid generation.</p>
+                <div className="panel"><div className="stage stage--fade-b"><div className="island island--top ui ui-island tw" style={v({ '--iw': '230px' })}>
                   <BudgetCard
                     label="December budget"
                     totalBudget={25000}
@@ -232,8 +232,8 @@ export default function Home() {
                 </div></div></div>
               </article>
               <article className="card card--row card--open span-6 m-nolift" id="watch">
-                <h3>Watches three competitors every week</h3>
-                <p>Their pricing pages, offers and new ads are compared with last week’s, and each change is saved with a screenshot.</p>
+                <h3>Watches 3 competitors every week</h3>
+                <p>Their pricing pages, offers and new ads are compared with last week’s, with screenshots saved.</p>
                 <div className="panel">
                   <div className="stage stage--fade-b">
                     <div className="at-rise fit" style={v({ '--fit-max': '380px', '--ax': '32px', '--ay': 'calc(100% - 180px)', '--ay-sm': 'calc(100% - 180px)' })}>
@@ -272,6 +272,23 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="section" id="questions" aria-labelledby="questions-h">
+          <div className="wrap">
+            <div className="grid grid--top">
+              <div className="span-5 stack-4">
+                <h2 id="questions-h">Questions</h2>
+                <p>Approval, ads, results, data and models.</p>
+                <p><a className="link" href="mailto:hello@pracharo.example">Email us</a></p>
+              </div>
+              <div className="faq span-6 start-7">
+                {FAQ.map(([q, a]) => (
+                  <div className="faq__item" key={q}><h3>{q}</h3><p>{a}</p></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="section" id="apply" aria-labelledby="apply-h">
           <div className="wrap">
             <div className="grid">
@@ -291,18 +308,15 @@ export default function Home() {
                   <div className="field"><label htmlFor="f-site">Website or Facebook page</label>
                     <input id="f-site" name="site" type="text" autoComplete="url" required aria-describedby="f-site-err" />
                     <p className="field__error" id="f-site-err" hidden>Write a link people use to find the brand.</p></div>
-                  <div className="field field--wide"><label htmlFor="f-sell">What you sell</label>
-                    <input id="f-sell" name="sell" type="text" autoComplete="off" required aria-describedby="f-sell-err" />
-                    <p className="field__error" id="f-sell-err" hidden>Write what the brand sells, in a few words.</p></div>
                   <div className="btn-row"><button className="btn btn--primary" type="submit">Join the pilot</button></div>
                   <p className="form__status" role="status" data-form-status="" />
                   <p className="t-small muted">A person reads every application and replies by email.</p>
                 </form>
               </div>
-              <div className="frame frame--split span-6 start-7" data-visual="">
+              <div className="frame frame--split span-6 start-7" data-visual="" role="img" aria-label="The pilot’s week one checklist: facts approved, competitors named, then two channels, the monthly cap and the first week’s plan.">
                 <div className="stage stage--fade-b">
                   <div className="at-rise fit" style={v({ '--fit-max': '340px', '--ax': 'max(24px, 50% - 170px)', '--ay': '40px' })}>
-                    <div className="ui ui-panel ui-checks" data-ui="checklist" role="img" aria-label="The pilot’s week one checklist: facts approved, competitors named, then two channels, the monthly cap and the first week’s plan.">
+                    <div className="ui ui-panel ui-checks" data-ui="checklist">
                       <div className="ui-checks__head">
                         <div className="ui-title">Week one</div>
                         <span className="ui-spacer" />
@@ -324,38 +338,21 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="section" id="questions" aria-labelledby="questions-h">
-          <div className="wrap">
-            <div className="grid grid--top">
-              <div className="span-5 stack-4">
-                <h2 id="questions-h">Questions</h2>
-                <p className="muted">Approval, ads, results, data and models.</p>
-                <p><a className="link" href="mailto:hello@pracharo.example">Email us</a></p>
-              </div>
-              <div className="faq span-6 start-7">
-                {FAQ.map(([q, a]) => (
-                  <div className="faq__item" key={q}><h3>{q}</h3><p>{a}</p></div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       <footer className="footer closing footer--statement" id="contact" aria-labelledby="close-h">
         <div className="wrap">
           <div className="closing__cta close--word">
             <div className="section-head--split">
-              <div><h2 id="close-h">Put your marketing in one queue</h2><p className="t-lead">Start with one brand and one week of posts.</p></div>
+              <div><h2 id="close-h">One queue for your marketing</h2><p className="t-lead">Start with one brand and one week of posts.</p></div>
               <a className="btn btn--primary" href="#apply">Join the pilot</a>
             </div>
             <p className="close__word" aria-hidden="true">Pracharo</p>
           </div>
           <div className="closing__links">
             <div className="grid">
-              <div className="span-4 stack-4">
+              <div className="span-6 stack-4">
                 <a className="nav__logo" href="#top"><span className="mark" data-mark="ring" aria-hidden="true" />Pracharo</a>
-                <p className="footer__lede">AI marketing software for brands in Nepal.</p>
               </div>
               <div className="span-2 footer__col"><h3>Product</h3><ul><li><a href="#queue">Queue</a></li><li><a href="#features">Features</a></li><li><a href="#channels">Channels</a></li></ul></div>
               <div className="span-2 footer__col"><h3>Pilot</h3><ul><li><a href="#apply">Application</a></li><li><a href="#questions">Questions</a></li></ul></div>

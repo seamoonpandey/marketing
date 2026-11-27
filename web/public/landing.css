@@ -6,13 +6,11 @@
 .ly-mark--ring::before, .ly-mark--ring::after { display: none; }
 
 /* ---------------------------------------------------------------- hero window (centred hero) */
-/* the painted still behind the window when WebGL is off or the canvas has not drawn: the sage ground
-   lit by the palette's teal and sky, the same colours the aurora moves */
-.hero__window { background:
-  radial-gradient(90% 70% at 18% 0%, rgb(15 82 87 / .55), transparent 70%),
-  radial-gradient(80% 60% at 85% 10%, rgb(95 147 204 / .45), transparent 70%),
-  linear-gradient(180deg, #c9dccf, #b9cfd9 60%, #c3d7e5); }
+/* the still behind the window when WebGL is off or the canvas has not drawn: a captured frame of the
+   aurora itself (public/hero-aurora.jpg), over the palette's ground */
+.hero__window { background: #c3d7e5; }
 .hero__window > .hero__aurora { position: absolute; inset: 0; z-index: 0; }
+.hero__window > .hero__aurora:not([data-gl="live"]) { background: url("/hero-aurora.jpg") center top / cover no-repeat; }
 .hero__window > .loop-pause { top: 12px; bottom: auto; }
 
 .d-win { background: #fff; color: #16181a; border-radius: 12px; overflow: hidden; font: 400 14px/1.4 var(--font-text);
@@ -42,8 +40,10 @@
 .acts { display: flex; gap: 8px; }
 .acts span { height: 30px; padding: 0 12px; border-radius: 99px; display: inline-flex; align-items: center; font-size: 13px; font-weight: 500; background: #c3d7e5; color: #0c0d0f; }
 .acts span + span { background: rgb(255 255 255 / .08); color: #e9ecee; }
+/* under 1024 the window is the conversation alone (no list column), and the tool line goes */
+@media (max-width: 1279px) { .d-tool { display: none; } }
+@media (max-width: 1023px) { .d-win__body { grid-template-columns: 1fr; } .inbox { display: none; } }
 @media (max-width: 639px) {
-  .d-win__body { grid-template-columns: 1fr; } .inbox { display: none; }
   .d-win__bar .sp ~ span { display: none; }
   .d-chat { font-size: 13px; padding: 12px 14px; }
   .d-msg--bot small, .d-tool { display: none; }
@@ -76,9 +76,10 @@
 
 /* ---------------------------------------------------------------- the four checks (features-2x2) */
 #features .panel { --p-h: 336px; }
-@media (max-width: 639px) { #features .panel { --p-h: 220px; } }
+#features .panel { overflow: clip; }
 /* a React island sits in its stage like a fragment: its own width, cut by the panel's bottom */
 .island { position: absolute; left: max(24px, 50% - var(--iw, 200px)); bottom: var(--ib, 32px); width: min(calc(var(--iw, 200px) * 2), calc(100% - 48px)); }
+.island--top { top: 32px; bottom: auto; }
 @media (max-width: 639px) { .island { left: 16px; bottom: auto; top: 20px; width: calc(100% - 32px); } }
 
 /* one brief becomes seven formats (anime.js loop) */
@@ -96,8 +97,6 @@
 /* ---------------------------------------------------------------- channels (split on the dark ground) */
 #channels .frame--split { aspect-ratio: 5 / 4; }
 #channels .facts { display: grid; gap: var(--s-3); }
-#channels .facts li { padding-left: 20px; position: relative; }
-#channels .facts li::before { content: ""; position: absolute; left: 0; top: .7em; width: 8px; height: 1px; background: currentColor; }
 
 /* ---------------------------------------------------------------- the pilot form beside week one */
 #apply .stack-5 > .form { margin-top: var(--s-6); }
@@ -105,7 +104,33 @@
 #apply .form .field--wide, #apply .form .btn-row, #apply .form .form__status, #apply .form .t-small { grid-column: 1 / -1; }
 @media (max-width: 639px) { #apply .form { grid-template-columns: 1fr; } }
 
-/* ---------------------------------------------------------------- close: the name across the wrap */
-/* "Pracharo" runs from line to line: 1280 wide at 1440 */
-.close__word { font-size: min(23.4vw, 336px); }
-@media (max-width: 639px) { .close__word { font-size: 22.6vw; } }
+
+/* reading text at 7:1: the centred hero's lead in ink */
+.hero--centred .hero__lead { color: var(--ink); }
+
+/* 640 to 1023 (the judges' tablet, upright): every section stays one screen, or two for the features */
+@media (min-width: 640px) and (max-width: 1023px) {
+  /* the card panels take what each screen leaves under the words, so neither screen has a hole */
+  #features .panel { --p-h: calc(100svh - 520px); }
+  .fan { grid-template-columns: 1fr; } .fan__brief { display: none; }
+  /* the channels diagram at a set height under the words */
+  #channels .frame--split { aspect-ratio: auto; height: 300px; }
+  /* the pilot form and week one side by side: the form alone runs past the screen when stacked */
+  #apply .grid > .span-6:first-child { grid-column: 1 / span 7; }
+  #apply .frame--split { grid-column: 8 / -1; grid-row: 1; aspect-ratio: auto; min-height: 0; height: 100%; }
+  #apply .form { grid-template-columns: 1fr; }
+}
+/* a phone: each section holds one screen (the features two): the phone copy is cut, never squeezed */
+@media (max-width: 639px) {
+  #features .panel { --p-h: 180px; }
+  #channels .facts { display: none; }
+  #questions .faq__item:nth-child(n + 4) { display: none; }
+  #apply .frame--split { display: none; }
+}
+
+/* the kit's pause disc inside the dark window: a ring that shows on the dark ground */
+.d-win--dark .loop-pause:focus-visible { outline-color: #c3d7e5; }
+/* the centred hero's notice pill sits off the phone's lines; the h1 says the same */
+@media (max-width: 639px) { .hero--centred .pill { display: none; } }
+/* 640 to 1023: the footer's three link columns share the row after the name */
+@media (min-width: 640px) and (max-width: 1023px) { .closing__links .footer__col { grid-column: span 4; } }

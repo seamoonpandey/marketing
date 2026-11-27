@@ -321,6 +321,8 @@ const Aurora = ({
 
     const program = link(gl);
     if (!program) return undefined;
+    // the shader linked: the page may drop its still fallback (a CSS hook, [data-gl="live"])
+    container.dataset.gl = 'live';
     const u = program.uniforms;
 
     const buffer = gl.createBuffer();

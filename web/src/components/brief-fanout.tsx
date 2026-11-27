@@ -54,7 +54,7 @@ export default function BriefFanout() {
   return (
     <>
       <div className="stage stage--fade-b">
-      <div className="island ui" style={{ '--iw': '230px', '--ib': '-24px' } as React.CSSProperties}>
+      <div className="island ui ui-island" style={{ '--iw': '230px', '--ib': '-24px' } as React.CSSProperties}>
       <div className="fan" ref={root} role="img" aria-label="An approved brief for a Dashain offer becomes a landing page, an email, social posts, a video script, a carousel, an FAQ and sales notes.">
         <div className="fan__brief" aria-hidden="true">
           <span className="fan__ok">Approved</span>

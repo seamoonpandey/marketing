@@ -1,6 +1,6 @@
 # Stack recommendation: AI Marketing Operating System
 
-For the developers taking the handover and for the devops engineer who runs the shared Contabo box. It settles the technology side of ADR-001 to ADR-012 (spec §20.1). Requirements come from `AI_Marketing_Operating_System_specs.md`. Server conventions come from `../docs/contabo-server.md` in the workspace root.
+For the developers taking the handover and for the devops engineer who runs the shared Contabo box. It settles the technology side of ADR-001 to ADR-012 (spec §20.1). Requirements come from `AI_Marketing_Operating_System_specs.md`. Server conventions come from `docs/contabo-server.md` in the xenex workspace root (`../../docs/contabo-server.md` from this file).
 
 Versions and licences were checked on 2026-11-27 against npm, GitHub and vendor pages; each row cites its source. NPR conversions use the Nepal Rastra Bank selling rates of 2026-10-12: USD 1 = NPR 155.08, EUR 1 = NPR 173.72 ([source](https://www.sharesansar.com/newsdetail/nrb-publishes-mondays-forex-rates-us-dollar-fixed-at-rs-15508-2026-10-12)).
 
@@ -40,7 +40,12 @@ The approach: one language (TypeScript), one database (Postgres), and no new ser
 
 ### ADR-001: modular monolith, API placement, repo layout
 
-**Pick:** one pnpm workspace with three deployable apps, all built from shared packages. The web app holds no business logic and does no database access. The API is a separate service in the same workspace (`apps/api`), not Next.js route handlers.
+**Pick:** two independent projects in one repo. Each has its own `package.json`, lockfile, build, CI and deploy, and nothing is shared through workspace packages.
+
+- `web/` is the Next.js app. It holds no business logic and does no database access.
+- `server/` is a modular monolith: the Hono API, Better Auth, DBOS workflows and the media worker. The media worker is a second entrypoint and a second pm2 process of the same project, because it needs the same workflow definitions and DB schema.
+
+Add another top-level project only if a layer truly needs its own runtime or deploy cycle. None does today.
 
 **Why the API is not in Next.js route handlers:**
 
@@ -50,41 +55,56 @@ The approach: one language (TypeScript), one database (Postgres), and no new ser
 
 **Runner-up:** Next.js route handlers that enqueue work through `DBOSClient`, with one worker process. It was rejected for the reason above: business rules would live in two places.
 
-**Same-origin routing:** nginx sends `/api/*` to `apps/api` on the same hostname. Cookies stay first-party and no CORS is needed. Product pages are client components that use TanStack Query against `/api`. The landing page is `app/(marketing)/page.tsx` with its own root layout and is prerendered static. The product lives in `app/(app)/` with its own root layout. Next.js reloads the full page when crossing between two root layouts, and it requires `/` to be defined inside one of the groups ([route groups](https://nextjs.org/docs/app/api-reference/file-conventions/route-groups)).
+**Contract between the two projects:** the OpenAPI document is the only interface.
+
+1. `server/` writes `openapi.json` from its `@hono/zod-openapi` routes (`pnpm openapi`) and commits it.
+2. `web/` runs openapi-typescript on that file to get a `paths` type, and calls the API through openapi-fetch.
+3. `server/` CI fails if the committed `openapi.json` is out of date.
+4. `web/` CI fails if its generated types differ from the committed spec.
+
+A breaking API change therefore shows up as a diff in `openapi.json`. Deploy `server/` before `web/` whenever the API changes.
+
+**Same-origin routing:** nginx sends `/api/*` to `server/` on the same hostname. Cookies stay first-party and no CORS is needed. Product pages are client components that use TanStack Query and openapi-fetch against `/api`.
+
+The landing page is `web/src/app/(marketing)/page.tsx`. It has its own root layout and is prerendered static. The product lives in `web/src/app/(app)/` with its own root layout. Next.js reloads the full page when crossing between two root layouts, and it requires `/` to be defined inside one of the groups ([route groups](https://nextjs.org/docs/app/api-reference/file-conventions/route-groups)).
 
 ```
 marketing/
-├─ apps/
-│  ├─ web/          Next.js: (marketing) landing page "/" static; (app) product UI. Calls /api only.
-│  ├─ api/          Hono HTTP API + Better Auth + webhooks + DBOS executor (all queues except "media").
-│  └─ media/        DBOS executor that listens only to the "media" queue: FFmpeg, whisper.cpp, Piper, Satori.
-├─ packages/
-│  ├─ db/           Drizzle schema, migrations, RLS policies, withTenant(tx) helper, seed.
-│  ├─ contracts/    Zod schemas and types shared by web and api (request/response, role/workflow JSON schemas).
-│  ├─ domain/       Business modules (brands, knowledge, content, approvals, publishing, crm, analytics, costs, audit).
-│  ├─ workflows/    DBOS workflows WF-001..024 and queue definitions.
-│  ├─ ai/           Provider registry, router (tiers T0–T4, privacy class), cost ledger, AI SDK adapters, eval harness.
-│  ├─ connectors/   Connector contract (§20.2) and adapters (social, CRM, email, WhatsApp, analytics).
-│  └─ render/       FFmpeg/Satori presets and wrappers (imported by apps/media only).
-├─ deploy/vps/      Copies of every file installed on the box (house rule).
+├─ web/                 Next.js project (own package.json, pnpm-lock.yaml, CI, deploy).
+│  ├─ src/app/(marketing)/   Landing page "/", prerendered static, own root layout.
+│  ├─ src/app/(app)/         Product UI, own root layout. Calls /api only.
+│  ├─ src/components/        shadcn registry code (React Bits, Kokonut UI, Watermelon UI).
+│  └─ src/lib/api/           Generated openapi-typescript types and the openapi-fetch client.
+├─ server/              Node project (own package.json, pnpm-lock.yaml, CI, deploy).
+│  ├─ src/main.ts            Entrypoint 1: Hono HTTP API, Better Auth, webhooks, DBOS executor (all queues except "media").
+│  ├─ src/media.ts           Entrypoint 2: DBOS executor listening only to "media" (FFmpeg, whisper.cpp, Piper, Satori).
+│  ├─ src/db/                Drizzle schema, migrations, RLS policies, withTenant(tx) helper, seed.
+│  ├─ src/contracts/         Zod schemas for requests, responses, and role and workflow JSON schemas. Source of openapi.json.
+│  ├─ src/domain/            Business modules (brands, knowledge, content, approvals, publishing, crm, analytics, costs, audit).
+│  ├─ src/workflows/         DBOS workflows WF-001..024 and queue definitions.
+│  ├─ src/ai/                Provider registry, router (tiers T0–T4, privacy class), cost ledger, AI SDK adapters, eval harness.
+│  ├─ src/connectors/        Connector contract (§20.2) and adapters (social, CRM, email, WhatsApp, analytics).
+│  ├─ src/render/            FFmpeg/Satori presets and wrappers (used by the media entrypoint only).
+│  └─ openapi.json           Generated and committed; the contract web/ builds against.
+├─ deploy/vps/          Not a project: copies of every file installed on the box (deploy script,
+│                       ecosystem.config.js, nginx site, compose file for Postgres and OpenObserve).
 └─ docs/
 ```
 
-Add `packages/ui` only if a second front end appears. shadcn registry code stays in `apps/web`.
+Keep module boundaries inside `server/src` with plain imports. Each module exposes an `index.ts`, and other modules import nothing else from it. Promote a module to its own project only when it needs its own runtime or deploy cycle.
 
 ### ADR-002: backend framework
 
 **Pick:** Hono 4.
 
 - Better Auth exposes a fetch handler, which mounts directly on Hono.
-- `@hono/zod-openapi` produces the OpenAPI document from the same schemas used for validation.
-- The typed RPC client gives `apps/web` end-to-end types without codegen.
-- Known cost: IDE type-checking slows down as the route count grows. Mitigate by splitting the client per module and exporting precompiled client types (`hcWithType`), as the Hono docs recommend ([Hono RPC](https://hono.dev/docs/guides/rpc)).
+- `@hono/zod-openapi` produces the OpenAPI document from the same schemas used for validation. That document is the web/server contract (ADR-001).
+- Hono's RPC client (`hc`) is not used. It needs the server's TypeScript types inside `web/`, which independent projects rule out. It also slows IDE type-checking as the route count grows ([Hono RPC](https://hono.dev/docs/guides/rpc)).
 - Hono 5 is in RC ([npm](https://www.npmjs.com/package/hono)). Stay on 4 until 5 is GA.
 
 **Runner-up:** Fastify 5.12.8 (MIT, [npm](https://www.npmjs.com/package/fastify)). It is mature and has plugin encapsulation, but needs extra adapters for Web-standard handlers and Zod/OpenAPI.
 
-**Rejected:** NestJS 12.6.3 (MIT, [npm](https://www.npmjs.com/package/@nestjs/core)). Its decorator and DI layer adds structure that `packages/domain` already gives, at a cost in boilerplate.
+**Rejected:** NestJS 12.6.3 (MIT, [npm](https://www.npmjs.com/package/@nestjs/core)). Its decorator and DI layer adds structure that the `server/src` module boundaries already give, at a cost in boilerplate.
 
 ### ADR-003: auth, RBAC and isolation
 
@@ -137,7 +157,7 @@ How the spec's §14.1 requirements map to DBOS (references: [queues](https://doc
 | Per-brand rate limits and quiet hours | Partitioned queues keyed by `brand_id` |
 | Cancel, resume, replay from failed node | `cancelWorkflow`, `resumeWorkflow`, `forkWorkflow` / `rewindWorkflow` from a step |
 | Dead-letter view | List workflows in `ERROR` status |
-| Separate media worker pool | `listenQueues`, so only `apps/media` dequeues `media` |
+| Separate media worker pool | `listenQueues`, so only the `server/src/media.ts` process dequeues `media` |
 
 **Operating rules** (only the free MIT library is used):
 
@@ -161,9 +181,9 @@ How the spec's §14.1 requirements map to DBOS (references: [queues](https://doc
 
 ### ADR-006: model gateway and local hardware
 
-**Pick:** the AI SDK 7, in the same process, behind `packages/ai`.
+**Pick:** the AI SDK 7, in the same process, behind the `server/src/ai` module.
 
-`packages/ai` owns these parts:
+`server/src/ai` owns these parts:
 
 - The provider registry (§15.1).
 - The tier router T0–T4. A request's privacy class can only narrow the set of allowed providers; a local-only task never falls back to a hosted provider.
@@ -193,7 +213,7 @@ The AI SDK records token and usage counts as OpenTelemetry `gen_ai.*` attributes
 
 **MinIO is out.** Its community edition went into maintenance mode in December 2025 and ships as source only. The GitHub repo is archived, with no new binaries ([InfoQ](https://www.infoq.com/news/2025/12/minio-s3-api-alternatives/), [repo](https://github.com/minio/minio)).
 
-**Rendering pick:** FFmpeg templates in `packages/render`, run by `apps/media`:
+**Rendering pick:** FFmpeg templates in `server/src/render`, run by the media entrypoint (`server/src/media.ts`):
 
 - FFmpeg handles concat, overlays, drawtext, libass captions and resize presets.
 - Satori and resvg-js render statics and carousels.
@@ -208,7 +228,7 @@ Use the Ubuntu FFmpeg package (6.1.1), which gets security updates through unatt
 
 ### ADR-012: video provider cost benchmark
 
-This is not a stack choice. The provider registry and cost ledger supply the data. T4 providers (avatar, premium video, dubbing) are adapters in `packages/ai` and run only with a cost estimate and an explicit approval (§15). Phase 0 runs the benchmark. The FFmpeg template path is the baseline cost every paid provider is compared against.
+This is not a stack choice. The provider registry and cost ledger supply the data. T4 providers (avatar, premium video, dubbing) are adapters in `server/src/ai` and run only with a cost estimate and an explicit approval (§15). Phase 0 runs the benchmark. The FFmpeg template path is the baseline cost every paid provider is compared against.
 
 ### ADR-005: Postiz/OpenBuzz vs native social publishing
 
@@ -302,15 +322,17 @@ Before deploying, run `nproc; free -m; df -h /; docker stats --no-stream` and re
 
 ### Processes
 
-All apps live under `/opt/marketing/<app>/{releases,shared,current}`, following the house convention.
+The box sees one house project, `marketing`, with two deployable apps, one per repo project. Each lives under `/opt/marketing/<app>/{releases,shared,current}`. One `/opt/marketing/ecosystem.config.js` lists the three pm2 apps.
 
-| Name | Runs as | Mode | Listens on | Notes |
-|---|---|---|---|---|
-| `marketing-web` | pm2 (root) | cluster ×2, Next.js standalone | 127.0.0.1:3040 | Landing page and product UI. Same pattern as CLiQ Campus |
-| `marketing-api` | pm2 (root) | cluster ×2 | 127.0.0.1:3041 | Hono API, Better Auth, webhooks, and a DBOS executor for every queue except `media`. `executorID` is taken from `NODE_APP_INSTANCE` |
-| `marketing-media` | pm2 (root) | fork ×1 | none | DBOS executor with `listenQueues: ['media']` and `workerConcurrency: 1`. Runs FFmpeg with `-threads 2` under `nice -n 10`, plus whisper.cpp, Piper and Satori |
-| `marketing-postgres` | Docker | `pgvector/pgvector:0.8.7-pg18`, named volume | 127.0.0.1:5436 | Databases `marketing` (app) and `marketing_dbos` (DBOS system DB) |
-| `marketing-otel` | Docker | OpenObserve, named volume, retention set | 127.0.0.1:5080 (HTTP/OTLP), 127.0.0.1:5081 (gRPC) | Reached through an SSH tunnel only |
+| Repo project | pm2 app / container | Runs as | Mode | Listens on | Notes |
+|---|---|---|---|---|---|
+| `web/` | `marketing-web` | pm2 (root) | cluster ×2, Next.js standalone | 127.0.0.1:3040 | Landing page and product UI. Same pattern as CLiQ Campus |
+| `server/` | `marketing-api` (entry `src/main.ts`) | pm2 (root) | cluster ×2 | 127.0.0.1:3041 | Hono API, Better Auth, webhooks, and a DBOS executor for every queue except `media`. `executorID` is `api-${NODE_APP_INSTANCE}` |
+| `server/` | `marketing-media` (entry `src/media.ts`) | pm2 (root) | fork ×1 | none | Same release as `marketing-api`. DBOS executor `media-0` with `listenQueues: ['media']` and `workerConcurrency: 1`. Runs FFmpeg with `-threads 2` under `nice -n 10`, plus whisper.cpp, Piper and Satori |
+| `server/` | `marketing-postgres` (Docker) | Docker | `pgvector/pgvector:0.8.7-pg18`, named volume | 127.0.0.1:5436 | Databases `marketing` (app) and `marketing_dbos` (DBOS system DB) |
+| (ops) | `marketing-otel` (Docker) | Docker | OpenObserve, named volume, retention set | 127.0.0.1:5080 (HTTP/OTLP), 127.0.0.1:5081 (gRPC) | Reached through an SSH tunnel only |
+
+Both containers run from `/opt/marketing/docker-compose.yml`.
 
 There is no Redis and there are no other containers. Memory use is not yet measured: budget roughly 2–3 GB resident in total and check it with `pm2 monit` and `docker stats` after the first deploy.
 
@@ -331,7 +353,23 @@ Large media never passes through nginx because uploads go straight to R2 through
 
 ### Deploy
 
-The house command, `git archive HEAD:<app>`, ships one folder, but a pnpm workspace app needs its `packages/` too. `/opt/marketing/bin/deploy <app> <sha>` should therefore take a `git archive HEAD` of the whole repo and run `pnpm install --frozen-lockfile` and `pnpm --filter <app> build`. For `api`, it runs `drizzle-kit migrate` before flipping `current`. Then it reloads pm2, runs health checks, and rolls back on failure.
+Each project deploys alone with the unchanged house command, because each folder is self-contained:
+
+```
+git archive HEAD:web    | ssh xenex /opt/marketing/bin/deploy web <sha>
+git archive HEAD:server | ssh xenex /opt/marketing/bin/deploy server <sha>
+```
+
+| App | What the deploy script does |
+|---|---|
+| `web` | `pnpm install --frozen-lockfile`, `pnpm build` (standalone output), flip `current`, `pm2 reload marketing-web`, health-check 3040, roll back on failure |
+| `server` | Build once, run `drizzle-kit migrate`, flip `current`, reload both `marketing-api` and `marketing-media` from that one release, health-check 3041, roll back on failure |
+
+**Restarting the media worker:** a restart re-runs any in-flight render from its last completed DBOS step. Render steps must therefore write to deterministic R2 keys.
+
+**Order of deploys:** when `openapi.json` changes, deploy `server` first.
+
+**CI:** each project has its own CI job, triggered by changes under its folder. Both jobs run the same command as above through the house key pinned to `/opt/marketing/bin/deploy`.
 
 Other house rules apply as usual:
 

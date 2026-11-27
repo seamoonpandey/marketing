@@ -260,7 +260,7 @@ function ToolInput({ input }: { input: ToolCall["input"] }) {
   if (typeof input === "string") {
     return (
       <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-zinc-50 px-3 py-2.5 font-mono text-[13px] text-zinc-900 leading-relaxed ring-1 ring-black/5 dark:bg-white/5 dark:text-zinc-100 dark:ring-white/10">
-        <span aria-hidden="true" className="select-none text-zinc-400">
+        <span aria-hidden="true" className="select-none text-zinc-600">
           ${" "}
         </span>
         {input}
@@ -404,7 +404,7 @@ function ApprovalCard({
         >
           {call.title}
         </p>
-        <span className="font-mono text-xs text-zinc-400 dark:text-zinc-500">
+        <span className="font-mono text-xs text-zinc-700 dark:text-zinc-500">
           {call.tool}
         </span>
         {call.destructive && (
@@ -421,12 +421,12 @@ function ApprovalCard({
       )}
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {call.destructive ? (
-          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+          <span className="text-xs text-zinc-600 dark:text-zinc-500">
             Asks every time
           </span>
         ) : (
           <label
-            className="flex cursor-pointer select-none items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400"
+            className="flex cursor-pointer select-none items-center gap-2 text-xs text-zinc-700 dark:text-zinc-400"
             htmlFor={alwaysId}
           >
             <input
@@ -541,7 +541,7 @@ function StatusIcon({ state }: { state: ToolCallState }) {
       aria-hidden="true"
       className={cn(
         "size-3.5",
-        state === "output-error" ? "text-red-500" : "text-zinc-400"
+        state === "output-error" ? "text-red-500" : "text-zinc-600"
       )}
       fill="none"
       viewBox="0 0 16 16"
@@ -617,7 +617,7 @@ function TraceLine({ call }: { call: ToolCall }) {
           className={cn(
             "shrink-0",
             state === "output-denied"
-              ? "text-zinc-400 dark:text-zinc-500"
+              ? "text-zinc-600 dark:text-zinc-500"
               : "text-zinc-600 dark:text-zinc-300"
           )}
         >
@@ -627,7 +627,7 @@ function TraceLine({ call }: { call: ToolCall }) {
           className={cn(
             "min-w-0 truncate font-mono text-[12.5px]",
             state === "output-denied"
-              ? "text-zinc-400 line-through decoration-zinc-300 dark:text-zinc-500 dark:decoration-zinc-600"
+              ? "text-zinc-600 line-through decoration-zinc-300 dark:text-zinc-500 dark:decoration-zinc-600"
               : "text-zinc-900 dark:text-zinc-100"
           )}
         >
@@ -637,7 +637,7 @@ function TraceLine({ call }: { call: ToolCall }) {
           <ChevronRight
             aria-hidden="true"
             className={cn(
-              "ml-auto size-3.5 shrink-0 text-zinc-400 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover/line:text-zinc-600 dark:group-hover/line:text-zinc-300",
+              "ml-auto size-3.5 shrink-0 text-zinc-600 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover/line:text-zinc-600 dark:group-hover/line:text-zinc-300",
               open && "rotate-90"
             )}
           />
