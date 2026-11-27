@@ -15,8 +15,8 @@ const NOISE = [
 ];
 const mask = (s: string) => NOISE.reduce((t, re) => t.replace(re, '#'), s);
 const COOKIE = /\bcookies?\b/i;
-// A price is never noise, whatever the block's length or wording: Rs 5,000 / NPR / $ / रु ५,००० / 5,000/-.
-const PRICE = /(?:\b(?:rs|nrs|npr|inr|usd)\.?|[$€£₹]|रु\.?|रू\.?)\s*[\d०-९][\d०-९,.]*|[\d०-९][\d०-९,.]*\s*(?:\/-|\brupees?\b)/gi;
+// A price is never noise, whatever the block's length or wording: Rs 5,000 / NPR / $ / रु ५,००० / 5,000/-, in any script's digits.
+const PRICE = /(?:\b(?:rs|nrs|npr|inr|usd)\.?|[$€£₹]|रु\.?|रू\.?)\s*\p{Nd}[\p{Nd},.]*|\p{Nd}[\p{Nd},.]*\s*(?:\/-|\brupees?\b)/giu;
 const prices = (s: string) => (s.match(PRICE) ?? []).join(' ');
 
 const blocks = (text: string) =>

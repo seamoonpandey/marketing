@@ -1,11 +1,11 @@
 // Risk by fixed rules (design section 3, spec §21.2). False positives only raise the risk, so the
 // rules lean wide: every string in the content is read, and industries match whole words.
 import type { ApprovalRisk } from '../../db/schema/approve.ts';
+import { asciiDigits, latinLookalikes, plainText, stripAccents, stripInvisible, WORD_END as END, WORD_START as START } from '../../text/normalise.ts';
 
-const DASHES = /[‐-―−﹘﹣－]/gu;
-
-/** NFKC, invisible characters (format and every other default-ignorable one) removed, dashes made ASCII, runs of white space made one space, trimmed. */
-export const plain = (s: string): string => s.normalize('NFKC').replace(/[\p{Cf}\p{Default_Ignorable_Code_Point}]/gu, '').replace(DASHES, '-').replace(/\s+/gu, ' ').trim();
+// Case and digits are kept as written, so a reason quotes the copy ("१५%"); the rules read every script's digits themselves.
+/** Invisible characters and generic accents removed, then plainText: NFKC, ASCII dashes and quote marks, runs of white space as one space, trimmed. */
+export const plain = (s: string): string => plainText(stripAccents(stripInvisible(s)));
 
 /** Every string in a draft's content, one per line. */
 export function textOf(v: unknown): string {
@@ -15,9 +15,6 @@ export function textOf(v: unknown): string {
   return '';
 }
 
-// Not preceded / not followed by a letter, combining mark (Devanagari vowel signs), digit or underscore.
-const START = '(?<![\\p{L}\\p{M}\\p{N}_])';
-const END = '(?![\\p{L}\\p{M}\\p{N}_])';
 const NUM = '\\p{Nd}[\\p{Nd},.]*'; // \p{Nd} is every script's digits, Devanagari ones included
 const re = (src: string) => new RegExp(src, 'iu');
 
@@ -29,19 +26,15 @@ const RULES: { risk: ApprovalRisk; re: RegExp; label: string }[] = [
   { risk: 'medium', re: re(`(?:${START}(?:best|cheapest|lowest|better than)${END}|#1(?!\\p{N})|${START}no\\.? ?1(?!\\p{N}))`), label: 'Comparison' },
 ];
 
-// Cyrillic and Greek letters that look like Latin ones (and Turkish dotless and dotted i), read as those Latin letters.
-const LOOKALIKE = 'АВЕКМНОРСТУХІЈЅӀаеорсухіјѕԁһԛԝӏΑΒΕΖΗΙΚΜΝΟΡΤΥΧαιονρυκıİ';
-const LATIN = 'ABEKMHOPCTYXIJSIaeopcyxijsdhqwlABEZHIKMNOPTYXaiovpukiI';
-const latin = (s: string) => s.replace(new RegExp(`[${LOOKALIKE}]`, 'gu'), (c) => LATIN[LOOKALIKE.indexOf(c)]!);
-
 export function riskOf(i: { text: string; pillar: string | null; industry: string | null }): { risk: ApprovalRisk; reasons: string[] } {
   const high: string[] = [];
   const medium: string[] = [];
-  const industry = i.industry && latin(plain(i.industry));
+  const industry = i.industry && latinLookalikes(plain(i.industry));
   if (industry && REGULATED.test(industry)) high.push(`Regulated industry "${industry}"`);
-  const text = latin(plain(i.text));
+  const text = latinLookalikes(plain(i.text));
   for (const r of RULES) {
-    const m = r.re.exec(text);
+    // "#१" is "#1": a rule that names a digit (No. 1) is tried again with every script's digits as ASCII.
+    const m = r.re.exec(text) ?? r.re.exec(asciiDigits(text));
     if (m) (r.risk === 'high' ? high : medium).push(`${r.label} "${m[0]}"`);
   }
   if (i.pillar === 'comparison' || i.pillar === 'offer') medium.push(`Pillar "${i.pillar}"`);

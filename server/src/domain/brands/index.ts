@@ -22,6 +22,7 @@ export type Competitor = {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const operator = 'operator';
 
+// Not text/normalise.ts: a slug is a URL label, not a check, and already keeps only a-z and 0-9; folding would rename some brands.
 /** Latin letters and digits; a name with none (Devanagari, say) becomes "brand". */
 export function slugify(name: string): string {
   const slug = name

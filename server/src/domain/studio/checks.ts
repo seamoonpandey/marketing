@@ -1,5 +1,6 @@
 import type { ApprovedFact } from '../../contracts/common.ts';
 import type { DraftContent, DraftKind, RenderRecord } from '../../db/schema/studio.ts';
+import { foldText, WORD_END, WORD_START } from '../../text/normalise.ts';
 import { contrast } from '../knowledge/index.ts';
 import type { BrandKit } from './render-types.ts';
 
@@ -10,22 +11,6 @@ export type Finding = {
 
 /** Caption limits in characters by channel; email and website have none. */
 export const CAPTION_LIMITS: Record<string, number> = { x: 280, whatsapp: 1024, facebook: 2000, instagram: 2200, tiktok: 2200, linkedin: 3000, youtube: 5000 };
-
-// Invisible characters (zero-width, bidi marks, joiners, variation selectors …) and the generic combining
-// accents and enclosing marks (keycaps), none of which a reader sees as splitting a word or a number.
-const HIDDEN = /[\p{Default_Ignorable_Code_Point}̀-ͯ᪰-᫿᷀-᷿⃐-⃿︠-︯]/gu;
-const tidy = (s: string) => s.normalize('NFKD').replace(HIDDEN, '').normalize('NFC');
-
-/** ASCII digits for every Unicode decimal digit (Devanagari, Arabic-Indic, fullwidth …). */
-export function asciiDigits(s: string): string {
-  return tidy(s).replace(/\p{Nd}/gu, (c) => {
-    let cp = c.codePointAt(0)!;
-    const at = cp;
-    // Digit sets are runs of ten in order, some of them adjacent, so the offset from the run's start mod 10 is the digit.
-    while (cp > 0 && /\p{Nd}/u.test(String.fromCodePoint(cp - 1))) cp--;
-    return String((at - cp) % 10);
-  });
-}
 
 /** "1,500.50" is "1500.5"; compared as text, so no two numbers share a form (Number() makes NaN, Infinity, rounding). */
 function canonical(n: string): string {
@@ -38,17 +23,16 @@ function canonical(n: string): string {
 
 /** Number tokens: digit runs with optional , or . separators, or a space before a group of three ("18 000"). */
 export function numbersIn(s: string): string[] {
-  return (asciiDigits(s).match(/\d+(?:[,.]\d+| \d{3}(?!\d))*/g) ?? []).map(canonical);
+  return (foldText(s).match(/\d+(?:[,.]\d+| \d{3}(?!\d))*/g) ?? []).map(canonical);
 }
 
 const flat = (v: unknown): string => (typeof v === 'string' ? v : JSON.stringify(v) ?? '');
 
-const strip = (s: string) => tidy(s).toLowerCase().replace(/\s+/g, ' ').trim();
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-/** Whole-word, case-insensitive; separators and zero-width characters cannot hide a word. */
+/** Whole-word, in the comparison form (foldText), so no invisible, look-alike or width trick can hide a word. */
 export function containsWord(text: string, word: string): boolean {
-  const w = strip(word);
-  return !!w && new RegExp(`(?<![\\p{L}\\p{N}\\p{M}_])${escapeRe(w)}(?![\\p{L}\\p{N}\\p{M}_])`, 'u').test(strip(text));
+  const w = foldText(word);
+  return !!w && new RegExp(`${WORD_START}${escapeRe(w)}${WORD_END}`, 'u').test(foldText(text));
 }
 
 /** The prohibited words and claims of the voice and positioning facts. */
@@ -102,7 +86,7 @@ export function checkDraft(i: {
       if (!allowed.has(n)) add('unverified_number', true, where, `${n} is not in any approved fact this draft cites`);
 
   // A hashtag runs words together ("PashminaGuaranteed"), so there the word is looked for anywhere in it.
-  const runTogether = (s: string) => strip(s).replace(/[\s_]+/g, '');
+  const runTogether = (s: string) => foldText(s).replace(/[\s_]+/g, '');
   const inTags = (tags: string, w: string) => !!runTogether(w) && tags.split(' ').some((t) => runTogether(t).includes(runTogether(w)));
   for (const [where, text] of texts)
     for (const w of i.prohibited)

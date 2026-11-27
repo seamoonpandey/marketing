@@ -26,5 +26,8 @@ describe('diffText', () => {
     expect(diffText('Classic shawl\nRs 5,000', 'Classic shawl\nRs 4,500')).toEqual({ changed: true, blocks: [{ before: 'Rs 5,000', after: 'Rs 4,500' }] });
     expect(diffText('Butter cookies Rs 350 a box', 'Butter cookies Rs 300 a box').changed).toBe(true);
     expect(diffText('रु ५,०००', 'रु ४,५००').changed).toBe(true);
+    // Digits of any script, as Studio reads them: Arabic-Indic and full-width.
+    expect(diffText('Rs ٥,٠٠٠', 'Rs ٤,٥٠٠').changed).toBe(true);
+    expect(diffText('Rs ５,０００', 'Rs ４,５００').changed).toBe(true);
   });
 });

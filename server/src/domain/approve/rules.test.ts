@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { payloadHash, payloadOf, type Payload } from './hash.ts';
 import { riskOf } from './risk.ts';
-import { approvalState, expiryOf, type Approval } from './state.ts';
+import { approvalState, expiryOf, noteLength, type Approval } from './state.ts';
 import type { ReadyDraft } from './studio.ts';
 
 const ID = '0196f3c2-0000-7000-8000-0000000000d1';
@@ -124,6 +124,13 @@ describe('riskOf', () => {
     for (const t of ['Results guаranteed', 'Сure for colds', 'A rіsk-free trial', 'GUΑRANTEED']) expect(r(t).risk, t).toBe('high');
     expect(r('Fresh stock', { industry: 'Рharmacy' }).risk).toBe('high');
     expect(r('thе bеst shawl').risk).toBe('medium');
+  });
+
+  it('cannot be slipped past with tricks fixed in Studio: combining accents, control characters, other scripts\' digits', () => {
+    for (const t of ['Results guarante\u0301ed', 'Herbal cu\u0300re', 'guar\u0001anteed']) expect(r(t).risk, t).toBe('high');
+    for (const t of ['No. १ in Thamel', 'Nepal\'s #١ shawl']) expect(r(t).risk, t).toBe('medium');
+    expect(noteLength(`ok${'\u0001'.repeat(30)}`)).toBe(2);
+    expect(noteLength(`a${'\u0301'.repeat(30)}`)).toBe(1);
   });
 
   it('is medium for a price, a percentage, a comparison word or a comparison or offer pillar', () => {
