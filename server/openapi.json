@@ -5001,6 +5001,913 @@
           }
         },
         "description": "Every change makes a new version (origin owner), clears the renders of the new version and sets a ready draft back to draft. Claims citing no approved fact move to leftOut."
+      },
+      "PublishSummary": {
+        "type": "object",
+        "properties": {
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kathmandu",
+            "description": "The brand's IANA timezone; every time on screen is shown in it and names it. UTC when the brand's timezone is not valid."
+          },
+          "now": {
+            "type": "string",
+            "example": "2026-12-01T04:15:00.000Z",
+            "description": "ISO 8601 timestamp, UTC"
+          },
+          "hasChannels": {
+            "type": "boolean"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/PublishCounts"
+          },
+          "manualNow": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishJob"
+            },
+            "description": "awaiting_manual: post these by hand now. Earliest first."
+          },
+          "attention": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishJob"
+            },
+            "description": "blocked, unknown and failed, each with its error and actions. Earliest first, at most 50."
+          },
+          "upcoming": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishJob"
+            },
+            "description": "scheduled or publishing in the next seven days. Earliest first."
+          },
+          "published": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishJob"
+            },
+            "description": "The last ten published, newest first."
+          }
+        },
+        "required": [
+          "timezone",
+          "now",
+          "hasChannels",
+          "counts",
+          "manualNow",
+          "attention",
+          "upcoming",
+          "published"
+        ]
+      },
+      "PublishCounts": {
+        "type": "object",
+        "properties": {
+          "scheduled": {
+            "type": "integer"
+          },
+          "publishing": {
+            "type": "integer"
+          },
+          "awaiting_manual": {
+            "type": "integer"
+          },
+          "published": {
+            "type": "integer"
+          },
+          "unknown": {
+            "type": "integer"
+          },
+          "blocked": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "cancelled": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scheduled",
+          "publishing",
+          "awaiting_manual",
+          "published",
+          "unknown",
+          "blocked",
+          "failed",
+          "cancelled"
+        ]
+      },
+      "PublishJob": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "draftId": {
+            "type": "string"
+          },
+          "draftVersion": {
+            "type": "integer"
+          },
+          "payloadHash": {
+            "type": "string"
+          },
+          "channelId": {
+            "type": "string"
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublishJobChannel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when the channel was removed."
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The draft's kind (post, static, carousel, video); null when Studio no longer has the draft."
+          },
+          "excerpt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The start of the draft's first caption, up to 140 characters."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "example": "2026-12-01T04:15:00.000Z",
+            "description": "ISO 8601 timestamp, UTC"
+          },
+          "dueAt": {
+            "type": "string",
+            "example": "2026-12-01T04:15:00.000Z",
+            "description": "When it is next sent: the retry time after a rate limit or server error, else scheduledAt."
+          },
+          "state": {
+            "$ref": "#/components/schemas/PublishJobState"
+          },
+          "attempts": {
+            "type": "integer"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it is blocked, failed or unknown, in plain words."
+          },
+          "retryable": {
+            "type": "boolean"
+          },
+          "externalId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "externalUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The post's link once published."
+          },
+          "publishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-12-01T04:15:00.000Z",
+            "description": "ISO 8601 timestamp, UTC"
+          },
+          "manual": {
+            "type": "boolean",
+            "description": "Posted by hand and confirmed by the owner."
+          },
+          "actions": {
+            "$ref": "#/components/schemas/PublishJobActions"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-12-01T04:15:00.000Z",
+            "description": "ISO 8601 timestamp, UTC"
+          }
+        },
+        "required": [
+          "id",
+          "draftId",
+          "draftVersion",
+          "payloadHash",
+          "channelId",
+          "channel",
+          "kind",
+          "excerpt",
+          "scheduledAt",
+          "dueAt",
+          "state",
+          "attempts",
+          "error",
+          "retryable",
+          "externalId",
+          "externalUrl",
+          "publishedAt",
+          "manual",
+          "actions",
+          "createdAt"
+        ]
+      },
+      "PublishJobChannel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/PublishPlatform"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "api"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/PublishChannelStatus"
+          }
+        },
+        "required": [
+          "id",
+          "platform",
+          "accountName",
+          "mode",
+          "status"
+        ]
+      },
+      "PublishPlatform": {
+        "type": "string",
+        "enum": [
+          "facebook",
+          "instagram",
+          "tiktok",
+          "youtube",
+          "linkedin",
+          "x",
+          "whatsapp",
+          "email",
+          "website"
+        ]
+      },
+      "PublishChannelStatus": {
+        "type": "string",
+        "enum": [
+          "connected",
+          "needs_reconnect",
+          "disabled"
+        ]
+      },
+      "PublishJobState": {
+        "type": "string",
+        "enum": [
+          "scheduled",
+          "publishing",
+          "awaiting_manual",
+          "published",
+          "unknown",
+          "blocked",
+          "failed",
+          "cancelled"
+        ],
+        "description": "scheduled: waiting for its time. publishing: a send is in flight. awaiting_manual: post it by hand now and confirm. published: sent, with its link. unknown: the send timed out; nothing is retried until it is resolved. blocked: the approval or the channel said no at send time, or it missed its time by over 24 hours. failed: sending failed (see retryable). cancelled: stopped by the owner."
+      },
+      "PublishJobActions": {
+        "type": "object",
+        "properties": {
+          "cancel": {
+            "type": "boolean"
+          },
+          "reschedule": {
+            "type": "boolean"
+          },
+          "retry": {
+            "type": "boolean"
+          },
+          "confirmManual": {
+            "type": "boolean"
+          },
+          "resolveUnknown": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cancel",
+          "reschedule",
+          "retry",
+          "confirmManual",
+          "resolveUnknown"
+        ],
+        "description": "What the job's state allows now. Show only these actions."
+      },
+      "PublishChannel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/PublishPlatform"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "api"
+            ],
+            "description": "manual: the owner posts by hand at the scheduled time. Every channel is manual this sprint."
+          },
+          "connector": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "mock"
+            ]
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "accountUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/PublishChannelStatus"
+          },
+          "lastVerifiedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-12-01T04:15:00.000Z",
+            "description": "ISO 8601 timestamp, UTC"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-12-01T04:15:00.000Z",
+            "description": "ISO 8601 timestamp, UTC"
+          }
+        },
+        "required": [
+          "id",
+          "platform",
+          "mode",
+          "connector",
+          "accountName",
+          "accountUrl",
+          "status",
+          "lastVerifiedAt",
+          "createdAt"
+        ]
+      },
+      "PublishChannelCreate": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "$ref": "#/components/schemas/PublishPlatform"
+          },
+          "accountName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "accountUrl": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "An http or https URL.",
+            "example": "https://www.instagram.com/brand"
+          }
+        },
+        "required": [
+          "platform",
+          "accountName"
+        ],
+        "description": "Creates a manual channel. One per platform and account name (409)."
+      },
+      "PublishChannelPatch": {
+        "type": "object",
+        "properties": {
+          "accountName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "accountUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000,
+            "description": "An http or https URL.",
+            "example": "https://www.instagram.com/brand"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "connected",
+              "disabled"
+            ],
+            "description": "connected also reconnects a channel that needs it. Jobs of a channel that is not connected at send time are blocked."
+          }
+        }
+      },
+      "PublishCapability": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "$ref": "#/components/schemas/PublishPlatform"
+          },
+          "textLimit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Characters, counting the caption, call to action and hashtags; null for none."
+          },
+          "ratios": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Accepted image shapes, preferred first."
+          },
+          "maxMedia": {
+            "type": "integer"
+          },
+          "lastVerified": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "False until the values are checked against the platform. Show \"not yet verified\"."
+          },
+          "manualFallback": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "platform",
+          "textLimit",
+          "ratios",
+          "maxMedia",
+          "lastVerified",
+          "verified",
+          "manualFallback"
+        ]
+      },
+      "PublishSchedulable": {
+        "type": "object",
+        "properties": {
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kathmandu",
+            "description": "The brand's IANA timezone; every time on screen is shown in it and names it. UTC when the brand's timezone is not valid."
+          },
+          "settings": {
+            "$ref": "#/components/schemas/PublishSettings"
+          },
+          "drafts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishSchedulableDraft"
+            },
+            "description": "Ready drafts with a valid approval, by planned day."
+          }
+        },
+        "required": [
+          "timezone",
+          "settings",
+          "drafts"
+        ]
+      },
+      "PublishSettings": {
+        "type": "object",
+        "properties": {
+          "windowStart": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23
+          },
+          "windowEnd": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 24
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Sends tried on server errors and rate limits before the job fails."
+          }
+        },
+        "required": [
+          "windowStart",
+          "windowEnd",
+          "maxAttempts"
+        ],
+        "description": "A post may be scheduled from windowStart:00 up to, not including, windowEnd:00 in the brand's timezone. windowStart is before windowEnd."
+      },
+      "PublishSchedulableDraft": {
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "day": {
+            "type": "string",
+            "description": "The planned day, YYYY-MM-DD."
+          },
+          "plannedChannel": {
+            "type": "string"
+          },
+          "excerpt": {
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Presigned URL of the first image, or null."
+          },
+          "approvalExpiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-12-01T04:15:00.000Z",
+            "description": "ISO 8601 timestamp, UTC"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishSchedulableChannel"
+            },
+            "description": "Every channel of the brand."
+          }
+        },
+        "required": [
+          "draftId",
+          "version",
+          "kind",
+          "day",
+          "plannedChannel",
+          "excerpt",
+          "thumbnailUrl",
+          "approvalExpiresAt",
+          "channels"
+        ]
+      },
+      "PublishSchedulableChannel": {
+        "type": "object",
+        "properties": {
+          "channelId": {
+            "type": "string"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/PublishPlatform"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PublishChannelStatus"
+          },
+          "fits": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why this draft cannot go to this channel: not connected, too long, no image in an accepted shape, too many images, or already scheduled there."
+          }
+        },
+        "required": [
+          "channelId",
+          "platform",
+          "accountName",
+          "status",
+          "fits",
+          "reason"
+        ]
+      },
+      "PublishJobList": {
+        "type": "object",
+        "properties": {
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kathmandu",
+            "description": "The brand's IANA timezone; every time on screen is shown in it and names it. UTC when the brand's timezone is not valid."
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishJob"
+            },
+            "description": "By scheduledAt, earliest first."
+          }
+        },
+        "required": [
+          "timezone",
+          "jobs"
+        ]
+      },
+      "PublishJobCreate": {
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string"
+          },
+          "channelId": {
+            "type": "string"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "example": "2026-12-01T10:00:00+05:45",
+            "description": "ISO 8601 with an offset. A time with no offset is refused. A numeric offset must be the brand timezone's offset at that moment, which refuses a wall-clock time that does not exist (a daylight-saving gap); Z (UTC) is always accepted."
+          }
+        },
+        "required": [
+          "draftId",
+          "channelId",
+          "scheduledAt"
+        ],
+        "description": "One job per channel: post once per channel to schedule a draft to several. Refused with 400 for a time with no offset, in the past or outside the publishing window; 409 when the draft has no valid approval or it expires before that time, the channel is not connected, the draft does not fit the platform, or the draft already has an active job on that channel."
+      },
+      "PublishJobDetail": {
+        "type": "object",
+        "properties": {
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kathmandu",
+            "description": "The brand's IANA timezone; every time on screen is shown in it and names it. UTC when the brand's timezone is not valid."
+          },
+          "job": {
+            "$ref": "#/components/schemas/PublishJob"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishHistoryEvent"
+            },
+            "description": "Newest first."
+          },
+          "package": {
+            "$ref": "#/components/schemas/PublishPackage"
+          }
+        },
+        "required": [
+          "timezone",
+          "job",
+          "history",
+          "package"
+        ]
+      },
+      "PublishHistoryEvent": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "example": "2026-12-01T04:15:00.000Z",
+            "description": "ISO 8601 timestamp, UTC"
+          },
+          "action": {
+            "type": "string",
+            "example": "publish.job.blocked"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "denied",
+              "failed"
+            ]
+          },
+          "from": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublishJobState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "to": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublishJobState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "at",
+          "action",
+          "result",
+          "from",
+          "to",
+          "note"
+        ]
+      },
+      "PublishPackage": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "description": "False when the approval no longer matches what was scheduled, or the draft is gone: then nothing is shown to post."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ratio": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The shape the media are in, chosen for the channel's platform."
+          },
+          "captions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishPackageCaption"
+            },
+            "description": "One per language."
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishPackageMedia"
+            },
+            "description": "In posting order."
+          }
+        },
+        "required": [
+          "available",
+          "reason",
+          "ratio",
+          "captions",
+          "media"
+        ]
+      },
+      "PublishPackageCaption": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "caption": {
+            "type": "string",
+            "description": "The caption, without the call to action or hashtags."
+          },
+          "cta": {
+            "type": "string"
+          },
+          "hashtags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "With the leading #."
+          }
+        },
+        "required": [
+          "language",
+          "caption",
+          "cta",
+          "hashtags"
+        ]
+      },
+      "PublishPackageMedia": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "ratio": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video"
+            ]
+          },
+          "width": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "description": "Presigned download URL, valid for about 15 minutes."
+          }
+        },
+        "required": [
+          "index",
+          "ratio",
+          "kind",
+          "width",
+          "height",
+          "filename",
+          "url"
+        ]
+      },
+      "PublishReschedule": {
+        "type": "object",
+        "properties": {
+          "scheduledAt": {
+            "type": "string",
+            "example": "2026-12-01T10:00:00+05:45",
+            "description": "ISO 8601 with an offset. A time with no offset is refused. A numeric offset must be the brand timezone's offset at that moment, which refuses a wall-clock time that does not exist (a daylight-saving gap); Z (UTC) is always accepted."
+          }
+        },
+        "required": [
+          "scheduledAt"
+        ],
+        "description": "The same checks as scheduling, approval included."
+      },
+      "PublishConfirmManual": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "The post's http or https link."
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "description": "From awaiting_manual (or failed, posted by hand instead): sets published. A second confirmation is refused with 409 and changes nothing."
+      },
+      "PublishResolveUnknown": {
+        "type": "object",
+        "properties": {
+          "posted": {
+            "type": "boolean"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Required when posted is true."
+          }
+        },
+        "required": [
+          "posted"
+        ],
+        "description": "posted true: published with this link. posted false: sent again now, with the same idempotency key so the platform cannot post it twice."
       }
     },
     "parameters": {}
@@ -10215,6 +11122,961 @@
             }
           },
           "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/summary": {
+      "get": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/channels": {
+      "get": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "By platform, then account name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublishChannel"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishChannelCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishChannel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/channels/{id}": {
+      "patch": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishChannelPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishChannel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/capabilities": {
+      "get": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublishCapability"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/schedulable": {
+      "get": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishSchedulable"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/jobs": {
+      "get": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "ISO 8601 with an offset; default now. Jobs with scheduledAt at or after it."
+            },
+            "required": false,
+            "description": "ISO 8601 with an offset; default now. Jobs with scheduledAt at or after it.",
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "ISO 8601 with an offset; default from + 7 days. Jobs with scheduledAt before it. At most 62 days after from."
+            },
+            "required": false,
+            "description": "ISO 8601 with an offset; default from + 7 days. Jobs with scheduledAt before it. At most 62 days after from.",
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/PublishJobState"
+            },
+            "required": false,
+            "description": "scheduled: waiting for its time. publishing: a send is in flight. awaiting_manual: post it by hand now and confirm. published: sent, with its link. unknown: the send timed out; nothing is retried until it is resolved. blocked: the approval or the channel said no at send time, or it missed its time by over 24 hours. failed: sending failed (see retryable). cancelled: stopped by the owner.",
+            "name": "state",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishJobList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishJobCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Scheduled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/jobs/{id}": {
+      "get": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishJobDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/jobs/{id}/cancel": {
+      "post": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishJob"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/jobs/{id}/reschedule": {
+      "post": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishReschedule"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/jobs/{id}/retry": {
+      "post": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scheduled to send within a minute",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishJob"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/jobs/{id}/confirm-manual": {
+      "post": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishConfirmManual"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/jobs/{id}/resolve-unknown": {
+      "post": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishResolveUnknown"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/publish/settings": {
+      "get": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishSettings"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "publish"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
