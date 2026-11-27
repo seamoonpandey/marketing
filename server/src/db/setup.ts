@@ -37,3 +37,4 @@ grant execute on function tenant_month_cost_npr() to ${APP_ROLE};
 
 /** Everything Drizzle cannot express. Runs after every schema change. */
 export const POST_SCHEMA_SQL = GRANTS_SQL + FUNCTIONS_SQL;
+

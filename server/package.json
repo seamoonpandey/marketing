@@ -16,7 +16,9 @@
     "openapi:check": "node scripts/openapi.ts --check",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env src/db/migrate.ts",
-    "seed": "node --env-file-if-exists=.env src/db/seed.ts"
+    "db:reset": "node --env-file-if-exists=.env scripts/db-reset.ts",
+    "seed": "node --env-file-if-exists=.env src/db/seed.ts",
+    "e2e:server": "node scripts/e2e-server.ts"
   },
   "packageManager": "pnpm@12.11.2",
   "dependencies": {
