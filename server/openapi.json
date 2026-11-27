@@ -3932,6 +3932,1075 @@
         "required": [
           "plan"
         ]
+      },
+      "StudioOverview": {
+        "type": "object",
+        "properties": {
+          "weekStart": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "example": "2026-11-29",
+            "description": "A calendar date, YYYY-MM-DD"
+          },
+          "planApproved": {
+            "type": "boolean",
+            "description": "False when the week has no approved plan: items is then empty and the screen links to the Plan calendar."
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioOverviewItem"
+            },
+            "description": "The approved plan items, by day then position."
+          },
+          "ready": {
+            "$ref": "#/components/schemas/StudioReady"
+          },
+          "latestRun": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudioRun"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The newest generate run that touched one of these items, so a screen can resume RunProgress."
+          },
+          "monthCost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudioMoney"
+              },
+              {
+                "description": "This month's (UTC) AI spend on Studio."
+              }
+            ]
+          }
+        },
+        "required": [
+          "weekStart",
+          "planApproved",
+          "items",
+          "ready",
+          "latestRun",
+          "monthCost"
+        ]
+      },
+      "StudioOverviewItem": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "$ref": "#/components/schemas/StudioPlanItem"
+          },
+          "draft": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudioDraftCard"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null until drafted."
+          }
+        },
+        "required": [
+          "item",
+          "draft"
+        ]
+      },
+      "StudioPlanItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "day": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "example": "2026-11-29",
+            "description": "A calendar date, YYYY-MM-DD"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "facebook",
+              "instagram",
+              "tiktok",
+              "youtube",
+              "linkedin",
+              "x",
+              "whatsapp",
+              "email",
+              "website"
+            ]
+          },
+          "format": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "text",
+                  "image",
+                  "carousel",
+                  "infographic",
+                  "poll",
+                  "story",
+                  "short_video",
+                  "long_video",
+                  "live",
+                  "gif",
+                  "blog",
+                  "email",
+                  "landing_page",
+                  "podcast",
+                  "case_study"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "idea": {
+            "type": "string"
+          },
+          "cta": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/StudioKind"
+          }
+        },
+        "required": [
+          "id",
+          "day",
+          "channel",
+          "format",
+          "idea",
+          "cta",
+          "kind"
+        ]
+      },
+      "StudioKind": {
+        "type": "string",
+        "enum": [
+          "post",
+          "static",
+          "carousel",
+          "video"
+        ],
+        "description": "The kind of draft this item gets."
+      },
+      "StudioDraftCard": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudioKind"
+              },
+              {
+                "description": "post: copy only. static: one image. carousel: 2 to 10 slides. video: a script and a rendered video."
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/StudioDraftStatus"
+          },
+          "currentVersion": {
+            "type": "integer"
+          },
+          "blockingCount": {
+            "type": "integer",
+            "description": "Blocking findings today; a draft with 0 can be marked ready."
+          },
+          "thumbnailUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "First rendered image, or null before the first render."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "currentVersion",
+          "blockingCount",
+          "thumbnailUrl"
+        ]
+      },
+      "StudioDraftStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "ready"
+        ]
+      },
+      "StudioReady": {
+        "type": "object",
+        "properties": {
+          "facts": {
+            "type": "boolean",
+            "description": "The brand has an approved fact. Drafting needs it."
+          }
+        },
+        "required": [
+          "facts"
+        ]
+      },
+      "StudioRun": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "generate",
+              "render"
+            ]
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Plan item ids (generate) or the draft id (render)."
+          },
+          "state": {
+            "$ref": "#/components/schemas/StudioRunState"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "On a failed run its reason. A completed render run can carry a plain note, such as the video engine being unavailable while the images were kept."
+          },
+          "startedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-11-27T06:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-11-27T06:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "estimate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudioMoney"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "actual": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudioMoney"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "counts": {
+            "$ref": "#/components/schemas/StudioRunCounts"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-27T06:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "targets",
+          "state",
+          "error",
+          "startedAt",
+          "finishedAt",
+          "estimate",
+          "actual",
+          "counts",
+          "createdAt"
+        ]
+      },
+      "StudioRunState": {
+        "type": "string",
+        "enum": [
+          "running",
+          "awaiting_approval",
+          "completed",
+          "failed_retryable",
+          "failed_final",
+          "cancelled"
+        ]
+      },
+      "StudioMoney": {
+        "type": "object",
+        "properties": {
+          "usd": {
+            "type": "string"
+          },
+          "npr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "usd",
+          "npr"
+        ],
+        "description": "Decimal strings: usd to 4 places, npr to 2."
+      },
+      "StudioRunCounts": {
+        "type": "object",
+        "properties": {
+          "drafted": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "rendered": {
+            "type": "integer"
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "planItemId": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "planItemId",
+                "message"
+              ]
+            },
+            "description": "Items whose model call failed; retry redoes only these."
+          },
+          "missingLanguages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "planItemId": {
+                  "type": "string"
+                },
+                "languages": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "planItemId",
+                "languages"
+              ]
+            },
+            "description": "Brand languages the model returned no copy for; the draft is still stored."
+          }
+        }
+      },
+      "StudioTemplateList": {
+        "type": "object",
+        "properties": {
+          "templates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "$ref": "#/components/schemas/StudioTemplate"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "label",
+                "description"
+              ]
+            }
+          },
+          "ratios": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ratio": {
+                  "$ref": "#/components/schemas/StudioRatio"
+                },
+                "width": {
+                  "type": "integer"
+                },
+                "height": {
+                  "type": "integer"
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ratio",
+                "width",
+                "height",
+                "label"
+              ]
+            }
+          }
+        },
+        "required": [
+          "templates",
+          "ratios"
+        ]
+      },
+      "StudioTemplate": {
+        "type": "string",
+        "enum": [
+          "headline",
+          "offer",
+          "quote"
+        ]
+      },
+      "StudioRatio": {
+        "type": "string",
+        "enum": [
+          "1:1",
+          "4:5",
+          "9:16",
+          "16:9"
+        ]
+      },
+      "StudioEstimate": {
+        "type": "object",
+        "properties": {
+          "estimate": {
+            "$ref": "#/components/schemas/StudioMoney"
+          },
+          "remaining": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudioMoney"
+              },
+              {
+                "description": "What the tenant may still spend this month."
+              }
+            ]
+          },
+          "count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "estimate",
+          "remaining",
+          "count"
+        ],
+        "description": "The most the copy for these items can cost. Show it before starting. Rendering costs NPR 0."
+      },
+      "StudioDraftCreate": {
+        "type": "object",
+        "properties": {
+          "planItemIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "planItemIds"
+        ],
+        "description": "Items of this brand whose week is approved and that have no draft yet. Another brand, an unapproved week or an item that already has a draft is refused (404, 409)."
+      },
+      "StudioDraftView": {
+        "type": "object",
+        "properties": {
+          "draft": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "planItemId": {
+                "type": "string"
+              },
+              "kind": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/StudioKind"
+                  },
+                  {
+                    "description": "post: copy only. static: one image. carousel: 2 to 10 slides. video: a script and a rendered video."
+                  }
+                ]
+              },
+              "status": {
+                "$ref": "#/components/schemas/StudioDraftStatus"
+              },
+              "currentVersion": {
+                "type": "integer"
+              },
+              "readyVersion": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "readyAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "2026-11-27T06:00:00.000Z",
+                "description": "ISO 8601 timestamp"
+              },
+              "createdAt": {
+                "type": "string",
+                "example": "2026-11-27T06:00:00.000Z",
+                "description": "ISO 8601 timestamp"
+              }
+            },
+            "required": [
+              "id",
+              "planItemId",
+              "kind",
+              "status",
+              "currentVersion",
+              "readyVersion",
+              "readyAt",
+              "createdAt"
+            ]
+          },
+          "version": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer"
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "model",
+                  "owner"
+                ]
+              },
+              "createdAt": {
+                "type": "string",
+                "example": "2026-11-27T06:00:00.000Z",
+                "description": "ISO 8601 timestamp"
+              }
+            },
+            "required": [
+              "version",
+              "origin",
+              "createdAt"
+            ]
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "integer"
+                },
+                "origin": {
+                  "type": "string",
+                  "enum": [
+                    "model",
+                    "owner"
+                  ]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "example": "2026-11-27T06:00:00.000Z",
+                  "description": "ISO 8601 timestamp"
+                }
+              },
+              "required": [
+                "version",
+                "origin",
+                "createdAt"
+              ]
+            },
+            "description": "Newest first."
+          },
+          "planItem": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudioPlanItem"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when the plan item was deleted; the draft stays readable."
+          },
+          "planApproved": {
+            "type": "boolean",
+            "description": "False when the item was deleted or its week went back to draft: the draft is stale, readable, and cannot be regenerated."
+          },
+          "channel": {
+            "type": "string"
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The brand languages."
+          },
+          "missingLanguages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Brand languages with no copy in this version."
+          },
+          "content": {
+            "$ref": "#/components/schemas/StudioContent"
+          },
+          "leftOut": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioLeftOut"
+            },
+            "description": "Claims removed for lack of an approved fact."
+          },
+          "facts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioFactRef"
+            }
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioFinding"
+            },
+            "description": "Blocking first. Computed on every read against today's facts and rights."
+          },
+          "blockingCount": {
+            "type": "integer"
+          },
+          "renders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioRender"
+            },
+            "description": "Of the current version only."
+          },
+          "canMarkReady": {
+            "type": "boolean"
+          },
+          "cannotMarkReadyReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "latestRun": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudioRun"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The newest run of this draft (its generate run or a render run)."
+          }
+        },
+        "required": [
+          "draft",
+          "version",
+          "versions",
+          "planItem",
+          "planApproved",
+          "channel",
+          "languages",
+          "missingLanguages",
+          "content",
+          "leftOut",
+          "facts",
+          "findings",
+          "blockingCount",
+          "renders",
+          "canMarkReady",
+          "cannotMarkReadyReason",
+          "latestRun"
+        ]
+      },
+      "StudioContent": {
+        "type": "object",
+        "properties": {
+          "copies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioCopy"
+            }
+          },
+          "slides": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioSlideText"
+            },
+            "description": "static and carousel drafts. Empty for others."
+          },
+          "scenes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioScene"
+            },
+            "description": "video drafts. Empty for others."
+          },
+          "template": {
+            "$ref": "#/components/schemas/StudioTemplate"
+          },
+          "ratios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioRatio"
+            }
+          }
+        },
+        "required": [
+          "copies",
+          "slides",
+          "scenes",
+          "template",
+          "ratios"
+        ]
+      },
+      "StudioCopy": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "description": "One of the brand languages."
+          },
+          "sentences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioSentence"
+            },
+            "maxItems": 30,
+            "description": "The caption is these joined with spaces."
+          },
+          "hashtags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "maxItems": 30,
+            "default": [],
+            "description": "Without the leading #."
+          },
+          "cta": {
+            "type": "string",
+            "maxLength": 300,
+            "default": ""
+          }
+        },
+        "required": [
+          "language",
+          "sentences"
+        ]
+      },
+      "StudioSentence": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "claim": {
+            "type": "boolean",
+            "description": "A claim is kept only while it cites at least one approved fact."
+          },
+          "factIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "default": []
+          }
+        },
+        "required": [
+          "text",
+          "claim"
+        ]
+      },
+      "StudioSlideText": {
+        "type": "object",
+        "properties": {
+          "headline": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "subline": {
+            "type": "string",
+            "maxLength": 600
+          },
+          "badge": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "photoAssetId": {
+            "type": "string",
+            "description": "An asset of this brand with a licence recorded; any other id is refused with 404."
+          }
+        },
+        "required": [
+          "headline"
+        ]
+      },
+      "StudioScene": {
+        "type": "object",
+        "properties": {
+          "onScreenText": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "voiceover": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "shot": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "seconds": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 15
+          }
+        },
+        "required": [
+          "onScreenText",
+          "voiceover",
+          "shot",
+          "seconds"
+        ],
+        "description": "Each scene becomes one card of the video. There is no voice: voiceover is script text only."
+      },
+      "StudioLeftOut": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "description": "\"no approved fact\" for a claim that cited nothing usable."
+          }
+        },
+        "required": [
+          "language",
+          "text",
+          "reason"
+        ]
+      },
+      "StudioFactRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string"
+          },
+          "subjectName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "field": {
+            "type": "string"
+          },
+          "value": {},
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "section",
+          "subjectName",
+          "field",
+          "unit"
+        ],
+        "description": "An approved fact that the draft cites. A cited id missing from the list is not approved today."
+      },
+      "StudioFinding": {
+        "type": "object",
+        "properties": {
+          "check": {
+            "$ref": "#/components/schemas/StudioCheck"
+          },
+          "blocking": {
+            "type": "boolean"
+          },
+          "where": {
+            "type": "string",
+            "example": "caption en"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "check",
+          "blocking",
+          "where",
+          "message"
+        ]
+      },
+      "StudioCheck": {
+        "type": "string",
+        "enum": [
+          "unverified_number",
+          "prohibited_word",
+          "too_long",
+          "missing_cta",
+          "expired_fact",
+          "no_rights",
+          "text_overflow",
+          "not_rendered",
+          "low_contrast",
+          "many_hashtags"
+        ]
+      },
+      "StudioRender": {
+        "type": "object",
+        "properties": {
+          "ratio": {
+            "$ref": "#/components/schemas/StudioRatio"
+          },
+          "width": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "overflow": {
+            "type": "boolean"
+          },
+          "index": {
+            "type": "integer",
+            "description": "The slide or scene number, from 0. A video is index 0."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "description": "Presigned download URL, valid for about 15 minutes. Images open inline; a video is an attachment."
+          }
+        },
+        "required": [
+          "ratio",
+          "width",
+          "height",
+          "overflow",
+          "index",
+          "type",
+          "url"
+        ]
+      },
+      "StudioContentPatch": {
+        "type": "object",
+        "properties": {
+          "copies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioCopy"
+            },
+            "maxItems": 10,
+            "description": "Replaces the copy of each language listed; languages not listed are kept."
+          },
+          "slides": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioSlideText"
+            },
+            "maxItems": 10
+          },
+          "scenes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioScene"
+            },
+            "maxItems": 10
+          },
+          "template": {
+            "$ref": "#/components/schemas/StudioTemplate"
+          },
+          "ratios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudioRatio"
+            },
+            "minItems": 1,
+            "maxItems": 4
+          },
+          "baseVersion": {
+            "type": "integer",
+            "description": "The version the editor started from; a different current version answers 409 so an edit never overwrites a newer one."
+          }
+        },
+        "description": "Every change makes a new version (origin owner), clears the renders of the new version and sets a ready draft back to draft. Claims citing no approved fact move to leftOut."
       }
     },
     "parameters": {}
@@ -8475,6 +9544,662 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlanRun"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/studio/overview": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "example": "2026-11-29",
+              "description": "The first day of a brand week. Default: the current week. Another day answers 400."
+            },
+            "required": false,
+            "description": "The first day of a brand week. Default: the current week. Another day answers 400.",
+            "name": "weekStart",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioOverview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/studio/templates": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioTemplateList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/studio/drafts/estimate": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioDraftCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioEstimate"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/studio/drafts": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioDraftCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioRun"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/studio/drafts/{id}": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioDraftView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "studio"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioContentPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The edit is the new current version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioDraftView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/studio/drafts/{id}/render": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Started. Costs NPR 0.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioRun"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/studio/drafts/{id}/ready": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioDraftView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/studio/runs/{id}": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioRun"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/studio/runs/{id}/cancel": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioRun"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/studio/runs/{id}/retry": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioRun"
                 }
               }
             }
