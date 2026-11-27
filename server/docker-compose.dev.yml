@@ -1,0 +1,28 @@
+# Development and test services. One shared project, so every worktree reuses the same containers.
+name: prachaar-dev
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.7-pg18
+    environment:
+      POSTGRES_USER: marketing
+      POSTGRES_PASSWORD: marketing
+      POSTGRES_DB: marketing
+    ports:
+      - "127.0.0.1:5436:5432"
+    volumes:
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "marketing"]
+      interval: 2s
+      retries: 30
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.55
+    # No s3 identities configured: the S3 API accepts any key pair. Dev only.
+    command: server -s3 -dir=/data -ip.bind=0.0.0.0 -volume.max=0
+    ports:
+      - "127.0.0.1:8333:8333"
+    volumes:
+      - seaweedfs:/data
+volumes:
+  postgres:
+  seaweedfs:

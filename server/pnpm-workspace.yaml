@@ -1,0 +1,6 @@
+# server is its own project (not part of a workspace); this file only holds pnpm settings
+minimumReleaseAgeExclude:
+  - hono@4.13.23
+allowBuilds:
+  esbuild: true
+  sharp: true
