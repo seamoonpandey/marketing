@@ -38,12 +38,14 @@ export async function remainingMonthlyCap(tx: Tx): Promise<Money> {
   const { rows } = await tx.execute<{ npr: string }>(
     sql`select greatest(0, ${config.AI_MONTHLY_CAP_NPR}::numeric - tenant_month_cost_npr())::numeric(14,2)::text as npr`,
   );
-  const npr = rows[0]!.npr;
-  // usd = npr / rate, both at 2 decimals; scale to 4 decimals and round half up.
-  const n = units(npr, 2) * 10n ** 4n;
+  return nprMoney(rows[0]!.npr);
+}
+
+/** An NPR amount with its USD value at USD_NPR, rounded half up to 4 decimals. */
+function nprMoney(npr: string): Money {
   const rate = units(config.USD_NPR, 2);
-  const usd = (2n * n + rate) / (2n * rate);
-  return { npr, usd: format(usd, 4, 4) };
+  const usd = (2n * units(npr, 2) * 10n ** 4n + rate) / (2n * rate);
+  return { npr: format(units(npr, 2), 2, 2), usd: format(usd, 4, 4) };
 }
 
 export type CostRecord = {
@@ -75,4 +77,32 @@ export async function recordCost(tx: Tx, c: CostRecord): Promise<Money> {
     costNpr: format(npr14, 14, 2),
   });
   return { usd: format(usd12, 12, 4), npr: format(npr14, 14, 2) };
+}
+
+/** This month's (UTC) AI spend of one brand: the total, the tenant's cap and what is left, and one row per run. */
+export async function brandCosts(tx: Tx, brandId: string) {
+  const { rows } = await tx.execute<{
+    run_type: string; run_id: string; calls: number; failed: number; input: number; output: number;
+    usd: string; npr: string; last_at: Date;
+  }>(sql`
+    select run_type, run_id, count(*)::int as calls, (count(*) filter (where not ok))::int as failed,
+      sum(input_tokens)::int as input, sum(output_tokens)::int as output,
+      round(sum(cost_usd), 4)::text as usd, sum(cost_npr)::text as npr, max(created_at) as last_at
+    from cost_events
+    where brand_id = ${brandId} and created_at >= date_trunc('month', now(), 'UTC')
+    group by run_type, run_id
+    order by max(created_at) desc`);
+  const sum = (key: 'usd' | 'npr', scale: number, places: number) =>
+    format(rows.reduce((t, r) => t + units(r[key], scale), 0n), scale, places);
+  return {
+    month: new Date().toISOString().slice(0, 7),
+    total: { usd: sum('usd', 4, 4), npr: sum('npr', 2, 2) },
+    cap: nprMoney(config.AI_MONTHLY_CAP_NPR),
+    remaining: await remainingMonthlyCap(tx),
+    runs: rows.map((r) => ({
+      runType: r.run_type, runId: r.run_id, calls: r.calls, failedCalls: r.failed,
+      inputTokens: r.input, outputTokens: r.output, cost: { usd: r.usd, npr: r.npr },
+      lastAt: new Date(r.last_at).toISOString(),
+    })),
+  };
 }

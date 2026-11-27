@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import { auditEvents } from '../../db/schema/core.ts';
 import type { Tx } from '../../db/tenant.ts';
 
@@ -81,3 +81,22 @@ export async function audit(tx: Tx, e: AuditInput): Promise<void> {
   await tx.insert(auditEvents).values({ ...row, result: e.result, hash: auditHash(row) });
 }
 
+
+/** A brand's audit trail, newest first: its own events and the tenant-level events about it (creation, denials). */
+export async function listAudit(tx: Tx, brandId: string, limit = 200) {
+  return tx
+    .select({
+      id: auditEvents.id, actor: auditEvents.actor, action: auditEvents.action, objectType: auditEvents.objectType,
+      objectId: auditEvents.objectId, objectVersion: auditEvents.objectVersion, result: auditEvents.result,
+      reason: auditEvents.reason, createdAt: auditEvents.createdAt,
+    })
+    .from(auditEvents)
+    .where(
+      or(
+        eq(auditEvents.brandId, brandId),
+        and(isNull(auditEvents.brandId), eq(auditEvents.objectType, 'brand'), eq(auditEvents.objectId, brandId)),
+      ),
+    )
+    .orderBy(desc(auditEvents.seq))
+    .limit(limit);
+}
