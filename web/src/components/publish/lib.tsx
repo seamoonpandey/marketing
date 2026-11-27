@@ -26,6 +26,9 @@ export const useCapabilities = (b: string) =>
 export const useSchedulable = (b: string) =>
   useQuery({ queryKey: [...root(b), 'schedulable'], queryFn: () => unwrap(api.GET('/api/brands/{brandId}/publish/schedulable', { params: p(b) })) });
 
+export const useSettings = (b: string) =>
+  useQuery({ queryKey: [...root(b), 'settings'], queryFn: () => unwrap(api.GET('/api/brands/{brandId}/publish/settings', { params: p(b) })) });
+
 export const useJobs = (b: string, from: string, to: string, enabled: boolean) =>
   useQuery({
     queryKey: [...root(b), 'jobs', from, to],

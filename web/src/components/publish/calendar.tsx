@@ -123,7 +123,7 @@ function DraftCard({ brandId, d, s }: { brandId: string; d: Draft; s: Schedulabl
                 <input type="checkbox" className="size-4" disabled={!c.fits} checked={picked.has(c.channelId)} onChange={() => toggle(c.channelId)} aria-describedby={c.fits ? undefined : `${id}-${c.channelId}`} />
                 {PLATFORM[c.platform]} · {c.accountName}
               </label>
-              {!c.fits ? <p id={`${id}-${c.channelId}`} className="pl-6.5 text-sm text-danger">Does not fit: {c.reason ?? 'not available'}</p> : null}
+              {!c.fits ? <p id={`${id}-${c.channelId}`} className="pl-6.5 text-sm text-danger">Cannot schedule here: {c.reason ?? 'not available'}</p> : null}
             </div>
           )) : <p className="text-sm text-muted">There are no channels yet. <Link href={`/app/b/${brandId}/publish/channels`} className="underline">Add one</Link>.</p>}
         </fieldset>

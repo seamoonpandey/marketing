@@ -81,6 +81,13 @@ async function stub(page: Page, init: Partial<World> = {}) {
       return send(c, 201);
     }
     if (path === '/publish/capabilities') return send(caps);
+    if (path === '/publish/settings' && m === 'GET') return send(w.schedulable.settings);
+    if (path === '/publish/settings' && m === 'PUT') {
+      const b = w.bodies[key];
+      if (b.windowStart >= b.windowEnd) return err(400, 'bad_request', 'The publishing window must start before it ends');
+      w.schedulable.settings = b;
+      return send(b);
+    }
     if (path === '/publish/schedulable') return send(w.schedulable);
     if (path === '/publish/jobs' && m === 'GET') return send({ timezone: TZ, jobs: w.jobs });
     if (path === '/publish/jobs' && m === 'POST') {
@@ -171,7 +178,7 @@ test.describe('calendar', () => {
     const card = page.getByRole('listitem').filter({ hasText: 'Hand-woven in Patan' }).last();
     // the misfit channel is disabled and says why, before anything is submitted
     await expect(card.getByLabel(/X · @himal_x/)).toBeDisabled();
-    await expect(card).toContainText('Does not fit: the caption is 412 characters and X takes 280');
+    await expect(card).toContainText('Cannot schedule here: the caption is 412 characters and X takes 280');
     await expect(card.getByRole('button', { name: /^Schedule to/ })).toBeDisabled();
     await card.getByLabel(/Instagram · @himal/).check();
     await card.getByLabel(/Facebook · Himal Pashmina/).check();
@@ -325,5 +332,33 @@ test.describe('channels', () => {
     await stub(page, { channels: [] });
     await page.goto(`/app/b/${B}/publish/channels`);
     await expect(page.locator('[data-state="empty"]')).toContainText('No channels yet');
+  });
+});
+
+test.describe('settings', () => {
+  test('the hours are shown and saved for the brand timezone, and the dashboard links here', async ({ page }) => {
+    const w = await stub(page);
+    await page.goto(`/app/b/${B}/publish`);
+    await page.getByRole('link', { name: 'Settings', exact: true }).first().click();
+    await expect(page).toHaveURL(/\/publish\/settings$/);
+    await expect(page.getByRole('group', { name: new RegExp(`Hours when posts may go out.*${TZ}`) })).toBeVisible();
+    await expect(page.getByLabel('From')).toHaveValue('7');
+    await expect(page.getByLabel('Until')).toHaveValue('21');
+    await expect(page.getByLabel('Attempts before a send fails')).toHaveValue('3');
+    await page.getByLabel('From').selectOption('0');
+    await page.getByLabel('Until').selectOption('24');
+    await page.getByLabel('Attempts before a send fails').fill('5');
+    await page.getByRole('button', { name: 'Save settings' }).click();
+    await expect(page.getByRole('status')).toContainText('Saved.');
+    expect(w.bodies['PUT /publish/settings']).toEqual({ windowStart: 0, windowEnd: 24, maxAttempts: 5 });
+  });
+
+  test('hours that end before they start cannot be saved', async ({ page }) => {
+    await stub(page);
+    await page.goto(`/app/b/${B}/publish/settings`);
+    await page.getByLabel('From').selectOption('20');
+    await page.getByLabel('Until').selectOption('8');
+    await expect(page.getByText('The hours must start before they end.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Save settings' })).toBeDisabled();
   });
 });

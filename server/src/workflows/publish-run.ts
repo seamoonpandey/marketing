@@ -22,7 +22,7 @@ const everyMinute = DBOS.registerWorkflow(
   async (scheduledAt: Date): Promise<void> => {
     void scheduledAt; // the real time decides what is due, so a late or replayed tick sends nothing early
     for (const j of await DBOS.runStep(() => dueJobs(new Date()), { name: 'due' })) {
-      await DBOS.runStep(async () => void (await startSend(j)), { name: `start:${j.jobId}` });
+      await startSend(j); // a workflow cannot be started from inside a step; here it becomes a recorded child run
     }
   },
   { name: 'publishEveryMinute' },
