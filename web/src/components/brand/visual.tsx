@@ -24,7 +24,7 @@ export function VisualScreen() {
           {(b) => {
             const logos = b.assets.filter((a) => a.kind === 'logo');
             const fonts = b.assets.filter((a) => a.kind === 'font');
-            const fontFacts = (b.sections.find((s) => s.key === 'visual')?.facts ?? []).filter((f) => /font|typeface/i.test(f.field));
+            const fontFacts = (b.sections.find((s) => s.key === 'visual')?.facts ?? []).filter((f) => f.field === 'fonts');
             return (
               <>
                 <section aria-labelledby="v-logos" className="grid gap-3">

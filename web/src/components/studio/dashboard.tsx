@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CircleAlert, FileText, ImageOff, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Async, CostConfirm, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId, WeekNav } from '@/components/app';
 import { api, unwrap, type Money } from '@/lib/api/client';
 import { cancelRun, fetchRun, retryRun, runKey, useAct, useOverview, type Overview, type OverviewItem } from './lib';
@@ -126,7 +126,8 @@ function GenerateRun({ brandId, runId, onSettled }: { brandId: string; runId: st
   const key = runKey(brandId, runId);
   const run = useQuery({ queryKey: key, queryFn: () => fetchRun(brandId, runId) });
   const state = run.data?.state;
-  useEffect(() => { if (state && state !== 'running' && state !== 'awaiting_approval') onSettled(); }, [state, onSettled]);
+  const settle = useEffectEvent(onSettled);
+  useEffect(() => { if (state && state !== 'running' && state !== 'awaiting_approval') settle(); }, [state]);
   const c = run.data?.counts;
   return (
     <div className="grid gap-2">

@@ -8,6 +8,7 @@ export type Run = { state: RunState; error?: string | null };
 
 /** States that wait for nobody but the owner, so polling stops. */
 const SETTLED: RunState[] = ['completed', 'failed_retryable', 'failed_final', 'cancelled'];
+const POLL_MS = 3000;
 
 type Props<R extends Run> = {
   queryKey: readonly unknown[];
@@ -24,7 +25,16 @@ export function RunProgress<R extends Run>({ queryKey, fetchRun, onCancel, onRet
   const run = useQuery({
     queryKey,
     queryFn: fetchRun,
-    refetchInterval: (q) => (q.state.data && SETTLED.includes(q.state.data.state) ? false : 3000),
+    // The interval is the only retry: a failed poll is just one tick lost, not the end of polling.
+    // It keeps ticking in a tab that is not in front and while the browser thinks it is offline (those
+    // pauses once left a finished run on "Running"), and a tab coming back or reconnecting asks at once.
+    retry: false,
+    staleTime: 0,
+    refetchInterval: (q) => (q.state.data && SETTLED.includes(q.state.data.state) ? false : POLL_MS),
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
+    networkMode: 'always',
   });
   const refresh = () => client.invalidateQueries({ queryKey });
   const cancel = useMutation({ mutationFn: () => onCancel!(), onSettled: refresh });

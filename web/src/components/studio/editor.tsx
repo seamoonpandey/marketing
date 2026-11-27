@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CircleAlert, CircleCheck, Film, ImageIcon, Info, Plus, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useEffect, useRef, useState, type MutableRefObject } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type MutableRefObject } from 'react';
 import { Async, BackLink, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { Preview } from './preview';
@@ -111,8 +111,9 @@ function Screen({ brandId, v }: { brandId: string; v: DraftView }) {
         {renderRun ? <RenderRun brandId={brandId} id={renderRun} onSettled={() => setRenderRun(null)} /> : null}
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-        <div className="lg:sticky lg:top-4">
+      <div className="grid items-start gap-6 lg:grid-cols-2 xl:grid-cols-[minmax(0,6fr)_minmax(0,5fr)]">
+        {/* The previews are the wider column, so a post can be judged by its picture; a tall set scrolls on its own beside the form. */}
+        <div role="group" aria-label="Preview" tabIndex={0} className="lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto">
           <Preview view={v} />
         </div>
         <div className="grid min-w-0 gap-6">
@@ -125,15 +126,32 @@ function Screen({ brandId, v }: { brandId: string; v: DraftView }) {
   );
 }
 
+/** How long the "Rendering completed" strip stays before it goes by itself. */
+const DISMISS_MS = 8000;
+
 function RenderRun({ brandId, id, onSettled }: { brandId: string; id: string; onSettled: () => void }) {
   const key = runKey(brandId, id);
   const run = useQuery({ queryKey: key, queryFn: () => fetchRun(brandId, id) });
   const state = run.data?.state;
   const settled = !!state && state !== 'running' && state !== 'awaiting_approval';
+  // A clean finish needs nothing from the owner, so its strip leaves by itself (a failure or a note stays until dismissed).
+  const clean = state === 'completed' && !run.data?.error;
+  const [held, setHeld] = useState(false);
   const client = useQueryClient();
+  const dismiss = useEffectEvent(onSettled);
   useEffect(() => { if (settled) client.invalidateQueries({ queryKey: ['studio', brandId] }); }, [settled, client, brandId]);
+  // Hovering or focusing the strip holds it, so it never goes while it is being read or used.
+  useEffect(() => {
+    if (!clean || held) return;
+    const t = setTimeout(dismiss, DISMISS_MS);
+    return () => clearTimeout(t);
+  }, [clean, held]);
   return (
-    <div className="grid gap-2">
+    <div
+      className="grid gap-2"
+      onMouseEnter={() => setHeld(true)} onMouseLeave={() => setHeld(false)}
+      onFocus={() => setHeld(true)} onBlur={() => setHeld(false)}
+    >
       <RunProgress queryKey={key} fetchRun={() => fetchRun(brandId, id)} onCancel={() => cancelRun(brandId, id)} onRetry={() => retryRun(brandId, id)} label="Rendering" />
       {state === 'completed' && run.data?.error ? <StateBlock state="partial" size="inline" title="Rendered with a note">{run.data.error}</StateBlock> : null}
       {settled ? <button type="button" className="btn btn-quiet justify-self-start" onClick={onSettled}>Dismiss</button> : null}
