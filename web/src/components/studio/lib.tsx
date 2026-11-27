@@ -2,14 +2,12 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAct as useBrandAct } from '@/components/app';
-import { api, ApiError, unwrap, type Money, type Schemas } from '@/lib/api/client';
+import { api, hasStatus, unwrap, type Money, type Schemas } from '@/lib/api/client';
 
 export type Overview = Schemas['StudioOverview'];
 export type OverviewItem = Schemas['StudioOverviewItem'];
 export type DraftView = Schemas['StudioDraftView'];
 export type Run = Schemas['StudioRun'];
-export type Content = Schemas['StudioContent'];
-export type Kind = Schemas['StudioKind'];
 export type Ratio = Schemas['StudioRatio'];
 export type Template = Schemas['StudioTemplate'];
 export type Asset = Schemas['Asset'];
@@ -38,7 +36,7 @@ export const useDraft = (b: string, id: string) =>
   useQuery({
     queryKey: [...root(b), 'draft', id],
     queryFn: () => unwrap(api.GET('/api/brands/{brandId}/studio/drafts/{id}', { params: { path: { brandId: b, id } } })),
-    retry: (n, e) => !(e instanceof ApiError && e.status === 404) && n < 2,
+    retry: (n, e) => !hasStatus(e, 404) && n < 2,
   });
 
 export const useTemplates = (b: string) =>

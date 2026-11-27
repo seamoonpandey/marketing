@@ -7,7 +7,6 @@ import { label } from '@/lib/labels';
 
 export type Week = Schemas['PlanWeekView'];
 export type Item = Schemas['PlanItem'];
-export type Violation = Schemas['PlanViolation'];
 export type Settings = Schemas['PlanSettings'];
 export type Campaign = Schemas['PlanCampaign'];
 export type Run = Schemas['PlanRun'];

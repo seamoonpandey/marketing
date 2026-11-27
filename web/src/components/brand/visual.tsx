@@ -34,7 +34,6 @@ export function VisualScreen() {
                       {logos.map((l) => (
                         <li key={l.id} className="panel grid gap-2 p-3">
                           <div className="grid h-36 place-items-center rounded-md bg-[color-mix(in_oklab,var(--theme-ink)_6%,transparent)] p-3">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={l.source.downloadUrl} alt={`${l.variant ?? 'Logo'}`} className="max-h-full max-w-full object-contain" />
                           </div>
                           <div className="flex items-center justify-between gap-2 text-sm">

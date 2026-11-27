@@ -197,7 +197,7 @@ How the base implements them (helpers beyond the signatures above):
 
 ## 5. Shared web components (`components/app/`)
 
-The base branch builds these. Both modules use them and do not restyle them.
+The base branch builds these. Every module uses them and none restyles them; no module imports another module's folder.
 
 | Component | Use |
 |---|---|
@@ -208,6 +208,11 @@ The base branch builds these. Both modules use them and do not restyle them.
 | `SourceQuote` | A quote with its source link or file and page |
 | `CostConfirm` | Shows an estimate and the remaining monthly cap, and asks for confirmation |
 | `RunProgress` | Polls a run every 3 seconds and shows its state, with cancel and retry |
+| `Async`, `MutationError` | A query's loading, error and stale states, and a failed write; `what` is a noun without its article |
+| `useAct` | A write that refreshes the module's cached queries for the brand |
+| `ModuleTabs`, `BackLink`, `WeekNav` | A module's sub-page tabs, the way up from a detail page, previous, this and next week |
+| `Time` | An instant in the brand's timezone with the zone named; pure date, week and money helpers are in `lib/time.ts` and `lib/money.ts`, names for codes in `lib/labels.ts` |
+| `CopyButton`, `LiveStatus` | Copy text and say so; a polite announcement for a change that is only shown by a list or badge moving |
 
 Colours come from `web/public/theme.css` tokens through Tailwind names in `app.css`. No hex values in components. Type is Geist plus Noto Sans Devanagari.
 

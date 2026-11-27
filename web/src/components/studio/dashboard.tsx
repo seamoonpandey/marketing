@@ -182,7 +182,6 @@ function Thumb({ url, drafted, textOnly, alt }: { url: string | null; drafted: b
   return (
     <div className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-md bg-surface text-muted">
       {url ? (
-        // eslint-disable-next-line @next/next/no-img-element -- presigned storage URL; its size is not known here
         <img src={url} alt={alt} className="size-full object-contain" />
       ) : (
         <span className="grid place-items-center gap-1 px-2 text-center text-xs"><ImageOff className="size-5" aria-hidden />{textOnly ? 'Text only' : drafted ? 'Not rendered' : 'No draft'}</span>

@@ -418,7 +418,6 @@ function PhotoPick({ brandId, label, value, onChange }: { brandId: string; label
               return (
                 <li key={a.id} className="flex items-center gap-2.5 rounded-md border border-line p-2">
                   {isImage(a) ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- presigned storage URL
                     <img src={a.source.downloadUrl} alt="" className="size-12 shrink-0 rounded object-cover" />
                   ) : null}
                   <div className="grid min-w-0 flex-1 gap-0.5 text-sm">

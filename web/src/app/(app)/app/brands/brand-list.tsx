@@ -2,8 +2,7 @@
 
 import { ArrowRight, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { PageHeader, StateBlock, StatusBadge, Time, useBrands } from '@/components/app';
-import { ApiError } from '@/lib/api/client';
+import { PageHeader, StateBlock, StatusBadge, Time, useBrands, viewStateOf } from '@/components/app';
 
 export function BrandList() {
   const brands = useBrands();
@@ -24,7 +23,7 @@ export function BrandList() {
       {brands.isPending ? <StateBlock state="loading" rows={4} title="Loading brands" /> : null}
       {brands.isError ? (
         <StateBlock
-          state={brands.error instanceof ApiError && brands.error.code === 'rate_limited' ? 'rate_limited' : 'error'}
+          state={viewStateOf(brands.error)}
           title="The brands could not be loaded"
           action={
             <button type="button" className="btn btn-secondary" onClick={() => brands.refetch()} disabled={brands.isFetching}>

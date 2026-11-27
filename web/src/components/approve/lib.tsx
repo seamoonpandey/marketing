@@ -7,9 +7,8 @@ import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { formatYmd } from '@/lib/time';
 
 export type State = Schemas['ApproveState'];
-export type Risk = Schemas['ApproveRisk'];
+type Risk = Schemas['ApproveRisk'];
 export type QueueItem = Schemas['ApproveQueueItem'];
-export type Decision = Schemas['ApproveDecision'];
 export type Preview = Schemas['ApprovePreview'];
 
 export const NOTE_MIN = 20;

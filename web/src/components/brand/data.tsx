@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 
 export type Fact = Schemas['Fact'];
@@ -49,11 +49,6 @@ export function putFacts(client: QueryClient, brandId: string, next: Fact[]) {
     (old ?? []).map((f) => next.find((n) => n.id === f.id || n.supersedesId === f.id) ?? f),
   );
   void client.invalidateQueries({ queryKey: ['kb', brandId], predicate: (q) => q.queryKey[2] !== 'facts' });
-}
-
-export function useRefresh(brandId: string) {
-  const client = useQueryClient();
-  return () => refreshAll(client, brandId);
 }
 
 /** A fact value as plain text (for labels and accessible names). */

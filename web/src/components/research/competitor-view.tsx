@@ -4,7 +4,7 @@ import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Async, BackLink, PageHeader, SourceQuote, StateBlock, useBrandId } from '@/components/app';
-import { ApiError } from '@/lib/api/client';
+import { hasStatus } from '@/lib/api/client';
 import { BattlecardSection } from './battlecard';
 import { useCompetitors, useObservations, useProfile } from './lib';
 import { ObservationCard } from './observation-card';
@@ -76,7 +76,7 @@ function Profile({ brandId, competitorId }: { brandId: string; competitorId: str
   return (
     <section aria-labelledby="prof-h" className="grid gap-3">
       <h2 id="prof-h" className="text-xl font-semibold">Profile</h2>
-      {q.isError && q.error instanceof ApiError && q.error.status === 404 ? (
+      {q.isError && hasStatus(q.error, 404) ? (
         <StateBlock state="empty" size="inline" title="No profile yet">The baseline run reads the watched pages and writes it.</StateBlock>
       ) : (
         <Async q={q} what="profile">

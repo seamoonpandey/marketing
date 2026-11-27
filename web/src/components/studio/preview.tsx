@@ -52,7 +52,6 @@ export function Preview({ view }: { view: DraftView }) {
         {images.map((r) => (
           <li key={r.index}>
             <figure className="grid gap-1.5">
-              {/* eslint-disable-next-line @next/next/no-img-element -- presigned storage URL; shown at the file's own ratio */}
               <img
                 src={r.url}
                 width={r.width}

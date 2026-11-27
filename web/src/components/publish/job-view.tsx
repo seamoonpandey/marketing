@@ -1,7 +1,6 @@
 'use client';
 
 import { Download, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Async, BackLink, CopyButton, MutationError, PageHeader, StateBlock, Time, useBrandId } from '@/components/app';
@@ -111,7 +110,6 @@ function PackageView({ d }: { d: Detail }) {
                     {m.kind === 'video' ? (
                       <video src={m.url} controls preload="metadata" aria-label={`Video ${m.index + 1}, ${m.ratio}`} className="max-h-72 w-auto max-w-full" style={{ aspectRatio: `${m.width} / ${m.height}` }} />
                     ) : (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={m.url} alt={`Image ${m.index + 1} of the post, ${m.ratio}`} width={m.width} height={m.height} className="max-h-72 w-auto max-w-full object-contain" />
                     )}
                   </div>

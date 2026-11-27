@@ -2,12 +2,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAct as useBrandAct } from '@/components/app';
-import { api, unwrap, type Money, type Schemas } from '@/lib/api/client';
+import { api, unwrap, type Schemas } from '@/lib/api/client';
 
 export type Observation = Schemas['Observation'];
-export type Competitor = Schemas['Competitor'];
-// The contract types estimate and actual as `Money & (object | null)`, which no Money satisfies; this is what the API sends.
-export type Run = Omit<Schemas['WatchRun'], 'estimate' | 'actual'> & { estimate: Money | null; actual: Money | null };
+export type Run = Schemas['WatchRun'];
 
 const root = (brandId: string) => ['research', brandId] as const;
 const p = (brandId: string) => ({ path: { brandId } });
@@ -34,12 +32,12 @@ export const useRuns = (b: string) =>
   useQuery({
     queryKey: [...root(b), 'runs'],
     queryFn: async () =>
-      ((await unwrap(api.GET('/api/brands/{brandId}/research/runs', { params: p(b) }))) as unknown as Run[]).sort((x, y) => y.createdAt.localeCompare(x.createdAt)),
+      (await unwrap(api.GET('/api/brands/{brandId}/research/runs', { params: p(b) }))).sort((x, y) => y.createdAt.localeCompare(x.createdAt)),
   });
 
 export const runKey = (b: string, id: string) => [...root(b), 'run', id] as const;
 export const fetchRun = async (b: string, id: string) =>
-  (await unwrap(api.GET('/api/brands/{brandId}/research/runs/{id}', { params: { path: { brandId: b, id } } }))) as unknown as Run;
+  unwrap(api.GET('/api/brands/{brandId}/research/runs/{id}', { params: { path: { brandId: b, id } } }));
 
 export const useSchedule = (b: string) =>
   useQuery({ queryKey: [...root(b), 'schedule'], queryFn: () => unwrap(api.GET('/api/brands/{brandId}/research/schedule', { params: p(b) })) });

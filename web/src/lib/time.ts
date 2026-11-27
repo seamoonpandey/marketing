@@ -4,7 +4,7 @@
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** The zone if the runtime knows it, else UTC (a brand with a bad zone name must still render). */
-export function safeTz(tz: string): string {
+function safeTz(tz: string): string {
   try {
     new Intl.DateTimeFormat('en-GB', { timeZone: tz });
     return tz;
@@ -16,7 +16,7 @@ export function safeTz(tz: string): string {
 const inZone = (tz: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-GB', { timeZone: safeTz(tz), hourCycle: 'h23', ...o });
 
 /** "Tue 1 Dec", or "Tue 1 Dec 2026" with `year`. */
-export const dayLabel = (iso: string, tz: string, year = false) =>
+const dayLabel = (iso: string, tz: string, year = false) =>
   inZone(tz, { weekday: 'short', day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}) }).format(new Date(iso)).replace(',', '');
 /** "10:00" */
 export const timeLabel = (iso: string, tz: string) => inZone(tz, { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
@@ -55,7 +55,7 @@ export const addDays = (ymd: string, n: number): string => new Date(utc(ymd).get
 /** A calendar date as text; "29 Nov" unless told otherwise. */
 export const formatYmd = (ymd: string, o: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }) => utc(ymd).toLocaleDateString('en-GB', { ...o, timeZone: 'UTC' });
 /** 0 (Sunday) to 6. */
-export const weekdayOf = (ymd: string) => utc(ymd).getUTCDay();
+const weekdayOf = (ymd: string) => utc(ymd).getUTCDay();
 /** The first day of the week (0 = Sunday) on or before the date. */
 export const weekStartOf = (ymd: string, first: number) => addDays(ymd, -((weekdayOf(ymd) - first + 7) % 7));
 /** "29 Nov – 5 Dec 2026" for the week that starts on `start`. */

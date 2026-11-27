@@ -1,7 +1,6 @@
 'use client';
 
 import { Plus, TriangleAlert } from 'lucide-react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Async, MutationError, PageHeader, StateBlock, StatusBadge, Time, useBrandId, WeekNav } from '@/components/app';

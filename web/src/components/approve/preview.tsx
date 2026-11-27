@@ -134,19 +134,22 @@ function Findings({ d }: { d: Draft }) {
 
 // ---- the decision --------------------------------------------------------------------------------
 
-type Sent = Schemas['ApproveApprove'] | Schemas['ApproveReject'];
+type Sent = { to: 'approve'; body: Schemas['ApproveApprove'] } | { to: 'reject'; body: Schemas['ApproveReject'] };
 
 function Decision({ brandId, draftId, p, d, onChanged, onDecided }: { brandId: string; draftId: string; p: Preview; d: Draft; onChanged: (m: string) => void; onDecided: () => void }) {
   const [note, setNote] = useState('');
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
-  const act = useAct(brandId, async (v: { to: 'approve' | 'reject'; body: Sent }): Promise<Preview> =>
-    unwrap(api.POST(`/api/brands/{brandId}/approve/queue/{draftId}/${v.to}`, { params: { path: { brandId, draftId } }, body: v.body as never })) as Promise<Preview>,
-  );
+  const act = useAct(brandId, (v: Sent) => {
+    const params = { params: { path: { brandId, draftId } } };
+    return v.to === 'approve'
+      ? unwrap(api.POST('/api/brands/{brandId}/approve/queue/{draftId}/approve', { ...params, body: v.body }))
+      : unwrap(api.POST('/api/brands/{brandId}/approve/queue/{draftId}/reject', { ...params, body: v.body }));
+  });
   const hash = d.payloadHash;
   const noteOk = !d.noteRequired || note.trim().length >= NOTE_MIN;
-  const send = (to: 'approve' | 'reject', body: Sent) =>
-    act.mutate({ to, body }, {
+  const send = (v: Sent) =>
+    act.mutate(v, {
       onSuccess: () => { setRejecting(false); onDecided(); },
       // Never retried: a refused decision reloads the preview (onSettled) and asks for another look.
       onError: (e) => { if (hasStatus(e, 409)) onChanged(e.code === 'changed' ? 'This draft changed since you opened it.' : `Not done: ${e.message}.`); },
@@ -167,7 +170,7 @@ function Decision({ brandId, draftId, p, d, onChanged, onDecided }: { brandId: s
         {withdrawable && hash ? (
           <div className="grid gap-3 border-t border-line pt-4">
             {rejecting ? (
-              <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); if (reason.trim()) send('reject', { payloadHash: hash, reason: reason.trim() }); }}>
+              <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); if (reason.trim()) send({ to: 'reject', body: { payloadHash: hash, reason: reason.trim() } }); }}>
                 <div className="field">
                   <label className="label" htmlFor="withdraw-reason">Why are you withdrawing it? (required)</label>
                   <textarea id="withdraw-reason" className="input h-auto min-h-20 py-2" maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
@@ -213,7 +216,7 @@ function Decision({ brandId, draftId, p, d, onChanged, onDecided }: { brandId: s
       ) : null}
       <div className="grid gap-2">
         <button type="button" className="btn btn-primary h-11 text-base" disabled={!d.canApprove || !noteOk || act.isPending}
-          onClick={() => send('approve', { payloadHash: hash, ...(d.noteRequired ? { reviewNote: note.trim() } : {}) })}>
+          onClick={() => send({ to: 'approve', body: { payloadHash: hash, ...(d.noteRequired ? { reviewNote: note.trim() } : {}) } })}>
           {label}
         </button>
         {!d.canApprove && d.cannotApproveReason ? <p className="text-sm break-words text-danger">{d.cannotApproveReason}</p> : null}
@@ -223,7 +226,7 @@ function Decision({ brandId, draftId, p, d, onChanged, onDecided }: { brandId: s
       {first ? (
         <div className="grid gap-3 border-t border-line pt-4">
           {rejecting ? (
-            <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); if (reason.trim()) send('reject', { payloadHash: hash, reason: reason.trim() }); }}>
+            <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); if (reason.trim()) send({ to: 'reject', body: { payloadHash: hash, reason: reason.trim() } }); }}>
               <div className="field">
                 <label className="label" htmlFor="reason">Why are you rejecting it? (required)</label>
                 <textarea id="reason" className="input h-auto min-h-20 py-2" maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />

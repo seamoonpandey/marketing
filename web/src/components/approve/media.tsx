@@ -29,7 +29,6 @@ export function Media({ d }: { d: Draft }) {
                       {r.type === 'video' ? (
                         <video src={r.url} controls preload="metadata" width={r.width} height={r.height} aria-label={alt} className="h-auto w-full rounded-md border border-line bg-panel" />
                       ) : (
-                        // eslint-disable-next-line @next/next/no-img-element -- presigned URL at its own size
                         <img src={r.url} alt={alt} width={r.width} height={r.height} className="h-auto w-full rounded-md border border-line bg-panel object-contain" />
                       )}
                       {sorted.length > 1 ? <figcaption className="num text-xs text-muted">Slide {r.index + 1} of {sorted.length}</figcaption> : null}

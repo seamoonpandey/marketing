@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Async, MutationError, PageHeader, StateBlock, useBrandId, WeekNav } from '@/components/app';
-import { api, ApiError, unwrap, type Schemas } from '@/lib/api/client';
+import { api, errorMessage, unwrap, type Schemas } from '@/lib/api/client';
 import { JobBadge, useAct, useJobs, useSchedulable } from './lib';
 import { addDays, dayKey, formatYmd, timeLabel, wallToIso } from '@/lib/time';
 import { label } from '@/lib/labels';
@@ -93,7 +93,7 @@ function DraftCard({ brandId, d, s }: { brandId: string; d: Draft; s: Schedulabl
           await unwrap(api.POST('/api/brands/{brandId}/publish/jobs', { params: { path: { brandId } }, body: { draftId: d.draftId, channelId, scheduledAt: wallToIso(date, time, tz) } }));
           return { id: channelId, ok: true, text: `${name}: scheduled` };
         } catch (e) {
-          return { id: channelId, ok: false, text: `${name}: ${e instanceof ApiError ? e.message : 'could not be scheduled'}` };
+          return { id: channelId, ok: false, text: `${name}: ${errorMessage(e, 'could not be scheduled')}` };
         }
       }),
     );
@@ -104,7 +104,6 @@ function DraftCard({ brandId, d, s }: { brandId: string; d: Draft; s: Schedulabl
   return (
     <li className="panel grid gap-4 p-4 md:grid-cols-[8rem_minmax(0,1fr)]">
       {d.thumbnailUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img src={d.thumbnailUrl} alt={`First image of the ${d.kind} draft`} className="max-h-40 w-auto max-w-32 rounded-md object-contain" />
       ) : (
         <div className="grid h-24 place-items-center rounded-md bg-[color-mix(in_oklab,var(--theme-ink)_6%,transparent)] text-sm text-muted">No image</div>

@@ -165,7 +165,6 @@ function Row({ brandId, item, checked, why, onToggle }: { brandId: string; item:
         ) : <span aria-hidden />}
         <div className="grid h-16 w-20 place-items-center overflow-hidden rounded-md bg-[color-mix(in_oklab,var(--theme-ink)_5%,transparent)]">
           {d?.thumbnailUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- presigned URL, true aspect ratio kept by max sizes
             <img src={d.thumbnailUrl} alt={`Preview of the ${d.kind} for ${d.channel}`} className="h-auto max-h-16 w-auto max-w-20 object-contain" />
           ) : (
             <FileText className="size-5 text-muted" aria-hidden />
