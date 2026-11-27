@@ -134,11 +134,13 @@ export const approvalBlocker = (plan: WeekPlan | null, items: PlanItem[], violat
     : !items.length ? 'The plan has no items'
     : violations.find((v) => v.blocking)?.message ?? null;
 
-export async function approveWeek(tx: Tx, brandId: string, weekStart: string, facts: ApprovedFact[]): Promise<WeekPlan> {
+export async function approveWeek(tx: Tx, brandId: string, weekStart: string, facts: ApprovedFact[], version: number): Promise<WeekPlan> {
   await assertWeekStart(tx, brandId, weekStart);
   // Item changes lock their plan (invalidate), so the items checked below are the items approved.
   await tx.select({ id: weekPlans.id }).from(weekPlans).where(and(eq(weekPlans.brandId, brandId), eq(weekPlans.weekStart, weekStart))).for('update');
   const { plan, items, violations } = await getWeek(tx, brandId, weekStart, facts);
+  // Same lock as the item edits: no draft can land between this check and the approval.
+  if (plan && plan.version !== version) throw new ConflictError('This plan changed since you opened it; look at it again before approving');
   if (plan?.status === 'approved') return plan;
   const blocker = approvalBlocker(plan, items, violations);
   if (blocker) throw new ConflictError(`Cannot approve: ${blocker}`);

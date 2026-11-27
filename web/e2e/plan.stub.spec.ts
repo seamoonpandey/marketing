@@ -58,6 +58,7 @@ async function stub(page: Page, init: Partial<World> = {}) {
     }
     if ((x = path.match(/^\/plan\/weeks\/([\d-]+)\/approve$/))) {
       const v = w.weeks[x[1]!];
+      if (body?.version !== v.plan.version) return send({ error: { code: 'conflict', message: 'This plan changed since you opened it; look at it again before approving' } }, 409);
       v.plan = { ...v.plan, status: 'approved', approvedAt: NOW };
       return send(v);
     }
@@ -84,7 +85,8 @@ async function stub(page: Page, init: Partial<World> = {}) {
     if (path === '/plan/campaigns/c-1/brief' && m === 'PATCH') { w.brief.draft = brief({ id: 'b-2', version: 2, body: body.body, leftOut: [{ section: 'audience', text: 'Everyone in Nepal', reason: 'no approved fact' }] }); return send(w.brief); }
     if (path === '/plan/campaigns/c-1/brief/estimate') return send({ estimate: money('6'), remaining: money('900') });
     if (path === '/plan/campaigns/c-1/brief/generate') { w.brief.draft = brief(); return send(run({ id: 'run-3', kind: 'brief' }), 201); }
-    if (path === '/plan/campaigns/c-1/brief/approve') { w.brief = { ...w.brief, approved: { ...w.brief.draft, status: 'approved', approvedAt: NOW }, draft: null }; return send(w.brief); }
+    if (path === '/plan/campaigns/c-1/brief/approve') {
+      if (body?.version !== w.brief.draft.version) return send({ error: { code: 'conflict', message: 'This brief changed since you opened it; look at it again before approving' } }, 409); w.brief = { ...w.brief, approved: { ...w.brief.draft, status: 'approved', approvedAt: NOW }, draft: null }; return send(w.brief); }
     return send({ error: { code: 'not_stubbed', message: `${m} ${path}` } }, 404);
   });
   return w;
@@ -198,8 +200,26 @@ test('a canApprove week is approved with one click', async ({ page }) => {
   await page.goto(`/app/b/${B}/plan/calendar`);
   await page.getByRole('button', { name: 'Approve week' }).click();
   expect(w.calls).toContain(`POST /plan/weeks/${THIS}/approve`);
+  expect(w.bodies[`POST /plan/weeks/${THIS}/approve`]).toEqual({ version: 1 });
   await expect(page.locator('[data-status="approved"]')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Approve week' })).toBeHidden();
+});
+
+test('a 409 on approve reloads the calendar, says the plan changed, and does not retry', async ({ page }) => {
+  const w = await stub(page, { weeks: { [THIS]: week(THIS, { plan: plan(), items: mondayItems.slice(2), canApprove: true, cannotApproveReason: null }), [NEXT]: week(NEXT) } });
+  await page.goto(`/app/b/${B}/plan/calendar`);
+  await expect(page.getByRole('button', { name: 'Approve week' })).toBeEnabled();
+  await page.waitForLoadState('networkidle');
+  // A newer draft lands after the page loaded.
+  w.weeks[THIS] = week(THIS, { plan: plan({ version: 2 }), items: [item({ id: 'i-9', day: THIS, channel: 'facebook', idea: 'Hand-woven pashmina in Patan' })], canApprove: true, cannotApproveReason: null });
+  const reads = () => w.calls.filter((c: string) => c === `GET /plan/weeks/${THIS}`).length;
+  const before = reads();
+  await page.getByRole('button', { name: 'Approve week' }).click();
+  await expect(page.getByText('Hand-woven pashmina in Patan')).toBeVisible();
+  await expect(page.getByText(/changed since you opened it/).first()).toBeVisible();
+  expect(reads()).toBeGreaterThan(before);
+  expect(w.calls.filter((c: string) => c === `POST /plan/weeks/${THIS}/approve`)).toHaveLength(1);
+  await expect(page.locator('[data-status="approved"]')).toHaveCount(0);
 });
 
 test('editing an item of an approved week puts the week back in draft', async ({ page }) => {

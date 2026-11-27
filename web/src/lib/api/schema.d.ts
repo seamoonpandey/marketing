@@ -3569,7 +3569,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanApprove"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -3578,6 +3582,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["PlanBriefView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
                     };
                 };
                 /** @description Error: `{ error: { code, message } }` */
@@ -3815,7 +3828,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanApprove"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -5080,6 +5097,10 @@ export interface components {
         PlanEstimate: {
             estimate: components["schemas"]["PlanMoney"];
             remaining: components["schemas"]["PlanMoney"] & unknown;
+        };
+        /** @description The version of the draft the owner is looking at. The server approves only when it is still the current draft, else 409. */
+        PlanApprove: {
+            version: number;
         };
         PlanWeekView: {
             /**

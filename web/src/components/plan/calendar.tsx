@@ -51,7 +51,7 @@ function WeekView({ brandId, w, thisWeek }: { brandId: string; w: Week; thisWeek
   const [editing, setEditing] = useState<Editing>(null);
   const [withdrawn, setWithdrawn] = useState(false);
   const campaigns = useCampaigns(brandId);
-  const approve = useAct(brandId, () => unwrap(api.POST('/api/brands/{brandId}/plan/weeks/{weekStart}/approve', { params: { path: { brandId, weekStart: w.weekStart } } })));
+  const approve = useAct(brandId, (version: number) => unwrap(api.POST('/api/brands/{brandId}/plan/weeks/{weekStart}/approve', { params: { path: { brandId, weekStart: w.weekStart } }, body: { version } })));
   const days = Array.from({ length: 7 }, (_, i) => addDays(w.weekStart, i));
   const blocked = new Set(w.violations.filter((v) => v.blocking).flatMap((v) => v.itemIds));
   const flagged = new Set(w.violations.filter((v) => !v.blocking).flatMap((v) => v.itemIds));
@@ -77,7 +77,7 @@ function WeekView({ brandId, w, thisWeek }: { brandId: string; w: Week; thisWeek
             <p id="approve-reason" className={`max-w-[48ch] text-sm ${w.canApprove ? 'text-muted' : 'font-medium'}`}>
               {w.canApprove ? 'Nothing blocks approval.' : reason}
             </p>
-            <button type="button" className="btn btn-primary" disabled={!w.canApprove || approve.isPending} aria-describedby="approve-reason" onClick={() => approve.mutate()}>
+            <button type="button" className="btn btn-primary" disabled={!w.canApprove || approve.isPending} aria-describedby="approve-reason" onClick={() => approve.mutate(w.plan!.version)}>
               {approve.isPending ? 'Approving…' : 'Approve week'}
             </button>
           </div>

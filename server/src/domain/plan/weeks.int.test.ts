@@ -24,7 +24,7 @@ const brandWith = async (channels: { channel: string; postsPerWeek: number }[] =
 const week = (b: string, f = facts, ws = SUN) => withBrand(b, (tx) => getWeek(tx, b, ws, f));
 const approved = async (b: string) => {
   await withBrand(b, (tx) => addItem(tx, b, SUN, full()));
-  return withBrand(b, (tx) => approveWeek(tx, b, SUN, facts));
+  return withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 1));
 };
 
 describe('week plans', () => {
@@ -43,14 +43,22 @@ describe('week plans', () => {
     const w = await week(b);
     expect(w.plan).toMatchObject({ status: 'draft', version: 1 });
     expect(w.violations).toEqual([]);
-    expect((await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts))).status).toBe('approved');
+    expect((await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 1))).status).toBe('approved');
   });
 
   it('refuses approval of an empty plan and of a plan with a blocking violation', async () => {
     const b = await brandWith();
-    await expect(withBrand(b, (tx) => approveWeek(tx, b, SUN, facts))).rejects.toMatchObject({ status: 409 });
+    await expect(withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 1))).rejects.toMatchObject({ status: 409 });
     await withBrand(b, (tx) => addItem(tx, b, SUN, full({ cta: '' })));
-    await expect(withBrand(b, (tx) => approveWeek(tx, b, SUN, facts))).rejects.toThrow(/Missing/);
+    await expect(withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 1))).rejects.toThrow(/Missing/);
+  });
+
+  it('approves only the version the owner saw: a stale version is refused, the current one succeeds', async () => {
+    const b = await brandWith();
+    await withBrand(b, (tx) => addItem(tx, b, SUN, full()));
+    await expect(withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 0))).rejects.toMatchObject({ status: 409, message: expect.stringMatching(/changed since/) });
+    expect((await week(b)).plan!.status).toBe('draft');
+    expect((await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 1))).status).toBe('approved');
   });
 
   it('AT-013: editing the cta of an item in an approved week sets the week to draft and audits it', async () => {
@@ -69,7 +77,7 @@ describe('week plans', () => {
     await approved(b);
     const added = await withBrand(b, (tx) => addItem(tx, b, SUN, full({ day: '2026-11-30', idea: 'Second' })));
     expect((await week(b)).plan!.status).toBe('draft');
-    await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts));
+    await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 1));
     await withBrand(b, (tx) => removeItem(tx, b, added.id));
     expect((await week(b)).plan!.status).toBe('draft');
   });
@@ -79,17 +87,17 @@ describe('week plans', () => {
     await withBrand(b, (tx) => addItem(tx, b, SUN, full({ factIds: [F1, F2] })));
     const only1 = [fact(F1)];
     expect((await week(b, only1)).violations.map((v) => v.rule)).toContain('unknown_fact');
-    await expect(withBrand(b, (tx) => approveWeek(tx, b, SUN, only1))).rejects.toThrow(/not approved today/);
+    await expect(withBrand(b, (tx) => approveWeek(tx, b, SUN, only1, 1))).rejects.toThrow(/not approved today/);
     const [item] = (await week(b, only1)).items;
     await withBrand(b, (tx) => editItem(tx, b, item!.id, { factIds: [F1] }));
-    expect((await withBrand(b, (tx) => approveWeek(tx, b, SUN, only1))).status).toBe('approved');
+    expect((await withBrand(b, (tx) => approveWeek(tx, b, SUN, only1, 1))).status).toBe('approved');
   });
 
   it('uses the approved plans of the four weeks before for repeat_idea', async () => {
     const b = await brandWith();
     const prev = '2026-11-15';
     await withBrand(b, (tx) => addItem(tx, b, prev, full({ day: prev, idea: 'Shawl story' })));
-    await withBrand(b, (tx) => approveWeek(tx, b, prev, facts));
+    await withBrand(b, (tx) => approveWeek(tx, b, prev, facts, 1));
     await withBrand(b, (tx) => addItem(tx, b, SUN, full({ idea: 'shawl STORY' })));
     expect((await week(b)).violations.map((v) => v.rule)).toEqual(['repeat_idea']);
   });
@@ -113,7 +121,7 @@ describe('week plans', () => {
   it('an item edit made while an approval commits ends that approval', async () => {
     const b = await brandWith();
     const item = await withBrand(b, (tx) => addItem(tx, b, SUN, full()));
-    const approving = held(b, (tx) => approveWeek(tx, b, SUN, facts));
+    const approving = held(b, (tx) => approveWeek(tx, b, SUN, facts, 1));
     await approving.at;
     const editing = withBrand(b, (tx) => editItem(tx, b, item.id, { cta: '' }));
     await settle();
@@ -130,7 +138,7 @@ describe('week plans', () => {
     const item = await withBrand(b, (tx) => addItem(tx, b, SUN, full()));
     const editing = held(b, (tx) => editItem(tx, b, item.id, { cta: '' }));
     await editing.at;
-    const approving = withBrand(b, (tx) => approveWeek(tx, b, SUN, facts)).catch((e: unknown) => e);
+    const approving = withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 1)).catch((e: unknown) => e);
     await settle();
     editing.release();
     await editing.done;

@@ -147,10 +147,14 @@ export async function editBrief(tx: Tx, brandId: string, campaignId: string, edi
   return row;
 }
 
-export async function approveBrief(tx: Tx, brandId: string, campaignId: string): Promise<Brief> {
+export async function approveBrief(tx: Tx, brandId: string, campaignId: string, facts: ApprovedFact[], version: number): Promise<Brief> {
   await lockCampaign(tx, brandId, campaignId);
   const { draft } = await currentBrief(tx, brandId, campaignId);
   if (!draft) throw new ConflictError('There is no draft to approve; generate or edit one first');
+  if (draft.version !== version) throw new ConflictError('This brief changed since you opened it; look at it again before approving');
+  // An approval cannot outlive its facts: the same rule as an edit, against today's facts.
+  const { leftOut } = buildBrief({ draft: draft.body as BriefBody, facts });
+  if (leftOut.length) throw new ConflictError(`Cannot approve: ${leftOut.length} statement${leftOut.length === 1 ? ' cites' : 's cite'} facts that are no longer approved; edit the brief to fix them`);
   await tx.update(campaignBriefs).set({ status: 'replaced' })
     .where(and(eq(campaignBriefs.brandId, brandId), eq(campaignBriefs.campaignId, campaignId), eq(campaignBriefs.status, 'approved')));
   const [row] = await tx.update(campaignBriefs).set({ status: 'approved', approvedAt: new Date() }).where(eq(campaignBriefs.id, draft.id)).returning();

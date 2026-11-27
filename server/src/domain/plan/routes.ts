@@ -144,12 +144,14 @@ export const routes = createRouter()
     },
   )
   .openapi(
-    createRoute({ method: 'post', path: `${P}/campaigns/{id}/brief/approve`, tags, request: { params: BrandItemParams }, responses: { 200: json(C.BriefView), 404: E, 409: E } }),
+    createRoute({ method: 'post', path: `${P}/campaigns/{id}/brief/approve`, tags, request: { params: BrandItemParams, ...body(C.ApproveBody) }, responses: { 200: json(C.BriefView), 400: E, 404: E, 409: E } }),
     async (c) => {
       const { brandId, id } = c.req.valid('param');
+      const { version } = c.req.valid('json');
       const view = await withBrand(brandId, async (tx) => {
-        await approveBrief(tx, brandId, id);
-        return briefView(tx, brandId, id, await approvedFacts(tx, brandId));
+        const f = await approvedFacts(tx, brandId);
+        await approveBrief(tx, brandId, id, f, version);
+        return briefView(tx, brandId, id, f);
       });
       return c.json(toBriefView(view), 200);
     },
@@ -177,12 +179,13 @@ export const routes = createRouter()
     },
   )
   .openapi(
-    createRoute({ method: 'post', path: `${P}/weeks/{weekStart}/approve`, tags, request: { params: WeekParams }, responses: { 200: json(C.WeekView), 400: E, 404: E, 409: E } }),
+    createRoute({ method: 'post', path: `${P}/weeks/{weekStart}/approve`, tags, request: { params: WeekParams, ...body(C.ApproveBody) }, responses: { 200: json(C.WeekView), 400: E, 404: E, 409: E } }),
     async (c) => {
       const { brandId, weekStart } = c.req.valid('param');
+      const { version } = c.req.valid('json');
       const view = await withBrand(brandId, async (tx) => {
         const f = await approvedFacts(tx, brandId);
-        await approveWeek(tx, brandId, weekStart, f);
+        await approveWeek(tx, brandId, weekStart, f, version);
         return weekView(tx, brandId, weekStart, f);
       });
       return c.json(toWeekView(view), 200);

@@ -69,7 +69,7 @@ describe('briefs', () => {
     const c = await newCampaign(brand);
     await withBrand(brand, async (tx) => {
       await editBrief(tx, brand, c.id, body({ audience: [{ text: 'Gift buyers', factIds: [F1] }] }), facts);
-      await approveBrief(tx, brand, c.id);
+      await approveBrief(tx, brand, c.id, facts, 1);
     });
     expect((await withBrand(brand, (tx) => currentBrief(tx, brand, c.id))).approved).not.toBeNull();
 
@@ -91,7 +91,7 @@ describe('briefs', () => {
     const at = new Promise<void>((r) => (reached = r));
     const gate = new Promise<void>((r) => (release = r));
     const approving = withBrand(brand, async (tx) => {
-      await approveBrief(tx, brand, c.id);
+      await approveBrief(tx, brand, c.id, facts, 1);
       reached();
       await gate;
     });
@@ -121,12 +121,29 @@ describe('briefs', () => {
     const c = await newCampaign(brand);
     const edited = await withBrand(brand, (tx) => editBrief(tx, brand, c.id, body({ offer_message: [{ text: 'Half price', factIds: ['nope'] }] }), facts));
     expect(edited.leftOut).toHaveLength(1);
-    await withBrand(brand, (tx) => approveBrief(tx, brand, c.id));
+    await withBrand(brand, (tx) => approveBrief(tx, brand, c.id, facts, 1));
     mockAi.queue({ audience: [{ text: 'New', factIds: [F1] }] });
     await storeBrief(brand, c.id, (await draftBrief(brand, c.id, c.id, facts)).draft, facts);
-    await withBrand(brand, (tx) => approveBrief(tx, brand, c.id));
+    await withBrand(brand, (tx) => approveBrief(tx, brand, c.id, facts, 2));
     const rows = await t.adminQuery(`select status from campaign_briefs where campaign_id = $1 order by version`, [c.id]);
     expect(rows.map((r) => r.status)).toEqual(['replaced', 'approved']);
-    await expect(withBrand(brand, (tx) => approveBrief(tx, brand, c.id))).rejects.toMatchObject({ status: 409 });
+    await expect(withBrand(brand, (tx) => approveBrief(tx, brand, c.id, facts, 2))).rejects.toMatchObject({ status: 409 });
+  });
+
+  it('approves only the version the owner saw: a stale version is refused, the current one succeeds', async () => {
+    const brand = await t.makeBrand();
+    const c = await newCampaign(brand);
+    await withBrand(brand, (tx) => editBrief(tx, brand, c.id, body({ audience: [{ text: 'Gift buyers', factIds: [F1] }] }), facts));
+    await expect(withBrand(brand, (tx) => approveBrief(tx, brand, c.id, facts, 0))).rejects.toMatchObject({ status: 409, message: expect.stringMatching(/changed since/) });
+    expect((await withBrand(brand, (tx) => approveBrief(tx, brand, c.id, facts, 1))).status).toBe('approved');
+  });
+
+  it('cannot approve a brief whose statements cite a fact that is no longer approved', async () => {
+    const brand = await t.makeBrand();
+    const c = await newCampaign(brand);
+    await withBrand(brand, (tx) => editBrief(tx, brand, c.id, body({ audience: [{ text: 'Gift buyers', factIds: [F1] }], offer_message: [{ text: 'Free shipping', factIds: [F1] }] }), facts));
+    const without = facts.filter((f) => f.id !== F1);
+    await expect(withBrand(brand, (tx) => approveBrief(tx, brand, c.id, without, 1))).rejects.toMatchObject({ status: 409, message: expect.stringMatching(/2 statements.*no longer approved/) });
+    expect((await withBrand(brand, (tx) => currentBrief(tx, brand, c.id))).draft).toMatchObject({ status: 'draft' });
   });
 });

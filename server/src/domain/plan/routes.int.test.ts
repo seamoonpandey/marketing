@@ -47,7 +47,7 @@ describe('plan API', () => {
     expect(await denied(camp.id)).toBe(1);
     expect((await call('GET', `${base}/campaigns/${camp.id}/brief`)).status).toBe(404);
     expect((await call('PATCH', `${base}/campaigns/${camp.id}`, { name: 'hijack' })).status).toBe(404);
-    expect((await call('POST', `${base}/campaigns/${camp.id}/brief/approve`)).status).toBe(404);
+    expect((await call('POST', `${base}/campaigns/${camp.id}/brief/approve`, { version: 1 })).status).toBe(404);
     expect(await denied(camp.id)).toBe(4);
     expect((await call('PATCH', `${base}/items/${item.id}`, { cta: 'x' })).status).toBe(404);
     expect((await call('DELETE', `${base}/items/${item.id}`)).status).toBe(404);
@@ -114,11 +114,11 @@ describe('plan API', () => {
     let w = (await call('GET', `${p}/weeks/${SUN}`)).body;
     expect(w).toMatchObject({ canApprove: false, blockingCount: 1, violations: [{ rule: 'incomplete', blocking: true }], ready: { facts: false, channels: true } });
     expect(w.cannotApproveReason).toMatch(/Missing/);
-    expect((await call('POST', `${p}/weeks/${SUN}/approve`)).status).toBe(409);
+    expect((await call('POST', `${p}/weeks/${SUN}/approve`, { version: 1 })).status).toBe(409);
 
     const id = added.body.item.id;
     expect((await call('PATCH', `${p}/items/${id}`, { cta: 'Visit', pillar: 'product', funnel: 'unaware', format: 'image' })).status).toBe(200);
-    w = (await call('POST', `${p}/weeks/${SUN}/approve`)).body;
+    w = (await call('POST', `${p}/weeks/${SUN}/approve`, { version: 1 })).body;
     expect(w).toMatchObject({ plan: { status: 'approved' }, canApprove: false, violations: [] });
     const edited = await call('PATCH', `${p}/items/${id}`, { cta: 'Order now' });
     expect(edited.body.plan.status).toBe('draft');
@@ -138,7 +138,7 @@ describe('plan API', () => {
     expect((await call('PATCH', `${p}/campaigns/${id}`, { status: 'active' })).body.status).toBe('active');
     expect((await call('GET', `${p}/campaigns?status=active`)).body).toHaveLength(1);
     expect((await call('GET', `${p}/campaigns/${id}/brief`)).body).toMatchObject({ approved: null, draft: null, campaign: { id }, facts: [], latestRun: null });
-    expect((await call('POST', `${p}/campaigns/${id}/brief/approve`)).status).toBe(409);
+    expect((await call('POST', `${p}/campaigns/${id}/brief/approve`, { version: 1 })).status).toBe(409);
     expect((await call('POST', `${p}/campaigns/${id}/brief/generate`)).status).toBe(400); // no approved fact
     const [acc] = await t.adminQuery(
       `insert into opportunities (tenant_id, brand_id, title, hypothesis, suggested_action, why_it_matters, observation_ids, confidence, status)

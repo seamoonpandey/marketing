@@ -91,13 +91,13 @@ describe('week draft', () => {
     const b = await brandWith();
     mockAi.queue({ items: six() }, { items: six().map((x, i) => ({ ...x, idea: `Second take ${i}` })) });
     await draft(b);
-    await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts));
+    await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 1));
     await draft(b);
     const w = await week(b);
     expect(w.plan).toMatchObject({ status: 'draft', version: 2 });
     expect(w.approvedPlan).toMatchObject({ status: 'approved', version: 1 });
     expect((await t.adminQuery(`select count(*)::int as n from plan_items where week_plan_id = $1`, [w.approvedPlan!.id]))[0]!.n).toBe(6);
-    await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts));
+    await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 2));
     const rows = await t.adminQuery(`select status from week_plans where brand_id = $1 order by version`, [b]);
     expect(rows.map((r) => r.status)).toEqual(['replaced', 'approved']);
   });

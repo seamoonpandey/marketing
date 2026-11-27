@@ -30,7 +30,7 @@ function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
   const path = { params: { path: { brandId, id } } };
   const estimate = useAct(brandId, () => unwrap(api.POST('/api/brands/{brandId}/plan/campaigns/{id}/brief/estimate', path)));
   const generate = useAct(brandId, () => unwrap(api.POST('/api/brands/{brandId}/plan/campaigns/{id}/brief/generate', path)));
-  const approve = useAct(brandId, () => unwrap(api.POST('/api/brands/{brandId}/plan/campaigns/{id}/brief/approve', path)));
+  const approve = useAct(brandId, (version: number) => unwrap(api.POST('/api/brands/{brandId}/plan/campaigns/{id}/brief/approve', { ...path, body: { version } })));
   const setStatus = useAct(brandId, (status: Schemas['PlanCampaignStatus']) => unwrap(api.PATCH('/api/brands/{brandId}/plan/campaigns/{id}', { ...path, body: { status } })));
 
   const run = v.latestRun;
@@ -102,7 +102,7 @@ function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
               <div className="flex flex-wrap gap-2">
                 <button type="button" className="btn btn-secondary" onClick={() => (shown.status === 'approved' ? setWarn(true) : setEditing(true))}>Edit the brief</button>
                 {shown.status === 'draft' ? (
-                  <button type="button" className="btn btn-primary" disabled={approve.isPending} onClick={() => approve.mutate()}>{approve.isPending ? 'Approving…' : 'Approve this brief'}</button>
+                  <button type="button" className="btn btn-primary" disabled={approve.isPending} onClick={() => approve.mutate(shown.version)}>{approve.isPending ? 'Approving…' : 'Approve this brief'}</button>
                 ) : null}
               </div>
             </div>

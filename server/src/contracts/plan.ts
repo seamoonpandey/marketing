@@ -106,6 +106,10 @@ export const BriefEdit = z.object({ body: BriefBody }).openapi('PlanBriefEdit', 
   description: 'Edits the working copy: the draft if there is one; otherwise the approved version is retired and the edit becomes a new draft. Statements citing no approved fact in audience or offer_message come back in leftOut.',
 });
 
+export const ApproveBody = z.object({ version: z.number().int().min(0) }).openapi('PlanApprove', {
+  description: 'The version of the draft the owner is looking at. The server approves only when it is still the current draft, else 409.',
+});
+
 // ---------- weeks
 export const WeekStatus = z.enum(['draft', 'approved', 'replaced']).openapi('PlanWeekStatus');
 export const WeekPlan = z
