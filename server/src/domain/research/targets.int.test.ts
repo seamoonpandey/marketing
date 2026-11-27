@@ -45,6 +45,15 @@ describe('watch list', () => {
     ).rejects.toThrow(/already/);
   });
 
+  it("refuses a subdomain of the brand's own site and its host written with a trailing dot", async () => {
+    const brand = await t.makeBrand();
+    await t.adminQuery(`update brands set website = 'https://own.example' where id = $1`, [brand]);
+    const c = await rival(brand, 'Rival');
+    for (const url of ['https://shop.own.example/pricing', 'https://own.example./pricing'])
+      await expect(withBrand(brand, (tx) => addTarget(tx, brand, { competitorId: c.id, url }))).rejects.toThrow(/own site/);
+    await withBrand(brand, (tx) => addTarget(tx, brand, { competitorId: c.id, url: 'https://notown.example/' }));
+  });
+
   it("hides brand B's targets inside brand A", async () => {
     const a = await t.makeBrand();
     const b = await t.makeBrand();

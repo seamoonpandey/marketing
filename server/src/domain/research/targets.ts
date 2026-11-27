@@ -12,7 +12,7 @@ export const MAX_COMPETITORS = 10;
 export type WatchTarget = typeof watchTargets.$inferSelect;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const host = (u: URL) => u.hostname.replace(/^www\./, '').toLowerCase();
+const host = (u: URL) => u.hostname.replace(/^www\./, '').replace(/\.$/, '').toLowerCase();
 
 /** Pages of a competitor's site worth watching (the base picker, at most 5). */
 export function suggestTargets(competitorSite: string): Promise<string[]> {
@@ -46,7 +46,7 @@ export async function addTarget(
     try {
       ownUrl = new URL(/^https?:\/\//i.test(own) ? own : `https://${own}`);
     } catch {}
-    if (ownUrl && host(ownUrl) === host(url)) throw new ValidationError("That page is on the brand's own site; only competitors' pages are watched");
+    if (ownUrl && (host(url) === host(ownUrl) || host(url).endsWith(`.${host(ownUrl)}`))) throw new ValidationError("That page is on the brand's own site; only competitors' pages are watched");
   }
 
   const all = await listTargets(tx, brandId);
