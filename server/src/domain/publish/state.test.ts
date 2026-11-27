@@ -15,6 +15,7 @@ const outcomes: Outcome[] = [
   { type: 'reconciled', result: { found: true, externalId: 'e2', url: 'https://p/2' } },
   { type: 'reconciled', result: { found: false } },
   { type: 'reconciled', result: { found: 'unknown' } },
+  { type: 'stalled' },
   { type: 'cancel' },
   { type: 'reschedule', at: new Date() },
   { type: 'retry' },
@@ -58,6 +59,12 @@ describe('nextState: the error table (§20.3) from publishing', () => {
   });
 });
 
+describe('nextState: a send that never finished', () => {
+  it('a job publishing too long becomes unknown, attempts unchanged, with nothing to retry', () => {
+    expect(nextState(at('publishing', 2), { type: 'stalled' }, MAX)).toEqual({ state: 'unknown', error: 'the send did not finish' });
+  });
+});
+
 describe('nextState: reconciling an unknown job', () => {
   it('found publishes, without another send', () => {
     expect(nextState(at('unknown'), { type: 'reconciled', result: { found: true, externalId: 'e', url: 'https://p' } }, MAX))
@@ -83,7 +90,7 @@ describe('nextState: every state and outcome', () => {
   // The transitions that apply; every other pair is refused and leaves the state as it was.
   const applies: Record<JobState, string[]> = {
     scheduled: ['cancel', 'reschedule'],
-    publishing: ['gate_refused', 'channel_unavailable', 'manual', 'sent', 'error'],
+    publishing: ['gate_refused', 'channel_unavailable', 'manual', 'sent', 'error', 'stalled'],
     awaiting_manual: ['cancel', 'confirm_manual'],
     published: [],
     unknown: ['reconciled', 'resolve_unknown'],

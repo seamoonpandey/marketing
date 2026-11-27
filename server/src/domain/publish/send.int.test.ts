@@ -1,14 +1,15 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { DBOS } from '@dbos-inc/dbos-sdk';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { launchTestWorkflows, testDb, type TestDb } from '../../../test/helpers.ts';
 import { withBrand } from '../../db/tenant.ts';
-import { startSend } from '../../workflows/publish-run.ts';
+import { publishTick, startSend } from '../../workflows/publish-run.ts';
 import { createChannel, updateChannel } from './channels.ts';
 import { ConnectorError, MockConnector, mockConnector, type Connector } from './connectors/index.ts';
 import { fakeReads } from './fake-reads.ts';
 import { getJob } from './jobs.ts';
 import { testReads, type DraftForPublish } from './reads.ts';
 import { scheduleJob } from './schedule.ts';
-import { dueJobs, sendJob } from './send.ts';
+import { dueJobs, reconcileJob, sendJob, sweepStalled } from './send.ts';
 
 let t: TestDb;
 let stop: () => Promise<void>;
@@ -33,12 +34,12 @@ beforeEach(() => {
   slept = [];
 });
 
-async function setup(o: { brand?: string; platform?: string; connector?: 'manual' | 'mock'; draft?: DraftForPublish & { brandId: string } } = {}) {
+async function setup(o: { brand?: string; platform?: string; connector?: 'manual' | 'mock'; draft?: DraftForPublish & { brandId: string }; at?: string } = {}) {
   const brand = o.brand ?? (await t.makeBrand());
   const platform = o.platform ?? 'facebook';
   const channel = await withBrand(brand, (tx) => createChannel(tx, brand, { platform, accountName: `@${platform}`, connector: o.connector ?? 'mock' }));
   const draft = o.draft ?? fake.add(brand);
-  const job = await withBrand(brand, (tx) => scheduleJob(tx, brand, { draftId: draft.id, channelId: channel.id, scheduledAt: AT }, [], fake.reads));
+  const job = await withBrand(brand, (tx) => scheduleJob(tx, brand, { draftId: draft.id, channelId: channel.id, scheduledAt: o.at ?? AT }, [], fake.reads));
   return { brand, channel, draft, job, key: job.idempotencyKey };
 }
 /** Sends at T0 + minutes, with the fake gate, the test's mock and no real waiting. */
@@ -201,6 +202,206 @@ describe('the scheduler', () => {
       expect(mockConnector.calls).toHaveLength(2);
       expect((await dueJobs(new Date())).filter((d) => d.jobId === a.job.id)).toEqual([]);
     } finally {
+      delete testReads.current;
+    }
+  });
+});
+
+describe('a retry outside the publishing hours', () => {
+  it('waits for the start of the next window in the brand\'s timezone, and the wait is not an attempt', async () => {
+    const { brand, job, key } = await setup();
+    mock.program(key, { result: 'error', kind: 'rate_limited', retryAfterSeconds: 120 });
+    // Sent late, at 20:58 Kathmandu time: the retry falls due at 21:00, where the window ends.
+    expect((await send(brand, job.id, 658)).nextAttemptAt!.getTime()).toBe(min(660).getTime());
+    const held = await send(brand, job.id, 660);
+    expect(held).toMatchObject({ state: 'scheduled', attempts: 1 });
+    expect(held.nextAttemptAt!.getTime()).toBe(min(21 * 60).getTime()); // 07:00 the next day, Kathmandu time
+    expect(mock.calls).toHaveLength(1);
+    expect(await send(brand, job.id, 21 * 60)).toMatchObject({ state: 'published', attempts: 2 });
+  });
+
+  it('leaves a job at its first scheduled time alone: it was checked when it was scheduled', async () => {
+    const { brand, job } = await setup({ at: `${DAY}T20:59:00+05:45` });
+    expect(await send(brand, job.id, 661)).toMatchObject({ state: 'published', attempts: 1 }); // 21:01, a minute late
+  });
+
+  it('uses UTC for a brand whose timezone is not valid, and still sends', async () => {
+    const { brand, job, key } = await setup();
+    await t.adminQuery(`update brands set timezone = 'Mars/Olympus' where id = $1`, [brand]);
+    mock.program(key, { result: 'error', kind: 'server' });
+    await send(brand, job.id, 1); // 04:16 UTC: the retry falls due before 07:00 UTC
+    const held = await send(brand, job.id, 5);
+    expect(held.nextAttemptAt!.toISOString()).toBe(`${DAY}T07:00:00.000Z`);
+    expect(await send(brand, job.id, 165)).toMatchObject({ state: 'published', attempts: 2 });
+  });
+});
+
+describe('a send that never finished', () => {
+  /** A job claimed `minutes` ago by a send workflow that then died. */
+  async function stuck(minutes: number) {
+    const s = await setup();
+    await t.adminQuery(`update publish_jobs set state = 'publishing', attempts = 1, workflow_id = 'dead', claimed_at = now() - make_interval(mins => $2) where id = $1`, [s.job.id, minutes]);
+    return s;
+  }
+  const reconcile = (brand: string, id: string) => reconcileJob(brand, id, { connector: mock, now: () => min(20), sleep: async (s) => void slept.push(s) });
+
+  it('becomes unknown after 15 minutes publishing, is never sent from there, and a younger one is left alone', async () => {
+    const old = await stuck(16);
+    const young = await stuck(10);
+    const swept = (await sweepStalled(new Date())).map((s) => s.jobId);
+    expect(swept).toContain(old.job.id);
+    expect(swept).not.toContain(young.job.id);
+    expect(await read(old.brand, old.job.id)).toMatchObject({ state: 'unknown', error: 'the send did not finish', attempts: 1 });
+    expect(await read(young.brand, young.job.id)).toMatchObject({ state: 'publishing' });
+    expect(await send(old.brand, old.job.id)).toMatchObject({ state: 'unknown' });
+    expect(mock.calls).toEqual([]);
+  });
+
+  it('then goes through reconcile: found is published with no send; not found is sent once more with the same key', async () => {
+    const found = await stuck(16);
+    const lost = await stuck(16);
+    await mock.publish({ platform: 'facebook', accountName: '@facebook', caption: '', hashtags: [], media: [] }, found.key); // the dead send did post
+    mock.calls.length = 0;
+    await sweepStalled(new Date());
+    expect(await reconcile(found.brand, found.job.id)).toMatchObject({ state: 'published', externalUrl: 'https://mock.example/post/1' });
+    expect(await reconcile(lost.brand, lost.job.id)).toMatchObject({ state: 'scheduled', attempts: 1 });
+    expect(slept).toEqual([60, 60]);
+    expect(await send(lost.brand, lost.job.id, 21)).toMatchObject({ state: 'published', attempts: 2 });
+    expect(mock.calls.map((c) => c.idempotencyKey)).toEqual([lost.key]);
+  });
+
+  it('a send whose workflow fails after the connector answered is left publishing, then swept and reconciled, never sent twice', async () => {
+    const { brand, job } = await setup();
+    let reads = 0; // the clock is read by the claim, the missed check, then the apply after the send: that one fails
+    const now = () => {
+      if (++reads === 3) throw new Error('database gone');
+      return min(1);
+    };
+    await expect(sendJob(brand, job.id, { reads: fake.reads, connector: mock, now })).rejects.toThrow('database gone');
+    expect(await read(brand, job.id)).toMatchObject({ state: 'publishing' });
+    expect((await sweepStalled(min(17))).map((s) => s.jobId)).toContain(job.id);
+    expect(await reconcile(brand, job.id)).toMatchObject({ state: 'published', externalUrl: 'https://mock.example/post/1' });
+    expect(mock.calls).toHaveLength(1);
+  });
+
+  it('the every-minute check sweeps it and starts its reconcile, once', async () => {
+    const { brand, job, key } = await stuck(16);
+    await publishTick();
+    await publishTick();
+    expect(await read(brand, job.id)).toMatchObject({ state: 'unknown' });
+    const runs = await DBOS.listWorkflows({ workflowIDs: [`publish-reconcile:${key}:1`] });
+    expect(runs).toHaveLength(1);
+    await DBOS.cancelWorkflow(runs[0]!.workflowID);
+  });
+});
+
+describe('a send held up between its checks and the connector', () => {
+  /** Holds every read of the channels table, which a send makes after claiming the job, until release (or the test ends). */
+  let held = false;
+  async function holdChannels() {
+    await t.adminQuery('begin');
+    await t.adminQuery('lock table channels in access exclusive mode');
+    held = true;
+    return release;
+  }
+  async function release() {
+    if (held) await t.adminQuery('commit');
+    held = false;
+  }
+  const waitingOnLock = (n: number) =>
+    vi.waitFor(async () => expect((await t.adminQuery(`select 1 from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'`)).length).toBeGreaterThanOrEqual(n), { timeout: 10_000, interval: 50 });
+  const settled = (brand: string, id: string) =>
+    vi.waitFor(async () => expect((await read(brand, id)).state).not.toBe('publishing'), { timeout: 10_000, interval: 50 });
+  async function dueNow() {
+    const s = await setup();
+    await t.adminQuery(`update publish_jobs set scheduled_at = now() - interval '5 minutes' where id = $1`, [s.job.id]);
+    const [d] = (await dueJobs(new Date())).filter((x) => x.jobId === s.job.id);
+    return { ...s, due: d! };
+  }
+
+  it('a resumed workflow never sends on the gate answer it replays, nor beside a first run still going', async () => {
+    testReads.current = fake.reads;
+    mockConnector.reset();
+    try {
+      const a = await dueNow();
+      const release = await holdChannels();
+      await startSend(a.due);
+      await waitingOnLock(1);
+      fake.edit(a.draft.id); // the owner edits the draft meanwhile: no approval stands
+      // Another process starts and resumes the workflow from its stored steps while the first run is still going.
+      await DBOS.recoverWorkflows(['local']);
+      await waitingOnLock(2);
+      await release();
+      await settled(a.brand, a.job.id);
+      expect(mockConnector.calls).toEqual([]);
+      expect(['scheduled', 'blocked']).toContain((await read(a.brand, a.job.id)).state);
+    } finally {
+      await release();
+      delete testReads.current;
+    }
+  });
+
+  it('asks the gate right before sending: an approval withdrawn while the send was held sends nothing', async () => {
+    testReads.current = fake.reads;
+    mockConnector.reset();
+    try {
+      const a = await dueNow();
+      await holdChannels();
+      const h = await startSend(a.due);
+      await waitingOnLock(1);
+      fake.edit(a.draft.id);
+      await release();
+      await h.getResult();
+      expect(await read(a.brand, a.job.id)).toMatchObject({ state: 'blocked', error: expect.stringMatching(/approval no longer stands/) });
+      expect(mockConnector.calls).toEqual([]);
+    } finally {
+      await release();
+      delete testReads.current;
+    }
+  });
+
+  it('a workflow resumed while its first run is still inside the connector does not send beside it', async () => {
+    testReads.current = fake.reads;
+    mockConnector.reset();
+    let letGo!: () => void;
+    const inFlight = new Promise<void>((r) => (letGo = r));
+    const publish = mockConnector.publish.bind(mockConnector);
+    mockConnector.publish = async (req, key) => {
+      const r = publish(req, key); // recorded at once, answered when let go
+      await inFlight;
+      return r;
+    };
+    try {
+      const a = await dueNow();
+      const h = await startSend(a.due);
+      await vi.waitFor(() => expect(mockConnector.calls).toHaveLength(1), { timeout: 10_000, interval: 50 });
+      await DBOS.recoverWorkflows(['local']); // another process starts and resumes it
+      await vi.waitFor(async () => {
+        if (mockConnector.calls.length < 2) expect((await DBOS.getWorkflowStatus(h.workflowID))?.status).toBe('SUCCESS');
+      }, { timeout: 10_000, interval: 50 });
+      expect(mockConnector.calls).toHaveLength(1);
+    } finally {
+      letGo();
+      delete (mockConnector as { publish?: unknown }).publish;
+      delete testReads.current;
+    }
+  });
+
+  it('never reaches the connector once the sweep has made the job unknown', async () => {
+    testReads.current = fake.reads;
+    mockConnector.reset();
+    try {
+      const a = await dueNow();
+      const release = await holdChannels();
+      const h = await startSend(a.due);
+      await waitingOnLock(1);
+      expect((await sweepStalled(new Date(Date.now() + 16 * 60_000))).map((s) => s.jobId)).toContain(a.job.id); // 16 minutes on
+      await release();
+      await h.getResult();
+      expect(await read(a.brand, a.job.id)).toMatchObject({ state: 'unknown' });
+      expect(mockConnector.calls).toEqual([]);
+    } finally {
+      await release();
       delete testReads.current;
     }
   });

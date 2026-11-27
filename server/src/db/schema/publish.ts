@@ -49,6 +49,8 @@ export const publishJobs = pgTable(
     publishedAt: timestamptz('published_at'),
     manual: boolean('manual').notNull().default(false),
     workflowId: text('workflow_id'),
+    /** When the send that holds the job claimed it; the sweep turns a claim older than 15 minutes into unknown. */
+    claimedAt: timestamptz('claimed_at'),
     createdAt: createdAt(),
   },
   (t) => [

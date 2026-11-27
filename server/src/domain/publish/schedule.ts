@@ -78,6 +78,20 @@ export function checkWindow(at: Date, timezone: string, s: PublishSettings, now:
     throw new ValidationError(`${describeAt(at, timezone)} is outside the publishing hours, ${s.windowStart}:00 to ${s.windowEnd}:00`);
 }
 
+/**
+ * The start of the next publishing window after `at` in the timezone (a valid one), or null when `at` is inside a window.
+ * The window's end is outside it, as in checkWindow.
+ */
+export function nextWindowStart(at: Date, timezone: string, s: PublishSettings): Date | null {
+  const local = new Date(at.getTime() + offsetAt(timezone, at)! * 60_000);
+  const minute = local.getUTCHours() * 60 + local.getUTCMinutes();
+  if (minute >= s.windowStart * 60 && minute < s.windowEnd * 60) return null;
+  const wall = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + (minute >= s.windowEnd * 60 ? 1 : 0), s.windowStart);
+  // The wall-clock start as an instant, with the offset in force at it, so a daylight-saving change that night is followed.
+  const guess = wall - offsetAt(timezone, new Date(wall))! * 60_000;
+  return new Date(wall - offsetAt(timezone, new Date(guess))! * 60_000);
+}
+
 type Checked = { at: Date; channel: Channel; draft: DraftForPublish; approval: GateApproval; settings: PublishSettings };
 
 /** Every check scheduling makes, in the order an owner would want to hear them. */
