@@ -6,9 +6,11 @@ import { routes as plan } from './domain/plan/index.ts';
 import { routes as studio } from './domain/studio/index.ts';
 import { routes as research } from './domain/research/index.ts';
 import { routes as approve } from './domain/approve/index.ts';
+import { routes as publish } from './domain/publish/index.ts';
 import './workflows/brand-import.ts';
 import './workflows/plan-draft.ts';
 import './workflows/research-watch.ts';
 import './workflows/studio-run.ts';
+import './workflows/publish-run.ts';
 
-export const moduleRoutes = [knowledge, research, plan, studio, approve];
+export const moduleRoutes = [knowledge, research, plan, studio, approve, publish];
