@@ -105,6 +105,7 @@ export const planRuns = pgTable(
     ...brandColumns,
     kind: text('kind', { enum: ['week', 'brief'] }).notNull(),
     targetId: text('target_id').notNull(),
+    workflowId: text('workflow_id'),
     counts: jsonb('counts').$type<PlanCounts>().notNull().default({}),
     ...runColumns,
     createdAt: createdAt(),
