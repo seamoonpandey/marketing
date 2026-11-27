@@ -32,6 +32,7 @@ export async function latestRun(tx: Tx, brandId: string, kind: 'generate' | 'ren
 
 async function begin(brandId: string, kind: 'generate' | 'render', targets: string[], estimate: Money, check: (tx: Tx) => Promise<void>): Promise<string> {
   return withBrand(brandId, async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`studio-run:${brandId}`}))`); // one start per brand at a time, so check then insert holds
     await check(tx);
     const id = (await tx.execute<{ id: string }>(sql`select uuidv7() as id`)).rows[0]!.id;
     await tx.insert(studioRuns).values({ id, brandId, kind, targets, state: 'running', startedAt: new Date(), workflowId: id, estimate });
@@ -46,6 +47,10 @@ export async function startGenerate(brandId: string, planItemIds: string[], fact
   const estimate = await estimateDrafts(brandId, ids, facts);
   const runId = await begin(brandId, 'generate', ids, estimate, async (tx) => {
     for (const id of ids) await assertDraftable(tx, brandId, id);
+    // An item has no draft until its model call returns; a second run for it then would pay twice.
+    const active = await tx.select({ targets: studioRuns.targets }).from(studioRuns)
+      .where(and(eq(studioRuns.brandId, brandId), eq(studioRuns.kind, 'generate'), eq(studioRuns.state, 'running')));
+    if (active.some((r) => r.targets.some((t) => ids.includes(t)))) throw new ConflictError('A plan item here is already being drafted; wait for that run');
   });
   await DBOS.startWorkflow(studioWorkflow, { queueName: QUEUE, workflowID: runId })(brandId, runId, 'generate', ids, facts);
   return { runId };

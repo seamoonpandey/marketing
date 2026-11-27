@@ -99,6 +99,17 @@ describe('generate', () => {
     expect(await drafts(s)).toHaveLength(2);
   });
 
+  it('refuses to draft an item that a running generate run is already drafting, so it is paid for once', async () => {
+    const s = await studioBrand(t, { formats: ['text', 'text'] });
+    mockAi.queue(answer(s), answer(s));
+    const both = await Promise.allSettled([startGenerate(s.brand, [s.itemIds[0]!], s.facts), startGenerate(s.brand, [s.itemIds[0]!], s.facts)]);
+    expect(both.map((x) => x.status).sort()).toEqual(['fulfilled', 'rejected']);
+    const first = (both.find((x) => x.status === 'fulfilled') as PromiseFulfilledResult<{ runId: string }>).value;
+    await expect(startGenerate(s.brand, s.itemIds, s.facts)).rejects.toMatchObject({ status: 409 }); // "Draft all" while item 0 is drafting
+    await wait(s.brand, first.runId);
+    expect(mockAi.calls).toHaveLength(1);
+  });
+
   it('two retries at once: one is refused, and the failed item is paid for once', async () => {
     const s = await studioBrand(t, { formats: ['text', 'text'] });
     mockAi.queue(answer(s));
