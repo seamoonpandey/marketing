@@ -46,6 +46,15 @@ describe('manual posting', () => {
     expect(JSON.parse(ev[1].reason)).toMatchObject({ from: 'awaiting_manual', to: 'published', hash: job.payloadHash });
   });
 
+  it('refuses a link carrying a user name or password, or a control character, which a screen could show as another link', async () => {
+    const { brand, job } = await jobIn('awaiting_manual');
+    for (const url of ['https://facebook.com@evil.example/p/1', 'https://user:pass@facebook.com/p/1', 'https://facebook.com/p/1\n2', 'https://facebook.com/p/\u00071'])
+      await expect(withBrand(brand, (tx) => confirmManual(tx, brand, job.id, url)), url).rejects.toMatchObject({ status: 400 });
+    expect((await read(brand, job.id)).state).toBe('awaiting_manual');
+    const unknown = await jobIn('unknown');
+    await expect(withBrand(unknown.brand, (tx) => resolveUnknown(tx, unknown.brand, unknown.job.id, { posted: true, url: 'https://a:b@facebook.com/p/1' }))).rejects.toMatchObject({ status: 400 });
+  });
+
   it('two confirmations at once publish once', async () => {
     const { brand, job } = await jobIn('awaiting_manual');
     const r = await Promise.allSettled(['https://p/1', 'https://p/2'].map((u) => withBrand(brand, (tx) => confirmManual(tx, brand, job.id, u))));

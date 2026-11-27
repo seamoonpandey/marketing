@@ -8,17 +8,23 @@ import { isUuid } from './reads.ts';
 
 export type Channel = typeof publishChannels.$inferSelect;
 
-/** An http or https URL, or a ValidationError. Anything else (javascript:, data:) could run when shown as a link. */
+/**
+ * A plain http or https URL, or a ValidationError. Anything else (javascript:, data:) could run when shown as a link; a
+ * user name (https://facebook.com@evil.example) or a control character makes it read as another link than it is.
+ */
 export function httpUrl(s: string, what = 'The link'): string {
   let u: URL;
+  if (/[\u0000-\u001f\u007f]/.test(s.trim())) throw new ValidationError(`${what} has a control character`);
   try {
     u = new URL(s.trim());
   } catch {
     throw new ValidationError(`${what} is not a URL`);
   }
   if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new ValidationError(`${what} must start with https:// or http://`);
+  if (u.username || u.password) throw new ValidationError(`${what} must not carry a user name or password`);
   return u.toString();
 }
+
 
 export async function listChannels(tx: Tx, brandId: string): Promise<Channel[]> {
   return tx.select().from(publishChannels).where(eq(publishChannels.brandId, brandId)).orderBy(asc(publishChannels.platform), asc(publishChannels.accountName));
