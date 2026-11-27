@@ -32,4 +32,12 @@ describe('buildBattlecard', () => {
     expect([r.body.differ, r.body.proof, r.body.responses]).toEqual([[], [], []]);
     expect(r.leftOut).toHaveLength(2 + 1 + 3 + 1);
   });
+
+  it('keeps only the checked fact ids on a kept statement, not the evidence the model attached to it', () => {
+    const r = buildBattlecard({
+      draft: { differ: [{ text: 'Ours is handmade', factIds: ['f1'], observationIds: ['o-other-brand'], profileQuote: 'an invented quote from nowhere' }], proof: [], objections: [], responses: [] },
+      facts: [fact('f1')], observationIds: [], profileText: '',
+    });
+    expect(r.body.differ).toEqual([{ text: 'Ours is handmade', factIds: ['f1'] }]);
+  });
 });

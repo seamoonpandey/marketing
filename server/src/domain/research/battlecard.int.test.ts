@@ -39,4 +39,24 @@ describe('battlecard versions', () => {
     const rows = await t.adminQuery(`select version, status from battlecards where competitor_id = $1 order by version`, [rival.id]);
     expect(rows.map((r) => r.status)).toEqual(['replaced', 'approved']);
   });
+
+  it("leaves out an objection whose quote is only in the model's own profile wording, not in a page quote", async () => {
+    const brand = await t.makeBrand();
+    const rival = await withBrand(brand, (tx) => createCompetitor(tx, brand, { name: 'Rival' }));
+    const entry = { kind: 'positioning', text: 'Rated number one in Nepal by every buyer', price: null, quote: 'Hand-woven pashmina shawls from the Himalaya', url: 'https://r.example/', sourceId: rival.id };
+    await t.adminQuery(
+      `insert into competitor_profiles (tenant_id, brand_id, competitor_id, profile, run_id) values ($1, $2, $3, $4, gen_random_uuid())`,
+      [t.tenantId, brand, rival.id, { entries: [entry] }],
+    );
+    mockAi.queue({
+      differ: [], proof: [], responses: [],
+      objections: [
+        { text: 'They say they are number one', profileQuote: 'Rated number one in Nepal by every buyer' },
+        { text: 'They say hand-woven', profileQuote: 'Hand-woven pashmina shawls from the Himalaya' },
+      ],
+    });
+    const card = await generateBattlecard(brand, rival.id, []);
+    expect((card.body as { objections: { text: string }[] }).objections.map((s) => s.text)).toEqual(['They say hand-woven']);
+    expect(card.leftOut).toEqual([{ text: 'They say they are number one', reason: 'no evidence' }]);
+  });
 });

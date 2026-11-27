@@ -26,7 +26,7 @@ export function buildBattlecard(i: { draft: Draft; facts: ApprovedFact[]; observ
   for (const key of ['differ', 'proof', 'responses'] as const) {
     for (const s of i.draft[key]) {
       const ids = (s.factIds ?? []).filter((f) => factIds.has(f));
-      if (ids.length) body[key].push({ ...s, factIds: ids });
+      if (ids.length) body[key].push({ text: s.text, factIds: ids });
       else leftOut.push({ text: s.text, reason: 'no approved fact' });
     }
   }
@@ -75,7 +75,8 @@ export async function generateBattlecard(brandId: string, competitorId: string, 
     }],
   });
   const { body, leftOut } = buildBattlecard({
-    draft: object, facts, observationIds: ctx.obs.map((o) => o.id), profileText: ctx.entries.map((e) => `${e.text}\n${e.quote}`).join('\n'),
+    // Only the page quotes are evidence; an entry's text is the profile model's own wording.
+    draft: object, facts, observationIds: ctx.obs.map((o) => o.id), profileText: ctx.entries.map((e) => e.quote).join('\n'),
   });
   return withBrand(brandId, async (tx) => {
     const [last] = await tx.select({ v: battlecards.version }).from(battlecards)
