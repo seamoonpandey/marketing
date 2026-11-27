@@ -339,3 +339,25 @@ test('the days sit side by side on a wide screen', async ({ page }) => {
   expect(Math.abs(a!.y - b!.y)).toBeLessThan(2);
   expect(b!.x).toBeGreaterThan(a!.x + 5 * a!.width);
 });
+
+test('editing an approved brief warns first, and a draft beside an approved week says the approval stays in force', async ({ page }) => {
+  await stub(page, { brief: { campaign: campaign(), approved: brief({ status: 'approved', approvedAt: NOW }), draft: null, facts: [fact], latestRun: null, ready } });
+  await page.goto(`/app/b/${B}/plan/campaigns/c-1`);
+  await page.getByRole('button', { name: 'Edit the brief' }).click();
+  await expect(page.getByText('starts a new draft')).toBeVisible();
+  await expect(page.getByRole('form', { name: 'Edit the brief' })).toBeHidden();
+  await page.getByRole('button', { name: 'Edit and start a new draft' }).click();
+  await expect(page.getByRole('form', { name: 'Edit the brief' })).toBeVisible();
+
+  await stub(page, { weeks: { [THIS]: week(THIS, { plan: plan({ version: 2 }), approvedPlan: plan({ status: 'approved', approvedAt: NOW }), items: mondayItems.slice(2) }), [NEXT]: week(NEXT) } });
+  await page.goto(`/app/b/${B}/plan/calendar`);
+  await expect(page.getByText('An approved version is still in force')).toBeVisible();
+  await expect(page.getByRole('article', { name: /Instagram/ })).toContainText('Cites: Pashmina shawl · Material: hand-woven');
+});
+
+test('a week date off the first day snaps to the settings weekday', async ({ page }) => {
+  const w = await stub(page);
+  await page.goto(`/app/b/${B}/plan/calendar?week=2026-11-25`);
+  await expect(page.locator('header p')).toContainText('22 Nov');
+  expect(w.calls).toContain(`GET /plan/weeks/${THIS}`);
+});

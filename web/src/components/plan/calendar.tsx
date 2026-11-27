@@ -8,13 +8,16 @@ import { PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/ap
 import { api, unwrap } from '@/lib/api/client';
 import { DraftWeek } from './draft-week';
 import { ItemDialog } from './item-dialog';
-import { Async, addDays, fmt, label, MutationError, useAct, useCampaigns, useOverview, useWeek, weekRange, type Item, type Week } from './lib';
+import { Async, addDays, factText, useSettings, fmt, label, MutationError, useAct, useCampaigns, useOverview, useWeek, weekRange, type FactRef, type Item, type Week } from './lib';
 
 export function Calendar() {
   const brandId = useBrandId()!;
   const asked = useSearchParams().get('week');
   const overview = useOverview(brandId);
-  const weekStart = asked ?? overview.data?.weeks[0]?.weekStart;
+  const first = useSettings(brandId).data?.weekStarts;
+  // The API refuses a week that does not start on the settings' first day, so snap a typed date to it.
+  const snap = (iso: string) => (first === undefined ? iso : addDays(iso, -((new Date(`${iso}T00:00:00Z`).getUTCDay() - first + 7) % 7)));
+  const weekStart = asked ? snap(asked) : overview.data?.weeks[0]?.weekStart;
   const week = useWeek(brandId, weekStart);
   const base = `/app/b/${brandId}/plan`;
   const thisWeek = overview.data?.weeks[0]?.weekStart;
@@ -33,7 +36,7 @@ export function Calendar() {
           ) : null
         }
       />
-      {asked ? <Board brandId={brandId} q={week} thisWeek={thisWeek} /> : <Async q={overview} what="the plan">{() => <Board brandId={brandId} q={week} thisWeek={thisWeek} />}</Async>}
+      {asked && first !== undefined ? <Board brandId={brandId} q={week} thisWeek={thisWeek} /> : <Async q={overview} what="the plan">{() => <Board brandId={brandId} q={week} thisWeek={thisWeek} />}</Async>}
     </>
   );
 }
@@ -81,6 +84,9 @@ function WeekView({ brandId, w, thisWeek }: { brandId: string; w: Week; thisWeek
         )}
       </section>
       <MutationError error={approve.error} />
+      {w.plan?.status === 'draft' && w.approvedPlan ? (
+        <StateBlock state="stale" size="inline" title="An approved version is still in force">It stays in force until you approve this draft. Editing here changes the draft only.</StateBlock>
+      ) : null}
       {withdrawn && status === 'draft' ? (
         <StateBlock state="stale" size="inline" title="Approval withdrawn">You changed an approved week, so it is a draft again. Approve it again when it is ready.</StateBlock>
       ) : null}
@@ -112,7 +118,7 @@ function WeekView({ brandId, w, thisWeek }: { brandId: string; w: Week; thisWeek
                       <ul className="grid gap-2 @3xl:grid-cols-2 @6xl:grid-cols-1">
                         {items.map((i) => (
                           <li key={i.id}>
-                            <ItemCard item={i} day={name} blocks={blocked.has(i.id)} flagged={flagged.has(i.id)} campaign={campaignName(i.campaignId)} onEdit={() => setEditing({ item: i })} />
+                            <ItemCard item={i} day={name} blocks={blocked.has(i.id)} flagged={flagged.has(i.id)} campaign={campaignName(i.campaignId)} facts={w.facts} onEdit={() => setEditing({ item: i })} />
                           </li>
                         ))}
                       </ul>
@@ -167,7 +173,7 @@ function ViolationList({ title, list, byId, danger }: { title: string; list: Wee
   );
 }
 
-function ItemCard({ item, day, blocks, flagged, campaign, onEdit }: { item: Item; day: string; blocks: boolean; flagged: boolean; campaign?: string; onEdit: () => void }) {
+function ItemCard({ item, day, blocks, flagged, campaign, facts, onEdit }: { item: Item; day: string; blocks: boolean; flagged: boolean; campaign?: string; facts: FactRef[]; onEdit: () => void }) {
   return (
     <article
       aria-label={`${label(item.channel)}, ${day}`}
@@ -183,6 +189,9 @@ function ItemCard({ item, day, blocks, flagged, campaign, onEdit }: { item: Item
       <p className="text-xs break-words text-muted">
         {[item.pillar ? label(item.pillar) : null, item.funnel ? label(item.funnel) : null, campaign].filter(Boolean).join(' · ') || 'No pillar or funnel stage'}
       </p>
+      {item.factIds.length ? (
+        <p className="text-xs break-words text-muted">Cites: {item.factIds.map((id) => { const f = facts.find((x) => x.id === id); return f ? factText(f) : 'a fact that is no longer approved'; }).join('; ')}</p>
+      ) : null}
       {blocks ? <p className="flex items-center gap-1.5 text-xs font-semibold text-danger"><TriangleAlert className="size-3.5" aria-hidden />Blocks approval</p> : flagged ? <p className="text-xs font-medium text-muted">Flagged in the balance check</p> : null}
       <button type="button" className="btn btn-secondary justify-self-start" onClick={onEdit}>
         Edit<span className="sr-only"> the {label(item.channel)} idea on {day}</span>

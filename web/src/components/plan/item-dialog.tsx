@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { CHANNELS, FORMATS, FUNNELS, INTENTS, PILLARS, factText, fmt, label, MutationError, useAct, type Campaign, type Item, type Week } from './lib';
@@ -49,7 +50,13 @@ export function ItemDialog({ brandId, week, days, campaigns, editing, onClose, o
     return r.plan;
   });
   const remove = useAct(brandId, async () => (await unwrap(api.DELETE('/api/brands/{brandId}/plan/items/{id}', { params: { path: { brandId, id: item!.id } } }))).plan);
-  const done = (plan: Plan) => { onSaved(plan.status); onClose(); };
+  const client = useQueryClient();
+  const done = (plan: Plan) => {
+    // The response carries the whole week plan: put it in the cache now so an approved week drops to draft at once.
+    client.setQueryData<Week>(['plan', brandId, 'week', week.weekStart], (old) => (old ? { ...old, plan } : old));
+    onSaved(plan.status);
+    onClose();
+  };
   const options = (list: readonly string[]) => list.map((o) => <option key={o} value={o}>{label(o)}</option>);
 
   return (

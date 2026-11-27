@@ -25,6 +25,7 @@ function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
   const c = v.campaign;
   const shown = v.draft ?? v.approved;
   const [editing, setEditing] = useState(false);
+  const [warn, setWarn] = useState(false);
   const [est, setEst] = useState<Schemas['PlanEstimate'] | null>(null);
   const path = { params: { path: { brandId, id } } };
   const estimate = useAct(brandId, () => unwrap(api.POST('/api/brands/{brandId}/plan/campaigns/{id}/brief/estimate', path)));
@@ -99,13 +100,22 @@ function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
                 <StatusBadge status={shown.status} label={shown.status === 'approved' ? 'Approved' : 'Draft'} />
               </div>
               <div className="flex flex-wrap gap-2">
-                <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>Edit the brief</button>
+                <button type="button" className="btn btn-secondary" onClick={() => (shown.status === 'approved' ? setWarn(true) : setEditing(true))}>Edit the brief</button>
                 {shown.status === 'draft' ? (
                   <button type="button" className="btn btn-primary" disabled={approve.isPending} onClick={() => approve.mutate()}>{approve.isPending ? 'Approving…' : 'Approve this brief'}</button>
                 ) : null}
               </div>
             </div>
-            {shown.status === 'approved' ? <p className="text-sm text-muted">Editing an approved brief starts a new draft; this version stays approved until you approve the draft.</p> : null}
+            {shown.status === 'approved' && warn ? (
+              <div role="alert" className="panel grid gap-3 p-4">
+                <p className="font-semibold">Edit an approved brief?</p>
+                <p className="text-sm text-muted">Saving an edit retires this approved version and starts a new draft. You must approve the draft again before it counts.</p>
+                <div className="flex gap-2">
+                  <button type="button" className="btn btn-primary" onClick={() => { setWarn(false); setEditing(true); }}>Edit and start a new draft</button>
+                  <button type="button" className="btn btn-quiet" onClick={() => setWarn(false)}>Keep it as is</button>
+                </div>
+              </div>
+            ) : null}
             <MutationError error={approve.error} />
             <div className="grid gap-4">
               {SECTIONS.map((s) => (
