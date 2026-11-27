@@ -46,7 +46,7 @@ function Nav() {
       <ul className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
         {NAV.map((item) => {
           const href = item.href(brandId);
-          const current = href !== null && (item.id === 'home' ? pathname === '/app' || pathname.startsWith('/app/brands') : pathname.startsWith(href));
+          const current = href !== null && (item.id === 'home' ? pathname === href || pathname === '/app' || pathname.startsWith('/app/brands') : pathname.startsWith(href));
           const Icon = item.icon;
           const base = 'flex h-9 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium whitespace-nowrap';
           return (
@@ -76,9 +76,9 @@ function Nav() {
   );
 }
 
-/** Which section of a brand the page is on, so switching brands keeps it. */
+/** Which section of a brand the page is on, so switching brands keeps it. Empty on Home and outside a brand. */
 function sectionOf(pathname: string): string {
-  return pathname.match(/^\/app\/b\/[^/]+\/([^/]+)/)?.[1] ?? 'brand';
+  return pathname.match(/^\/app\/b\/[^/]+\/([^/]+)/)?.[1] ?? '';
 }
 
 function BrandSwitcher() {
@@ -150,7 +150,7 @@ function BrandSwitcher() {
             {list.map((b) => (
               <li key={b.id}>
                 <Link
-                  href={`/app/b/${b.id}/${section}`}
+                  href={section ? `/app/b/${b.id}/${section}` : `/app/b/${b.id}`}
                   aria-current={b.id === brandId ? 'true' : undefined}
                   className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-[color-mix(in_oklab,var(--theme-ink)_6%,transparent)]"
                 >
