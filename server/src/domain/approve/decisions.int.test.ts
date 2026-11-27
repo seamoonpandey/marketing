@@ -31,6 +31,7 @@ const expire = (id: string) => t.adminQuery(`update approvals set expires_at = n
 const state = async (b: string, d: ReadyDraft) => (await withBrand(b, (tx) => preview(tx, b, d.id, facts, studio.reads, { record: false }))).state;
 const blocking = [{ check: 'prohibited_word', blocking: true, where: 'caption en', message: 'Uses "miracle"' }];
 const sameVersion = { currentVersion: 1, status: 'ready' as const, readyVersion: 1 };
+const pharmacy = [...facts, fact(randomUUID(), { section: 'identity', subjectType: 'brand', field: 'industry', value: 'Pharmacy', unit: null })];
 
 /**
  * Two approvals and a rejection of one draft at the same instant: Studio answers all three together, so each reads the
@@ -162,7 +163,6 @@ describe('approve decisions', () => {
     studio.edit(b, d.id, { ...sameVersion, findings: blocking });
     await expect(ok(b, d)).rejects.toThrow(/blocked/);
     studio.edit(b, d.id, { ...sameVersion, findings: [] });
-    const pharmacy = [...facts, fact(randomUUID(), { section: 'identity', subjectType: 'brand', field: 'industry', value: 'Pharmacy', unit: null })];
     await expect(withBrand(b, (tx) => approve(tx, b, { draftId: d.id, payloadHash: hashOf(d) }, pharmacy, studio.reads))).rejects.toThrow(/high risk/);
     expect(await stored(b)).toBe(1);
 
@@ -219,6 +219,20 @@ describe('approve decisions', () => {
     await expect(bulk(b, [e])).rejects.toThrow(/high risk/);
     expect(await stored(b)).toBe(0);
     expect(await ok(b, d, NOTE)).toMatchObject({ risk: 'high', reviewNote: NOTE });
+  });
+
+  it('drops a bulk or note-less approval once the unchanged draft turns high risk, until it is renewed on its own with a note', async () => {
+    const b = await t.makeBrand();
+    const [x, y, single] = [studio.put(b), studio.put(b), studio.put(b)];
+    for (const d of [x, y]) await view(b, d);
+    await bulk(b, [x, y]);
+    await ok(b, single);
+    for (const d of [x, single]) {
+      expect(await gate(b, d)).not.toBeNull();
+      expect(await gate(b, d, pharmacy)).toBeNull(); // the brand's industry is now known to be regulated
+    }
+    const renewed = await withBrand(b, (tx) => approve(tx, b, { draftId: single.id, payloadHash: hashOf(single), reviewNote: NOTE }, pharmacy, studio.reads));
+    expect(await gate(b, single, pharmacy)).toMatchObject({ id: renewed.id });
   });
 
   it('treats a regulated industry fact as high risk', async () => {

@@ -10,14 +10,13 @@ import { getSettings as getPlanSettings } from '../plan/index.ts';
 import { payloadHash, payloadOf } from './hash.ts';
 import { plain, riskOf, textOf } from './risk.ts';
 import { getSettings, type ApproveSettings } from './settings.ts';
-import { approvalState, expiryOf, type Approval } from './state.ts';
+import { approvalState, expiryOf, MIN_NOTE, noteLength, type Approval } from './state.ts';
 import { draftOf, isUuid, studioReads, type ReadyDraft, type StudioReads } from './studio.ts';
 
 export const CHANGED = 'changed since you opened it';
 /** A 409; its code is `changed` when the payload changed since the screen showed it, so screens need not match the message. */
 const refused = (why: string, message = why) => (why === CHANGED ? new HttpError(409, 'changed', message) : new ConflictError(message));
 const DAY = 86_400_000;
-const MIN_NOTE = 20;
 
 /** Everything the rules read besides the draft and its decisions, as of one instant. */
 export type RuleContext = {
@@ -49,7 +48,10 @@ export async function ruleContext(tx: Tx, brandId: string, facts: ApprovedFact[]
 }
 
 export const stateOf = (ctx: RuleContext, latest: Approval | null, draft: ReadyDraft | null) =>
-  approvalState({ latest, draft, now: ctx.now, paused: ctx.settings.paused, approvedFactIds: ctx.approvedFactIds, assetsWithRights: new Set(ctx.rights.keys()) });
+  approvalState({
+    latest, draft, now: ctx.now, paused: ctx.settings.paused, approvedFactIds: ctx.approvedFactIds, assetsWithRights: new Set(ctx.rights.keys()),
+    highRisk: !!draft && riskOfDraft(ctx, draft).risk === 'high',
+  });
 
 export const riskOfDraft = (ctx: RuleContext, d: ReadyDraft) => riskOf({ text: textOf(d.content), pillar: d.pillar, industry: ctx.industry });
 
@@ -89,9 +91,6 @@ export function alreadyDecided(ctx: RuleContext, d: ReadyDraft, latest: Approval
 const nextSeq = (d: ReadyDraft, latest: Approval | null) => (latest?.objectVersion === d.currentVersion ? latest.seq + 1 : 1);
 
 const latestOf = async (tx: Tx, brandId: string, draftId: string) => (await history(tx, brandId, draftId))[0] ?? null;
-
-/** A review note counts only its visible characters, so padding and invisible characters do not make it long enough. */
-export const noteLength = (note: string | undefined) => [...plain(note ?? '')].length;
 
 async function mustDraft(studio: StudioReads, tx: Tx, brandId: string, draftId: string, ctx: RuleContext): Promise<ReadyDraft> {
   const d = await draftOf(studio, tx, brandId, draftId, ctx.facts);
