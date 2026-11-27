@@ -8,12 +8,12 @@ import './islands.css';
 export const metadata: Metadata = {
   // SITE_URL: the public origin, for absolute share-image links (canonical waits for the chosen domain)
   metadataBase: new URL(process.env.SITE_URL ?? 'http://localhost:3040'),
-  title: 'Pracharo: AI marketing team for Nepali brands',
+  title: 'Prachaar: AI marketing team for Nepali brands',
   description:
     'Twenty AI roles plan, write, design and schedule a brand’s marketing, price each job in rupees first and post nothing you have not approved.',
   openGraph: {
     type: 'website',
-    title: 'Pracharo: AI marketing team for Nepali brands',
+    title: 'Prachaar: AI marketing team for Nepali brands',
     description: 'AI roles that plan, write and schedule your marketing, with every post approved by you.',
     images: ['/share.jpg'],
   },

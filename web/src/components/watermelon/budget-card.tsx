@@ -4,7 +4,7 @@
    Nepali rupees, no month dropdown and no details modal (it sits in a feature card as a picture). */
 
 import React from 'react';
-import { motion } from 'motion/react';
+import { LazyMotion, domAnimation, m } from 'motion/react';
 
 interface BreakdownItem {
   label: string;
@@ -28,6 +28,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ label, totalBudget, spen
   const cornerClass = 'absolute w-5 h-5 border-black/20';
 
   return (
+    <LazyMotion features={domAnimation} strict>
     <div className="relative w-full">
       <div className={`${cornerClass} top-0 left-0 z-40 border-t-[1.6px] border-l-[1.6px]`} />
       <div className={`${cornerClass} top-0 right-0 z-40 border-t-[1.6px] border-r-[1.6px]`} />
@@ -42,7 +43,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ label, totalBudget, spen
           </p>
           <div className="space-y-3">
             <div className="h-2 w-full overflow-hidden bg-zinc-100">
-              <motion.div
+              <m.div
                 initial={{ width: 0 }}
                 animate={{ width: `${spentPercentage}%` }}
                 transition={smoothTransition}
@@ -70,7 +71,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ label, totalBudget, spen
         <div className="space-y-3 p-5 pt-4">
           <div className="flex h-2 gap-2">
             {breakdown.map((item, idx) => (
-              <motion.div
+              <m.div
                 key={item.label}
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
@@ -91,5 +92,6 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ label, totalBudget, spen
         </div>
       </div>
     </div>
+    </LazyMotion>
   );
 };

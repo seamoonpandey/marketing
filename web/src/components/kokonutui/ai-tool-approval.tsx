@@ -18,7 +18,7 @@ import {
   SquareTerminal,
   Wrench,
 } from "lucide-react";
-import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import { AnimatePresence, LazyMotion, MotionConfig, domAnimation, m } from "motion/react";
 import {
   type ReactNode,
   useCallback,
@@ -523,7 +523,7 @@ function StatusIcon({ state }: { state: ToolCallState }) {
         fill="none"
         viewBox="0 0 16 16"
       >
-        <motion.path
+        <m.path
           animate={{ pathLength: 1 }}
           d="M3.5 8.5 6.5 11.5 12.5 4.5"
           initial={{ pathLength: 0 }}
@@ -645,7 +645,7 @@ function TraceLine({ call }: { call: ToolCall }) {
       </button>
       <AnimatePresence initial={false}>
         {showOutput && (
-          <motion.div
+          <m.div
             animate={{ height: "auto", opacity: 1 }}
             className="overflow-hidden"
             exit={{ height: 0, opacity: 0 }}
@@ -656,7 +656,7 @@ function TraceLine({ call }: { call: ToolCall }) {
             <pre className="mb-1.5 ml-6.5 overflow-x-auto rounded-lg bg-zinc-50 px-3 py-2 font-mono text-xs text-zinc-600 leading-5 ring-1 ring-black/5 dark:bg-white/5 dark:text-zinc-400 dark:ring-white/10">
               {call.output?.join("\n")}
             </pre>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>
@@ -726,12 +726,13 @@ export default function AIToolApproval({
 
   return (
     <MotionConfig reducedMotion="user">
+      <LazyMotion features={domAnimation} strict>
       <div className={cn("w-full max-w-md", className)} ref={rootRef}>
         <div className="rounded-2xl bg-black/5 p-1.5 dark:bg-white/5">
           {decided.length > 0 && (
             <div className="px-2.5 pt-1 pb-1.5">
               {decided.map((call) => (
-                <motion.div
+                <m.div
                   animate={{ opacity: 1, height: "auto" }}
                   initial={
                     mountedIds.has(call.id) ? false : { opacity: 0, height: 0 }
@@ -740,13 +741,13 @@ export default function AIToolApproval({
                   transition={{ duration: 0.24, ease: EASE_OUT }}
                 >
                   <TraceLine call={call} />
-                </motion.div>
+                </m.div>
               ))}
             </div>
           )}
           <AnimatePresence initial={false} mode="popLayout">
             {current ? (
-              <motion.div
+              <m.div
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 exit={{ opacity: 0, y: -6, filter: "blur(2px)" }}
                 initial={{ opacity: 0, y: 8, filter: "blur(2px)" }}
@@ -764,7 +765,7 @@ export default function AIToolApproval({
                     respond(current.id, approved, always)
                   }
                 />
-              </motion.div>
+              </m.div>
             ) : null}
           </AnimatePresence>
           {demoFinished && (
@@ -783,6 +784,7 @@ export default function AIToolApproval({
           )}
         </div>
       </div>
+      </LazyMotion>
     </MotionConfig>
   );
 }

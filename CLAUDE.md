@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Product: Pracharo, the AI Marketing Operating System. `docs/AI_Marketing_Operating_System_specs.md` is the requirements baseline (SRS + FRS). Read the sections you touch before building. `docs/stack.md` is the chosen stack and why.
+Product: Prachaar, the AI Marketing Operating System. `docs/AI_Marketing_Operating_System_specs.md` is the requirements baseline (SRS + FRS). Read the sections you touch before building. `docs/stack.md` is the chosen stack and why.
 
 ## Repo layout
 
@@ -11,7 +11,7 @@ One git repo of independent projects. Each top-level project has its own `packag
 
 ## Brand
 
-- Name: Pracharo (coined from *prachar*, Nepali for publicity). Buyer: brands in Nepal. Main action: "Join the pilot".
+- Name: Prachaar (Nepali for publicity; the owner's choice). Buyer: brands in Nepal. Main action: "Join the pilot".
 - Mark: the ring (`web/public/favicon.svg`). Palette: ground `#c3d7e5`, surface `#d0e0eb`, ink `#141414`, muted `#4a5068`, accent `#0f5257`; dark band `#141414` with `#c3d7e5` ink. Type: Geist and Geist Mono. Radius soft. Never violet.
 - Copy: plain, category first, no invented proof, prices only from the brief.
 

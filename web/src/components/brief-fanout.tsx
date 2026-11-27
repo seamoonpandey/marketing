@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createTimeline, stagger, type Timeline } from 'animejs';
+import { createTimeline, type Timeline } from 'animejs/timeline';
+import { stagger } from 'animejs/utils';
 
 const FORMATS = [
   { name: 'Landing page', note: '1 page' },

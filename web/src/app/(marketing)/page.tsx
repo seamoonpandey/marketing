@@ -16,8 +16,8 @@ const v = (o: Record<string, string | number>) => o as CSSProperties;
 
 const CHANNELS = {
   layout: 'hub',
-  alt: 'Pracharo posts to Facebook, Instagram, TikTok, YouTube, LinkedIn, Pinterest, WhatsApp and email.',
-  center: { label: 'Pracharo' },
+  alt: 'Prachaar posts to Facebook, Instagram, TikTok, YouTube, LinkedIn, Pinterest, WhatsApp and email.',
+  center: { label: 'Prachaar' },
   spokes: [
     { label: 'Facebook', icon: 'facebook' },
     { label: 'Instagram', icon: 'instagram' },
@@ -61,7 +61,7 @@ export default function Home() {
       <header className="nav nav--centre">
         <div className="wrap nav__bar">
           <a className="skip-link" href="#top">Skip to content</a>
-          <a className="nav__logo" href="#top"><span className="mark" data-mark="ring" aria-hidden="true" />Pracharo</a>
+          <a className="nav__logo" href="#top"><span className="mark" data-mark="ring" aria-hidden="true" />Prachaar</a>
           <nav className="nav__links" aria-label="Main">
             <div className="nav__item"><a className="nav__link" href="#queue">Queue</a></div>
             <div className="nav__item">
@@ -99,13 +99,13 @@ export default function Home() {
             <div className="hero__c">
               <a className="pill" href="#apply"><span>Pilot</span><span className="muted">Starts with one brand in Nepal</span></a>
               <h1 id="hero-h">AI marketing team for Nepali brands</h1>
-              <p className="hero__lead">Pracharo’s 20 AI roles research, write, design and schedule your posts. Each job shows its cost in rupees first, and nothing goes public until you approve it.</p>
+              <p className="hero__lead">Prachaar’s 20 AI roles research, write, design and schedule your posts. Each job shows its cost in rupees first, and nothing goes public until you approve it.</p>
               <div className="btn-row">
                 <a className="btn btn--primary" href="#apply">Join the pilot</a>
                 <a className="btn btn--secondary" href="#queue">See the queue</a>
               </div>
             </div>
-            <div className="hero__window" role="img" aria-label="Pracharo’s copywriter role has drafted three Instagram posts for a Dashain offer, removed one unsupported claim and is waiting for approval.">
+            <div className="hero__window" role="img" aria-label="Prachaar’s copywriter role has drafted three Instagram posts for a Dashain offer, removed one unsupported claim and is waiting for approval.">
               <HeroAurora />
               <div className="ly-piece d-win d-win--dark" aria-hidden="true">
                 <div className="d-win__bar"><span className="d-win__dots"><i /><i /><i /></span><span><b>Copywriter</b> · Dashain offer</span><span className="sp" /><span>Instagram · Facebook</span></div>
@@ -134,14 +134,14 @@ export default function Home() {
           <div className="wrap">
             <div className="grid">
               <h2 id="queue-h" className="span-5">Today’s marketing work in one ranked queue</h2>
-              <div className="span-6 start-7 stack-4"><p>Every morning Pracharo ranks the day’s jobs by what they are worth, with the role, the cost and the time due. Open one to read the draft and its checks.</p><p><a className="link" href="#approval">See how approval works</a></p></div>
+              <div className="span-6 start-7 stack-4"><p>Every morning Prachaar ranks the day’s jobs by what they are worth, with the role, the cost and the time due. Open one to read the draft and its checks.</p><p><a className="link" href="#approval">See how approval works</a></p></div>
             </div>
-            <div className="ui app fill" role="img" aria-label="The Pracharo queue: ten jobs by role and status beside an open Instagram draft, where one claim is blocked for having no approved source." data-ui-pause-host="">
+            <div className="ui app fill" role="img" aria-label="The Prachaar queue: ten jobs by role and status beside an open Instagram draft, where one claim is blocked for having no approved source." data-ui-pause-host="">
               <div className="app__pane app__pane--list">
                 <div className="ui ui-panel ui-win" data-ui="window" data-open="Queued" data-work="Drafting" data-done="Ready">
                   <div className="ui-win__bar">
                     <span className="ui-dots" aria-hidden="true"><i /><i /><i /></span>
-                    <span className="ui-win__crumb"><svg className="ui-brand" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path fillRule="evenodd" d={RING} /></svg>Pracharo <i>/</i> <b>Today</b></span>
+                    <span className="ui-win__crumb"><svg className="ui-brand" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path fillRule="evenodd" d={RING} /></svg>Prachaar <i>/</i> <b>Today</b></span>
                     <span className="ui-spacer" />
                     <span className="ui-win__search" aria-hidden="true"><svg className="ui-icon" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="m10.5 10.5 3 3" /></svg><span className="ui-win__ph">Search</span><span className="ui-kbd">/</span></span>
                   </div>
@@ -278,7 +278,7 @@ export default function Home() {
               <div className="span-5 stack-4">
                 <h2 id="questions-h">Questions</h2>
                 <p>Approval, ads, results, data and models.</p>
-                <p><a className="link" href="mailto:hello@pracharo.example">Email us</a></p>
+                <p><a className="link" href="mailto:hello@prachaar.example">Email us</a></p>
               </div>
               <div className="faq span-6 start-7">
                 {FAQ.map(([q, a]) => (
@@ -295,7 +295,7 @@ export default function Home() {
               <div className="span-6 stack-5">
                 <h2 id="apply-h">Pilot for brands in Nepal</h2>
                 <p className="t-lead">The pilot starts with one brand: its facts, its first week of posts and a report of what each asset cost.</p>
-                <form className="form" action="mailto:pilot@pracharo.example" method="post" encType="text/plain" data-endpoint="" data-sent="Your pilot application is in. We reply by email." noValidate>
+                <form className="form" action="mailto:pilot@prachaar.example" method="post" encType="text/plain" data-endpoint="" data-sent="Your pilot application is in. We reply by email." noValidate>
                   <div className="field"><label htmlFor="f-name">Name</label>
                     <input id="f-name" name="name" type="text" autoComplete="name" required aria-describedby="f-name-err" />
                     <p className="field__error" id="f-name-err" hidden>Write your name.</p></div>
@@ -347,19 +347,19 @@ export default function Home() {
               <div><h2 id="close-h">One queue for your marketing</h2><p className="t-lead">Start with one brand and one week of posts.</p></div>
               <a className="btn btn--primary" href="#apply">Join the pilot</a>
             </div>
-            <p className="close__word" aria-hidden="true">Pracharo</p>
+            <p className="close__word" aria-hidden="true">Prachaar</p>
           </div>
           <div className="closing__links">
             <div className="grid">
               <div className="span-6 stack-4">
-                <a className="nav__logo" href="#top"><span className="mark" data-mark="ring" aria-hidden="true" />Pracharo</a>
+                <a className="nav__logo" href="#top"><span className="mark" data-mark="ring" aria-hidden="true" />Prachaar</a>
               </div>
               <div className="span-2 footer__col"><h3>Product</h3><ul><li><a href="#queue">Queue</a></li><li><a href="#features">Features</a></li><li><a href="#channels">Channels</a></li></ul></div>
               <div className="span-2 footer__col"><h3>Pilot</h3><ul><li><a href="#apply">Application</a></li><li><a href="#questions">Questions</a></li></ul></div>
-              <div className="span-2 footer__col"><h3>Contact</h3><ul><li><a href="mailto:hello@pracharo.example">Email us</a></li></ul></div>
+              <div className="span-2 footer__col"><h3>Contact</h3><ul><li><a href="mailto:hello@prachaar.example">Email us</a></li></ul></div>
             </div>
             <div className="footer__legal">
-              <span>&copy; 2026 Pracharo</span>
+              <span>&copy; 2026 Prachaar</span>
               <span className="credits">Product names and logos are trademarks of their owners</span>
             </div>
           </div>
