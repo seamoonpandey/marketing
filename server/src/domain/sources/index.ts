@@ -45,6 +45,9 @@ const columns = {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sha256 = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
+// The browser PUTs here. Its presigned URL stays valid after completion and the browser picks the
+// Content-Type, so only completeUpload writes the source's own key, with the checked bytes and type.
+const pendingKey = (key: string) => `${key}.pending`;
 
 async function newId(tx: Tx): Promise<string> {
   return (await tx.execute<{ id: string }>(sql`select uuidv7() as id`)).rows[0]!.id;
@@ -88,7 +91,7 @@ export async function createUpload(
       trust: 'owner', meta: { filename: f.filename, bytes: f.bytes, uploader: 'operator', status: 'pending' },
     })
     .returning(columns);
-  return { source: row!, uploadUrl: await presignUpload(key, f.mime, f.bytes) };
+  return { source: row!, uploadUrl: await presignUpload(pendingKey(key), f.mime, f.bytes) };
 }
 
 /**
@@ -100,9 +103,10 @@ export async function completeUpload(tx: Tx, brandId: string, sourceId: string):
   if (source.kind !== 'upload') throw new ValidationError('Only an upload can be completed');
   if (source.meta.status === 'ready') return source;
 
+  const pending = pendingKey(source.objectKey);
   let bytes: Uint8Array;
   try {
-    bytes = await getObject(source.objectKey);
+    bytes = await getObject(pending);
   } catch {
     throw new ValidationError('The file has not been uploaded yet');
   }
@@ -112,10 +116,12 @@ export async function completeUpload(tx: Tx, brandId: string, sourceId: string):
     if (!bytesMatch(source.mime, bytes)) throw new ValidationError(`The file's contents are not ${source.mime}`);
     extracted = await extractText(bytes, source.mime);
   } catch (e) {
-    await deleteObject(source.objectKey);
+    await deleteObject(pending);
     if (e instanceof ValidationError) throw e;
     throw new ValidationError(`The file could not be read as ${source.mime}`);
   }
+  await putObject(source.objectKey, bytes, source.mime);
+  await deleteObject(pending);
   const meta = {
     ...source.meta,
     bytes: bytes.byteLength,

@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { testDb, type TestDb } from '../../../test/helpers.ts';
 import { withBrand } from '../../db/tenant.ts';
 import { ValidationError } from '../../http/errors.ts';
-import { ensureBucket, getObject } from '../../storage/index.ts';
+import { ensureBucket, getObject, presignDownload } from '../../storage/index.ts';
 import { fetchGuard } from './fetch.ts';
 import { completeUpload, createUpload, getSource, listSources, savePageSource } from './index.ts';
 
@@ -39,13 +39,13 @@ afterAll(async () => {
 });
 
 /** Creates an upload, PUTs the bytes to its presigned URL, and completes it. */
-async function upload(filename: string, mime: string, bytes: Uint8Array) {
+async function upload(filename: string, mime: string, bytes: Uint8Array, putType = mime) {
   const { source, uploadUrl } = await withBrand(brand, (tx) =>
     createUpload(tx, brand, { filename, mime, bytes: bytes.byteLength }),
   );
-  const put = await fetch(uploadUrl, { method: 'PUT', body: bytes, headers: { 'content-type': mime } });
+  const put = await fetch(uploadUrl, { method: 'PUT', body: bytes, headers: { 'content-type': putType } });
   expect(put.ok).toBe(true);
-  return { source, complete: () => withBrand(brand, (tx) => completeUpload(tx, brand, source.id)) };
+  return { source, uploadUrl, complete: () => withBrand(brand, (tx) => completeUpload(tx, brand, source.id)) };
 }
 
 describe('sources', () => {
@@ -78,6 +78,24 @@ describe('sources', () => {
     const exe = new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00]);
     const bin = await upload('setup.txt', 'text/plain', exe);
     await expect(bin.complete()).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('keeps the checked bytes when the upload URL is used again after completion', async () => {
+    const hello = new TextEncoder().encode('hello');
+    const { source, uploadUrl, complete } = await upload('notes.txt', 'text/plain', hello);
+    await complete();
+    const exe = new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00]);
+    await fetch(uploadUrl, { method: 'PUT', body: exe, headers: { 'content-type': 'text/plain' } });
+    expect(await getObject(source.objectKey)).toEqual(hello);
+  });
+
+  it('serves an image with its checked type, whatever Content-Type the browser PUT it with', async () => {
+    const page = new TextEncoder().encode('<html><script>alert(document.domain)</script></html>');
+    const polyglot = new Uint8Array([...file('logo.png'), ...page]);
+    const { source, complete } = await upload('logo.png', 'image/png', polyglot, 'text/html');
+    await complete();
+    const res = await fetch(await presignDownload(source.objectKey));
+    expect(res.headers.get('content-type')).toBe('image/png');
   });
 
   it('reads a DOCX and gives a scanned PDF null text', async () => {
