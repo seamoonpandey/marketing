@@ -254,7 +254,7 @@ export default function Home() {
 
         <section className="section ground-inverse" id="channels" data-moment="line-carries-colour" data-moment-opts='{"from": "base"}' aria-labelledby="channels-h">
           <div className="wrap">
-            <div className="grid">
+            <div className="grid fill">
               <div className="span-5 stack-5">
                 <h2 id="channels-h">Posts to 8 channels from one calendar</h2>
                 <p className="t-lead">Each channel keeps its own sizes, limits and rules. The pilot connects two or three of yours; the rest get a finished draft to post by hand.</p>
@@ -265,7 +265,7 @@ export default function Home() {
                 </ul>
                 <p><a className="link" href="#apply">See what the pilot covers</a></p>
               </div>
-              <div className="frame frame--split span-6 start-7" data-visual="">
+              <div className="frame frame--fill span-6 start-7" data-visual="">
                 <div className="dg" data-diagram={JSON.stringify(CHANNELS)} />
               </div>
             </div>
@@ -291,7 +291,7 @@ export default function Home() {
 
         <section className="section" id="apply" aria-labelledby="apply-h">
           <div className="wrap">
-            <div className="grid">
+            <div className="grid fill">
               <div className="span-6 stack-5">
                 <h2 id="apply-h">Pilot for brands in Nepal</h2>
                 <p className="t-lead">The pilot starts with one brand: its facts, its first week of posts and a report of what each asset cost.</p>
@@ -313,9 +313,9 @@ export default function Home() {
                   <p className="t-small muted">A person reads every application and replies by email.</p>
                 </form>
               </div>
-              <div className="frame frame--split span-6 start-7" data-visual="" role="img" aria-label="The pilot’s week one checklist: facts approved, competitors named, then two channels, the monthly cap and the first week’s plan.">
+              <div className="frame frame--fill span-6 start-7" data-visual="" role="img" aria-label="The pilot’s week one checklist: facts approved, competitors named, then two channels, the monthly cap and the first week’s plan.">
                 <div className="stage stage--fade-b">
-                  <div className="at-rise fit" style={v({ '--fit-max': '340px', '--ax': 'max(24px, 50% - 170px)', '--ay': '40px' })}>
+                  <div className="at-rise fit" style={v({ '--fit-max': '340px', '--ax': 'max(24px, 50% - 170px)', '--ay': 'max(24px, 50% - 135px)' })}>
                     <div className="ui ui-panel ui-checks" data-ui="checklist">
                       <div className="ui-checks__head">
                         <div className="ui-title">Week one</div>

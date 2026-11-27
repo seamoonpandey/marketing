@@ -94,9 +94,22 @@
 .fan__chip em { margin-left: auto; font-style: normal; color: var(--u-muted); font-size: 12px; }
 @media (max-width: 639px) { .fan { grid-template-columns: 1fr; } .fan__brief { display: none; } }
 
+/* channels, questions and the pilot run their frame or list to the screen's foot, so no air piles up under them;
+   a screen too short for them grows the section (as the kit's sections do) rather than let them spill out (.fill would) */
+:is(#channels, #questions, #apply) .wrap > .grid { flex: 1 0 auto; }
+
 /* ---------------------------------------------------------------- channels (split on the dark ground) */
-#channels .frame--split { aspect-ratio: 5 / 4; }
 #channels .facts { display: grid; gap: var(--s-3); }
+
+/* ---------------------------------------------------------------- questions: the rows share the screen */
+#questions .faq { align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; }
+@media (max-width: 1023px) {
+  #questions .wrap > .grid { grid-template-rows: auto 1fr; }
+  /* stacked under the heading: each row takes an equal share as air above its question; the rule stays under the answer */
+  #questions .faq > .faq__item { flex-grow: 1; align-content: end; }
+}
+/* 1024 to 1279: the narrow column wraps the questions, so four of them hold the screen */
+@media (min-width: 1024px) and (max-width: 1279px) { #questions .faq__item:nth-child(n + 5) { display: none; } }
 
 /* ---------------------------------------------------------------- the pilot form beside week one */
 #apply .stack-5 > .form { margin-top: var(--s-6); }
@@ -113,19 +126,17 @@
   /* the card panels take what each screen leaves under the words, so neither screen has a hole */
   #features .panel { --p-h: calc(100svh - 520px); }
   .fan { grid-template-columns: 1fr; } .fan__brief { display: none; }
-  /* the channels diagram at a set height under the words */
-  #channels .frame--split { aspect-ratio: auto; height: 300px; }
-  /* the pilot form and week one side by side: the form alone runs past the screen when stacked */
-  #apply .grid > .span-6:first-child { grid-column: 1 / span 7; }
-  #apply .frame--split { grid-column: 8 / -1; grid-row: 1; aspect-ratio: auto; min-height: 0; height: 100%; }
-  #apply .form { grid-template-columns: 1fr; }
 }
 /* a phone: each section holds one screen (the features two): the phone copy is cut, never squeezed */
 @media (max-width: 639px) {
   #features .panel { --p-h: 180px; }
   #channels .facts { display: none; }
   #questions .faq__item:nth-child(n + 4) { display: none; }
-  #apply .frame--split { display: none; }
+  /* week one takes the lead's and the reply line's place, so the form and its picture hold one screen
+     (24px steps, still 40px from the button to the picture) */
+  #apply :is(.t-lead, .t-small) { display: none; }
+  #apply .stack-5 > .form { margin-top: var(--s-5); }
+  #apply .grid.fill { gap: var(--s-5); }
 }
 
 /* the kit's pause disc inside the dark window: a ring that shows on the dark ground */
