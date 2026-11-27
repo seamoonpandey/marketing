@@ -5,6 +5,7 @@ import { closeDb, useDatabase } from '../src/db/client.ts';
 import * as schema from '../src/db/schema/index.ts';
 import { seedTenant } from '../src/db/seed.ts';
 import { ensureAppRole, POST_SCHEMA_SQL } from '../src/db/setup.ts';
+import { resetTenantCache } from '../src/db/tenant.ts';
 
 export type TestDb = {
   tenantId: string;
@@ -53,6 +54,7 @@ export async function testDb(): Promise<TestDb> {
   await admin.query(POST_SCHEMA_SQL);
   const tenantId = await seedTenant(admin);
   await useDatabase(appUrl);
+  resetTenantCache();
 
   let brands = 0;
   return {

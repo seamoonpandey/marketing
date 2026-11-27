@@ -3,8 +3,8 @@ import pg from 'pg';
 import { config } from '../config.ts';
 import * as schema from './schema/index.ts';
 
-function connect(url: string) {
-  const pool = new pg.Pool({ connectionString: url, max: 10 });
+function connect(url: string, max = 10) {
+  const pool = new pg.Pool({ connectionString: url, max });
   return { pool, db: drizzle(pool, { schema }) };
 }
 
@@ -19,9 +19,9 @@ export function db(): Db {
 }
 
 /** Points the app at another database. Tests only. */
-export async function useDatabase(url: string): Promise<void> {
+export async function useDatabase(url: string, poolSize?: number): Promise<void> {
   await closeDb();
-  current = connect(url);
+  current = connect(url, poolSize);
 }
 
 export async function closeDb(): Promise<void> {
