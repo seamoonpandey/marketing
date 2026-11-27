@@ -5,7 +5,7 @@ import type { Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { checkBalance, type PlanItem, type Violation } from './balance.ts';
-import { getCampaign } from './campaigns.ts';
+import { assertSegment, getCampaign } from './campaigns.ts';
 import { addDays, isDay, UUID, weekdayOf } from './dates.ts';
 import { getSettings } from './settings.ts';
 
@@ -56,6 +56,7 @@ export async function getWeek(tx: Tx, brandId: string, weekStart: string, facts:
 async function checkRefs(tx: Tx, brandId: string, i: ItemInput) {
   for (const f of i.factIds ?? []) if (!UUID.test(f)) throw new ValidationError('factIds must be fact ids');
   if (i.segmentId && !UUID.test(i.segmentId)) throw new ValidationError('segmentId is not an id');
+  await assertSegment(tx, brandId, i.segmentId); // 404 (denied) for another brand's segment
   if (i.campaignId) await getCampaign(tx, brandId, i.campaignId); // 404 (denied) for another brand's campaign
 }
 

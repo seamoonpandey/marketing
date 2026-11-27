@@ -20,6 +20,7 @@ export function suggestTargets(competitorSite: string): Promise<string[]> {
 }
 
 export async function listTargets(tx: Tx, brandId: string, competitorId?: string): Promise<WatchTarget[]> {
+  if (competitorId && !UUID.test(competitorId)) return []; // not an id: no competitor has it (and Postgres would refuse it)
   return tx
     .select()
     .from(watchTargets)

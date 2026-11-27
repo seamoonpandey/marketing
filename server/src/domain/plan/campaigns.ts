@@ -3,6 +3,7 @@ import { campaigns } from '../../db/schema/plan.ts';
 import type { Tx } from '../../db/tenant.ts';
 import { NotFoundError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
+import { listSubjects } from '../knowledge/index.ts';
 import { listOpportunities } from '../research/index.ts';
 import { isDay, UUID } from './dates.ts';
 
@@ -15,11 +16,17 @@ function check(f: { startsOn?: string | null; endsOn?: string | null; segmentId?
   if (f.segmentId && !UUID.test(f.segmentId)) throw new ValidationError('segmentId is not an id');
 }
 
+/** 404 (denied) unless segmentId, when given, is a segment of this brand. */
+export async function assertSegment(tx: Tx, brandId: string, segmentId: string | null | undefined): Promise<void> {
+  if (segmentId && !(await listSubjects(tx, brandId, 'segment')).some((s) => s.id === segmentId)) throw new NotFoundError('segment', segmentId);
+}
+
 /** An opportunity must be this brand's and accepted: another brand's is a 404 (denied), a dismissed or new one a 400. */
 export async function createCampaign(
   tx: Tx, brandId: string, i: Omit<Fields, 'status'> & { opportunityId?: string | null },
 ): Promise<Campaign> {
   check(i);
+  await assertSegment(tx, brandId, i.segmentId);
   if (i.opportunityId) {
     const opp = UUID.test(i.opportunityId) ? (await listOpportunities(tx, brandId)).find((o) => o.id === i.opportunityId) : undefined;
     if (!opp) throw new NotFoundError('opportunity', i.opportunityId);
@@ -39,6 +46,7 @@ export async function getCampaign(tx: Tx, brandId: string, id: string): Promise<
 export async function updateCampaign(tx: Tx, brandId: string, id: string, patch: Partial<Fields>): Promise<Campaign> {
   const cur = await getCampaign(tx, brandId, id);
   check({ startsOn: cur.startsOn, endsOn: cur.endsOn, ...patch });
+  await assertSegment(tx, brandId, patch.segmentId);
   const set = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined));
   const [row] = Object.keys(set).length ? await tx.update(campaigns).set(set).where(eq(campaigns.id, id)).returning() : [cur];
   await audit(tx, { brandId, actor: 'operator', action: 'plan.campaign.update', objectType: 'campaign', objectId: id, result: 'ok' });
