@@ -102,7 +102,9 @@ export const BriefView = z
     ready: Ready,
   })
   .openapi('PlanBriefView', { description: 'Editing an approved brief retires it and leaves a new draft: approved becomes null.' });
-export const BriefEdit = z.object({ body: BriefBody }).openapi('PlanBriefEdit');
+export const BriefEdit = z.object({ body: BriefBody }).openapi('PlanBriefEdit', {
+  description: 'Edits the working copy: the draft if there is one; otherwise the approved version is retired and the edit becomes a new draft. Statements citing no approved fact in audience or offer_message come back in leftOut.',
+});
 
 // ---------- weeks
 export const WeekStatus = z.enum(['draft', 'approved', 'replaced']).openapi('PlanWeekStatus');

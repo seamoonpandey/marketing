@@ -2127,7 +2127,8 @@
         },
         "required": [
           "body"
-        ]
+        ],
+        "description": "Edits the working copy: the draft if there is one; otherwise the approved version is retired and the edit becomes a new draft. Statements citing no approved fact in audience or offer_message come back in leftOut."
       },
       "PlanEstimate": {
         "type": "object",
@@ -4541,16 +4542,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -4583,16 +4574,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -4659,16 +4640,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -4712,16 +4683,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -4788,16 +4749,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -4838,16 +4789,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -4922,16 +4863,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -4972,16 +4903,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -5056,16 +4977,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -5116,16 +5027,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -5212,16 +5113,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -5272,16 +5163,6 @@
             }
           },
           "409": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -5352,16 +5233,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -5416,16 +5287,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -5516,16 +5377,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -5590,16 +5441,6 @@
             }
           },
           "409": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -5680,16 +5521,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -5758,16 +5589,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       },
@@ -5806,16 +5627,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -5864,16 +5675,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -5940,16 +5741,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -6000,16 +5791,6 @@
             }
           },
           "409": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {

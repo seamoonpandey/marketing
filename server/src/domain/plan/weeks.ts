@@ -75,7 +75,7 @@ export async function getPlan(tx: Tx, brandId: string, id: string): Promise<Week
   return row;
 }
 
-async function itemById(tx: Tx, brandId: string, id: string): Promise<PlanItem> {
+export async function getItem(tx: Tx, brandId: string, id: string): Promise<PlanItem> {
   const [row] = UUID.test(id) ? await tx.select().from(planItems).where(and(eq(planItems.id, id), eq(planItems.brandId, brandId))) : [];
   if (!row) throw new NotFoundError('plan_item', id);
   return row;
@@ -106,7 +106,7 @@ export async function nextVersion(tx: Tx, brandId: string, weekStart: string): P
 }
 
 export async function editItem(tx: Tx, brandId: string, id: string, patch: ItemInput & { day?: string; channel?: PlanItem['channel'] }): Promise<PlanItem> {
-  const item = await itemById(tx, brandId, id);
+  const item = await getItem(tx, brandId, id);
   const plan = await getPlan(tx, brandId, item.weekPlanId);
   if (patch.day !== undefined) inWeek(plan, patch.day);
   await checkRefs(tx, brandId, patch);
@@ -118,7 +118,7 @@ export async function editItem(tx: Tx, brandId: string, id: string, patch: ItemI
 }
 
 export async function removeItem(tx: Tx, brandId: string, id: string): Promise<void> {
-  const item = await itemById(tx, brandId, id);
+  const item = await getItem(tx, brandId, id);
   await invalidate(tx, brandId, await getPlan(tx, brandId, item.weekPlanId));
   await tx.delete(planItems).where(eq(planItems.id, id));
   await audit(tx, { brandId, actor: 'operator', action: 'plan.item.remove', objectType: 'plan_item', objectId: id, result: 'ok' });
