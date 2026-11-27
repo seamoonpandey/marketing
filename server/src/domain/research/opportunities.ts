@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { extract } from '../../ai/index.ts';
 import type { ApprovedFact } from '../../contracts/common.ts';
@@ -45,12 +45,7 @@ export async function generateOpportunities(brandId: string, runId: string, fact
     ],
   });
   return withBrand(brandId, async (tx) => {
-    const cited = [...new Set(object.opportunities.flatMap((o) => o.observationIds).filter((i) => UUID.test(i)))];
-    const known = new Set(
-      cited.length
-        ? (await tx.select({ id: observations.id }).from(observations).where(and(eq(observations.brandId, brandId), inArray(observations.id, cited)))).map((r) => r.id)
-        : [],
-    );
+    const known = new Set(fresh.map((o) => o.id)); // only this run's observations, the ones the model was shown
     const out: Opportunity[] = [];
     for (const o of object.opportunities) {
       if (!o.observationIds.length || !o.observationIds.every((i) => known.has(i))) continue;

@@ -36,6 +36,16 @@ describe('opportunities', () => {
     expect(await withBrand(brand, (tx) => listOpportunities(tx, brand, 'new'))).toHaveLength(1);
   });
 
+  it("drops one citing an observation of the same brand from another run", async () => {
+    const brand = await t.makeBrand();
+    const old = await withObservation(brand);
+    await t.adminQuery(`update observations set run_id = gen_random_uuid() where id = $1`, [old]);
+    const fresh = await withObservation(brand);
+    mockAi.queue({ opportunities: [...opp([old]).opportunities, ...opp([fresh]).opportunities] });
+    const made = await generateOpportunities(brand, RUN, []);
+    expect(made.map((o) => o.observationIds)).toEqual([[fresh]]);
+  });
+
   it('makes no model call when the run has no observation', async () => {
     const brand = await t.makeBrand();
     expect(await generateOpportunities(brand, RUN, [])).toEqual([]);
