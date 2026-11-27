@@ -375,7 +375,8 @@ export async function approveBatch(tx: Tx, brandId: string, ids: string[]): Prom
   }
   const out = [];
   for (const f of rows) out.push(f.status === 'approved' ? f : await addVersion(tx, f, ownerApproval(), 'fact.approve'));
-  return Promise.all(out.map((r) => showOne(tx, r.id)));
+  const shown = await selectFacts(tx, inArray(facts.id, out.map((r) => r.id)));
+  return out.map((r) => shown.find((s) => s.id === r.id)!);
 }
 
 /** The owner's correction: a new approved version. A changed value drops the old source and becomes origin owner. */
