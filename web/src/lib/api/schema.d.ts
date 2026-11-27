@@ -3012,6 +3012,1166 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/brands/{brandId}/plan/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanOverview"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanSettings"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanSettings"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanSettings"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/campaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    status?: components["schemas"]["PlanCampaignStatus"];
+                };
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Newest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanCampaign"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanCampaignCreate"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanCampaign"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/campaigns/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanCampaign"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanCampaignPatch"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanCampaign"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/campaigns/{id}/brief": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanBriefView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanBriefEdit"];
+                };
+            };
+            responses: {
+                /** @description The edit is now the draft */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanBriefView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/campaigns/{id}/brief/estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanEstimate"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/campaigns/{id}/brief/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Started */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                402: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/campaigns/{id}/brief/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanBriefView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/weeks/{weekStart}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    /** @description Must be the first day of the brand week (settings.weekStarts), else 400. */
+                    weekStart: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanWeekView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/weeks/{weekStart}/estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    /** @description Must be the first day of the brand week (settings.weekStarts), else 400. */
+                    weekStart: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanEstimate"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/weeks/{weekStart}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    /** @description Must be the first day of the brand week (settings.weekStarts), else 400. */
+                    weekStart: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Started */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                402: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/weeks/{weekStart}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    /** @description Must be the first day of the brand week (settings.weekStarts), else 400. */
+                    weekStart: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanWeekView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/weeks/{weekStart}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    /** @description Must be the first day of the brand week (settings.weekStarts), else 400. */
+                    weekStart: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanItemCreate"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanItemResult"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/items/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanItemRemoved"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanItemPatch"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanItemResult"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/runs/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/plan/runs/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3696,6 +4856,356 @@ export interface components {
             factIds?: string[];
             observationIds?: string[];
             profileQuote?: string;
+        };
+        PlanOverview: {
+            ready: components["schemas"]["PlanReady"];
+            /** @description Always two: this week, then next week. */
+            weeks: components["schemas"]["PlanWeekCard"][];
+            activeCampaigns: components["schemas"]["PlanCampaign"][];
+            /** @description Accepted opportunities that no campaign started from. */
+            opportunities: components["schemas"]["PlanOpportunityCard"][];
+            monthCost: components["schemas"]["PlanMoney"] & unknown;
+        };
+        PlanReady: {
+            /** @description The brand has at least one approved fact. Drafting needs it. */
+            facts: boolean;
+            /** @description The settings list at least one channel. Drafting needs it. */
+            channels: boolean;
+        };
+        PlanWeekCard: {
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            weekStart: string;
+            /** @enum {string} */
+            status: "none" | "draft" | "approved";
+            itemCount: number;
+            blockingCount: number;
+            latestRun: components["schemas"]["PlanRun"] | null;
+        };
+        PlanRun: {
+            id: string;
+            /** @enum {string} */
+            kind: "week" | "brief";
+            /** @description The week start date or the campaign id. */
+            targetId: string;
+            state: components["schemas"]["PlanRunState"];
+            error: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            startedAt: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            finishedAt: string | null;
+            estimate: components["schemas"]["PlanMoney"] | null;
+            actual: components["schemas"]["PlanMoney"] | null;
+            counts: components["schemas"]["PlanRunCounts"];
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        PlanRunState: "running" | "awaiting_approval" | "completed" | "failed_retryable" | "failed_final" | "cancelled";
+        /** @description Decimal strings: usd to 4 places, npr to 2. */
+        PlanMoney: {
+            usd: string;
+            npr: string;
+        };
+        PlanRunCounts: {
+            /** @description Items stored. */
+            items?: number;
+            /** @description Model items dropped: day outside the week, channel not in settings, or over the posts per week. */
+            dropped?: number;
+        };
+        PlanCampaign: {
+            id: string;
+            name: string;
+            objective: components["schemas"]["PlanObjective"];
+            status: components["schemas"]["PlanCampaignStatus"];
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            startsOn: string | null;
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            endsOn: string | null;
+            segmentId: string | null;
+            opportunityId: string | null;
+            /** @description Decimal string. */
+            budgetNpr: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        PlanObjective: "awareness" | "consideration" | "conversion" | "activation" | "retention" | "referral" | "reputation" | "recruitment" | "partner";
+        /** @enum {string} */
+        PlanCampaignStatus: "draft" | "active" | "paused" | "done" | "archived";
+        PlanOpportunityCard: {
+            id: string;
+            title: string;
+            suggestedAction: string;
+            whyItMatters: string;
+            /** @enum {string} */
+            confidence: "low" | "medium" | "high";
+        };
+        PlanSettings: {
+            /** @description A channel at most once. */
+            channels: {
+                channel: components["schemas"]["PlanChannel"];
+                postsPerWeek: number;
+            }[];
+            pillars: {
+                pillar: components["schemas"]["PlanPillar"];
+                weight: number;
+            }[];
+            /** @description 0 Sunday … 6 Saturday. Every week start date must fall on this weekday. */
+            weekStarts: number;
+        };
+        /** @enum {string} */
+        PlanChannel: "facebook" | "instagram" | "tiktok" | "youtube" | "linkedin" | "x" | "whatsapp" | "email" | "website";
+        /** @enum {string} */
+        PlanPillar: "education" | "product" | "proof" | "founder_team" | "behind_scenes" | "comparison" | "faq" | "culture" | "offer" | "industry_insight" | "community";
+        PlanCampaignCreate: {
+            name: string;
+            objective: components["schemas"]["PlanObjective"];
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            startsOn?: string;
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            endsOn?: string;
+            segmentId?: string;
+            /** @description An accepted opportunity of this brand; a dismissed or foreign one is refused with 400 or 404. */
+            opportunityId?: string;
+            budgetNpr?: string;
+        };
+        PlanCampaignPatch: {
+            name?: string;
+            objective?: components["schemas"]["PlanObjective"];
+            status?: components["schemas"]["PlanCampaignStatus"];
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            startsOn?: string | null;
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            endsOn?: string | null;
+            segmentId?: string | null;
+            budgetNpr?: string | null;
+        };
+        /** @description Editing an approved brief retires it and leaves a new draft: approved becomes null. */
+        PlanBriefView: {
+            campaign: components["schemas"]["PlanCampaign"];
+            approved: components["schemas"]["PlanBrief"] | null;
+            draft: components["schemas"]["PlanBrief"] | null;
+            /** @description The currently approved facts that the two versions cite. */
+            facts: components["schemas"]["PlanFactRef"][];
+            /** @description The newest brief run of this campaign, so a screen can resume RunProgress. */
+            latestRun: components["schemas"]["PlanRun"] | null;
+            ready: components["schemas"]["PlanReady"];
+        };
+        PlanBrief: {
+            id: string;
+            campaignId: string;
+            version: number;
+            /** @enum {string} */
+            status: "draft" | "approved" | "replaced";
+            body: components["schemas"]["PlanBriefBody"];
+            /** @description Removed statements. reason is "no approved fact" (audience and offer_message statements need one). */
+            leftOut: {
+                section: string;
+                text: string;
+                reason: string;
+            }[];
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            approvedAt: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            createdAt: string;
+        };
+        PlanBriefBody: {
+            goal_kpi: components["schemas"]["PlanStatement"][];
+            audience: components["schemas"]["PlanStatement"][];
+            offer_message: components["schemas"]["PlanStatement"][];
+            channel_mix: components["schemas"]["PlanStatement"][];
+            creative: components["schemas"]["PlanStatement"][];
+            conversion: components["schemas"]["PlanStatement"][];
+            budget: components["schemas"]["PlanStatement"][];
+            measurement: components["schemas"]["PlanStatement"][];
+            risk: components["schemas"]["PlanStatement"][];
+        };
+        PlanStatement: {
+            text: string;
+            factIds?: string[];
+        };
+        /** @description An approved fact that something cites. A cited id missing from the list is not approved today. */
+        PlanFactRef: {
+            id: string;
+            section: string;
+            subjectName: string | null;
+            field: string;
+            value?: unknown;
+            unit: string | null;
+        };
+        /** @description Edits the working copy: the draft if there is one; otherwise the approved version is retired and the edit becomes a new draft. Statements citing no approved fact in audience or offer_message come back in leftOut. */
+        PlanBriefEdit: {
+            body: components["schemas"]["PlanBriefBody"];
+        };
+        /** @description The most the draft can cost. Show it before starting. */
+        PlanEstimate: {
+            estimate: components["schemas"]["PlanMoney"];
+            remaining: components["schemas"]["PlanMoney"] & unknown;
+        };
+        PlanWeekView: {
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            weekStart: string;
+            /** @description The newest draft if there is one, else the approved plan; null when the week has no plan yet. */
+            plan: components["schemas"]["PlanWeekPlan"] | null;
+            /** @description Ordered by day, then position. */
+            items: components["schemas"]["PlanItem"][];
+            /** @description Blocking ones first. */
+            violations: components["schemas"]["PlanViolation"][];
+            blockingCount: number;
+            canApprove: boolean;
+            /** @description Why approval is disabled, or null. */
+            cannotApproveReason: string | null;
+            /** @description The approval that still stands while a newer draft is shown in plan; null when plan is itself the approved one or nothing is approved. */
+            approvedPlan: components["schemas"]["PlanWeekPlan"] | null;
+            /** @description The currently approved facts that the items cite. */
+            facts: components["schemas"]["PlanFactRef"][];
+            /** @description The newest run for this week, so a screen can resume RunProgress. */
+            latestRun: components["schemas"]["PlanRun"] | null;
+            ready: components["schemas"]["PlanReady"];
+        };
+        PlanWeekPlan: {
+            id: string;
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            weekStart: string;
+            version: number;
+            status: components["schemas"]["PlanWeekStatus"];
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            approvedAt: string | null;
+            runId: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        PlanWeekStatus: "draft" | "approved" | "replaced";
+        PlanItem: {
+            id: string;
+            weekPlanId: string;
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            day: string;
+            channel: components["schemas"]["PlanChannel"];
+            format: components["schemas"]["PlanFormat"] | null;
+            pillar: components["schemas"]["PlanPillar"] | null;
+            funnel: components["schemas"]["PlanFunnel"] | null;
+            intent: components["schemas"]["PlanIntent"] | null;
+            segmentId: string | null;
+            campaignId: string | null;
+            idea: string;
+            cta: string;
+            factIds: string[];
+            position: number;
+            /** @enum {string} */
+            origin: "model" | "owner";
+        };
+        /** @enum {string} */
+        PlanFormat: "text" | "image" | "carousel" | "infographic" | "poll" | "story" | "short_video" | "long_video" | "live" | "gif" | "blog" | "email" | "landing_page" | "podcast" | "case_study";
+        /** @enum {string} */
+        PlanFunnel: "unaware" | "problem_aware" | "solution_aware" | "product_aware" | "most_aware" | "customer" | "advocate";
+        /** @enum {string} */
+        PlanIntent: "teach" | "demonstrate" | "persuade" | "entertain" | "reassure" | "objection" | "capture_lead" | "activate" | "retain";
+        PlanViolation: {
+            rule: components["schemas"]["PlanRule"];
+            blocking: boolean;
+            itemIds: string[];
+            message: string;
+        };
+        /** @enum {string} */
+        PlanRule: "same_day_channel" | "incomplete" | "duplicate_idea" | "unknown_fact" | "channel_count" | "pillar_share" | "format_variety" | "repeat_idea";
+        /** @description plan.status shows whether the edit set an approved week back to draft. */
+        PlanItemResult: {
+            item: components["schemas"]["PlanItem"];
+            plan: components["schemas"]["PlanWeekPlan"];
+        };
+        /** @description day must fall inside the week. An incomplete item is allowed; it blocks approval until completed. */
+        PlanItemCreate: {
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            day: string;
+            channel: components["schemas"]["PlanChannel"];
+            format?: components["schemas"]["PlanFormat"];
+            pillar?: components["schemas"]["PlanPillar"];
+            funnel?: components["schemas"]["PlanFunnel"];
+            intent?: components["schemas"]["PlanIntent"];
+            segmentId?: string;
+            campaignId?: string;
+            idea?: string;
+            cta?: string;
+            factIds?: string[];
+        };
+        PlanItemPatch: {
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            day?: string;
+            channel?: components["schemas"]["PlanChannel"];
+            format?: components["schemas"]["PlanFormat"] | null;
+            pillar?: components["schemas"]["PlanPillar"] | null;
+            funnel?: components["schemas"]["PlanFunnel"] | null;
+            intent?: components["schemas"]["PlanIntent"] | null;
+            segmentId?: string | null;
+            campaignId?: string | null;
+            idea?: string;
+            cta?: string;
+            factIds?: string[];
+        };
+        PlanItemRemoved: {
+            plan: components["schemas"]["PlanWeekPlan"];
         };
     };
     responses: never;
