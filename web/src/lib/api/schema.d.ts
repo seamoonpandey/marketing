@@ -7675,6 +7675,8 @@ export interface components {
              * @example 2026-11-29
              */
             weekStart: string;
+            /** @description The plan item's content pillar; comparison and offer raise the risk. */
+            pillar: string | null;
             /** @description The start of the first caption, at most 140 characters. */
             excerpt: string;
             /** @description Presigned URL of the first rendered image; null when there is none. */
