@@ -20,6 +20,9 @@ export async function brandKeyPrefix(tx: Tx, brandId: string) {
   return `tenant/${await tenantOf(tx)}/brand/${brandId}/`;
 }
 
+/** A key under the prefix with no . or .. segment, which a URL would resolve out of it. */
+export const underPrefix = (prefix: string, key: string) => key.startsWith(prefix) && !key.split('/').some((p) => p === '.' || p === '..');
+
 export async function jobPackage(tx: Tx, brandId: string, job: Job, channel: Channel | null, r: Reads, facts: ApprovedFact[]): Promise<Package> {
   const draft = await draftOf(r, tx, brandId, job.draftId, facts);
   if (!draft) return none('The draft no longer exists');
@@ -29,7 +32,7 @@ export async function jobPackage(tx: Tx, brandId: string, job: Job, channel: Cha
   const platform = channel?.platform ?? draft.channel;
   const { ratio, items } = mediaFor(draft, platform);
   const prefix = await brandKeyPrefix(tx, brandId);
-  if (items.some((m) => !m.key.startsWith(prefix))) return none('A media file of this draft is not stored for this brand');
+  if (items.some((m) => !underPrefix(prefix, m.key))) return none('A media file of this draft is not stored for this brand');
   const media = await Promise.all(
     items.map(async (m, i) => {
       const ext = m.key.slice(m.key.lastIndexOf('.') + 1).toLowerCase();

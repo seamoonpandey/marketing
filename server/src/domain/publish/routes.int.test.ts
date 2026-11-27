@@ -68,6 +68,17 @@ describe('publish API', () => {
     expect((await call('GET', `${a.p}/jobs/${j.id}`)).body.package).toEqual({ available: false, reason: expect.stringMatching(/not stored for this brand/), ratio: null, captions: [], media: [] });
   });
 
+  it('issues no media URL for a key that climbs out of the brand with ..', async () => {
+    const a = await brandWithJob();
+    const b = await brandWithJob();
+    const climbing = { ...render(a.brand, 'x'), key: `tenant/${t.tenantId}/brand/${a.brand}/../${b.brand}/asset/a.png` };
+    const d = fake.add(a.brand, { kind: 'static', renders: [climbing] });
+    const j = (await call('POST', `${a.p}/jobs`, { draftId: d.id, channelId: a.channel.id, scheduledAt: AT })).body;
+    expect((await call('GET', `${a.p}/jobs/${j.id}`)).body.package).toMatchObject({ available: false, media: [] });
+    const listed = (await call('GET', `${a.p}/schedulable`)).body.drafts.find((x: any) => x.draftId === d.id);
+    expect(listed.thumbnailUrl).toBeNull();
+  });
+
   it('GET /schedulable lists only drafts the gate approves, with the reason each channel does not fit', async () => {
     const brand = await t.makeBrand();
     const p = `/brands/${brand}/publish`;

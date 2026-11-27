@@ -12,7 +12,7 @@ import { getBrand } from '../brands/index.ts';
 import { findChannel, listChannels, type Channel } from './channels.ts';
 import { captionLength, copiesOf, fits, isVideo } from './fit.ts';
 import { dueAt, getJob, type Job } from './jobs.ts';
-import { brandKeyPrefix, jobPackage } from './package.ts';
+import { brandKeyPrefix, jobPackage, underPrefix } from './package.ts';
 import { approvalOf, type DraftForPublish, type Reads } from './reads.ts';
 import { parseInstant, safeTimezone } from './schedule.ts';
 import { getSettings } from './settings.ts';
@@ -98,7 +98,7 @@ export async function schedulable(tx: Tx, brandId: string, r: Reads, facts: Appr
         .where(and(eq(publishJobs.brandId, brandId), eq(publishJobs.draftId, d.id), notInArray(publishJobs.state, [...INACTIVE])))).map((x) => x.channelId),
     );
     const length = captionLength(d);
-    const thumb = d.renders.filter((x) => !isVideo(x) && x.key.startsWith(prefix)).sort((a, b) => (a.index ?? 0) - (b.index ?? 0))[0];
+    const thumb = d.renders.filter((x) => !isVideo(x) && underPrefix(prefix, x.key)).sort((a, b) => (a.index ?? 0) - (b.index ?? 0))[0];
     drafts.push({
       draftId: d.id, version: d.currentVersion, kind: d.kind, day: d.day, plannedChannel: d.channel, excerpt: excerptOf(d) ?? '',
       thumbnailUrl: thumb ? await presignDownload(thumb.key) : null, approvalExpiresAt: iso(new Date(approval.expiresAt)),
