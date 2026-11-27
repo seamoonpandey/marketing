@@ -4,8 +4,8 @@ import type { ApprovalRisk } from '../../db/schema/approve.ts';
 
 const DASHES = /[‐-―−﹘﹣－]/gu;
 
-/** NFKC, invisible format characters removed, dashes made ASCII, runs of white space made one space, trimmed. */
-export const plain = (s: string): string => s.normalize('NFKC').replace(/\p{Cf}/gu, '').replace(DASHES, '-').replace(/\s+/gu, ' ').trim();
+/** NFKC, invisible characters (format and every other default-ignorable one) removed, dashes made ASCII, runs of white space made one space, trimmed. */
+export const plain = (s: string): string => s.normalize('NFKC').replace(/[\p{Cf}\p{Default_Ignorable_Code_Point}]/gu, '').replace(DASHES, '-').replace(/\s+/gu, ' ').trim();
 
 /** Every string in a draft's content, one per line. */
 export function textOf(v: unknown): string {

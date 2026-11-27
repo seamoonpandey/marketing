@@ -104,6 +104,11 @@ describe('riskOf', () => {
     for (const t of ['better than the rest', 'better\n than', 'No.1 in Thamel', '#1 shawl']) expect(r(t).risk, t).toBe('medium');
   });
 
+  it('cannot be slipped past with invisible characters that are not format characters', () => {
+    // A variation selector, the combining grapheme joiner and a Hangul filler: each draws nothing.
+    for (const t of ['Results guar️anteed', 'Herbal cu͏re', 'A riskㅤfree trial']) expect(r(t).risk, t).toBe('high');
+  });
+
   it('cannot be slipped past with Cyrillic or Greek letters that look like Latin ones', () => {
     // а, С, і, е, Р are Cyrillic; Α is Greek.
     for (const t of ['Results guаranteed', 'Сure for colds', 'A rіsk-free trial', 'GUΑRANTEED']) expect(r(t).risk, t).toBe('high');

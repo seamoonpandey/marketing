@@ -212,7 +212,7 @@ describe('approve decisions', () => {
   it('refuses a high-risk draft without a long enough note, accepts it with one, and refuses it in a bulk approval', async () => {
     const b = await t.makeBrand();
     const d = studio.put(b, risky);
-    for (const note of [undefined, '', 'Looks fine to me ok', `   short note   ${'​'.repeat(20)}`, ' '.repeat(30)])
+    for (const note of [undefined, '', 'Looks fine to me ok', `   short note   ${'​'.repeat(20)}`, ' '.repeat(30), `Looks fine${'️'.repeat(20)}`])
       await expect(ok(b, d, note)).rejects.toThrow(/review note of at least 20/);
     const e = studio.put(b, risky);
     await view(b, e);
