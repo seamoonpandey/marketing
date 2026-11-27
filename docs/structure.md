@@ -316,3 +316,25 @@ The module registers itself with one line each in `server/src/modules.ts`, `serv
 Approve reads Studio only through `domain/approve/studio.ts`. Any module that publishes must call `validApproval` from `domain/approve/index.ts`.
 
 Ports: server work uses web 4540 and API 4541; screens use 4640 and 4641; the full-flow test uses 4740 and 4741.
+
+## 11. Publish module (module 6)
+
+Branch `product/publish`, built from `product/approve`. Plan: `docs/superpowers/plans/2026-11-27-publish-module.md`. Design: `docs/superpowers/specs/2026-11-27-publish-design.md`.
+
+Paths tagged **publish**:
+
+| Path | Holds |
+|---|---|
+| `server/src/db/schema/publish.ts` | Channels, jobs, settings |
+| `server/src/contracts/publish.ts` | Request and response schemas |
+| `server/src/domain/publish/` | Capabilities, fit, scheduling, the state machine, connectors, sending, the adapter to Approve and Studio, routes |
+| `server/src/workflows/publish-run.ts` | The send workflow and the every-minute scheduler |
+| `web/src/app/(app)/app/b/[brandId]/publish/**` | Screens |
+| `web/src/components/publish/` | Components |
+| `web/e2e/publish*.spec.ts` | End-to-end tests |
+
+The module registers itself with one line each in `server/src/modules.ts`, `server/src/db/schema/index.ts`, `web/src/nav.ts` and `web/src/app/(app)/app.css`. API paths start `/api/brands/{brandId}/publish/`.
+
+Publish reads Approve and Studio only through `domain/publish/reads.ts`. A real platform connector is one file under `domain/publish/connectors/` that implements `Connector`.
+
+Ports: server work uses web 4840 and API 4841; screens use 4940 and 4941; the full-flow test uses 5040 and 5041.
