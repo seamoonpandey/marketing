@@ -15,11 +15,15 @@ const NOISE = [
 ];
 const mask = (s: string) => NOISE.reduce((t, re) => t.replace(re, '#'), s);
 const COOKIE = /\bcookies?\b/i;
+// A price is never noise, whatever the block's length or wording: Rs 5,000 / NPR / $ / रु ५,००० / 5,000/-.
+const PRICE = /(?:\b(?:rs|nrs|npr|inr|usd)\.?|[$€£₹]|रु\.?|रू\.?)\s*[\d०-९][\d०-९,.]*|[\d०-९][\d०-९,.]*\s*(?:\/-|\brupees?\b)/gi;
+const prices = (s: string) => (s.match(PRICE) ?? []).join(' ');
 
 const blocks = (text: string) =>
   text.split(/\n+/).map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
 
 function isNoise({ before, after }: Block): boolean {
+  if (prices(before) !== prices(after)) return false;
   if (before.length < 20 && after.length < 20) return true;
   if (COOKIE.test(before + after) && (!before || !after || (COOKIE.test(before) && COOKIE.test(after)))) return true;
   return before !== '' && after !== '' && mask(before) === mask(after);

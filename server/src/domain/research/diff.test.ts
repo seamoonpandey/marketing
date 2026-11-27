@@ -22,4 +22,9 @@ describe('diffText', () => {
     const r = diffText('Shawls for sale in Kathmandu', 'Shawls for sale in Kathmandu\nFree delivery on every order this week');
     expect(r.blocks).toEqual([{ before: '', after: 'Free delivery on every order this week' }]);
   });
+  it('reports a price change in a short block or a block that mentions cookies', () => {
+    expect(diffText('Classic shawl\nRs 5,000', 'Classic shawl\nRs 4,500')).toEqual({ changed: true, blocks: [{ before: 'Rs 5,000', after: 'Rs 4,500' }] });
+    expect(diffText('Butter cookies Rs 350 a box', 'Butter cookies Rs 300 a box').changed).toBe(true);
+    expect(diffText('रु ५,०००', 'रु ४,५००').changed).toBe(true);
+  });
 });
