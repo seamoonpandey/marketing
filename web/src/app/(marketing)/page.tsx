@@ -3,7 +3,7 @@ import HeroAurora from '@/components/hero-aurora';
 import BriefFanout from '@/components/brief-fanout';
 import AIToolApproval from '@/components/kokonutui/ai-tool-approval';
 import { BudgetCard } from '@/components/watermelon/budget-card';
-import { Lockup, Mark } from '@/components/brand';
+import { Lockup, Mark, Mascot } from '@/components/brand';
 
 /* type: software
    deal: hero centred, nav nav-centre (nav-cards re-dealt: no photographs), close close-word,
@@ -62,7 +62,7 @@ export default function Home() {
       <header className="nav nav--centre">
         <div className="wrap nav__bar">
           <a className="skip-link" href="#top">Skip to content</a>
-          <a className="nav__logo" href="#top"><Lockup className="logo logo--full" id="nav-logo" /><Mark className="logo logo--small" /></a>
+          <a className="nav__logo" href="#top"><Lockup className="logo logo--full" /><Mark className="logo logo--small" /></a>
           <nav className="nav__links" aria-label="Main">
             <div className="nav__item"><a className="nav__link" href="#queue">Queue</a></div>
             <div className="nav__item">
@@ -97,6 +97,7 @@ export default function Home() {
       <main id="top">
         <section className="hero hero--centred" data-enter="" aria-labelledby="hero-h">
           <div className="wrap"><div className="hero-text">
+            <Mascot className="hero__mascot" sizes="300px" />
             <div className="hero__c">
               <a className="pill" href="#apply"><span>Pilot</span><span className="muted">Starts with one brand in Nepal</span></a>
               <h1 id="hero-h">AI marketing team for Nepali brands</h1>
@@ -280,6 +281,7 @@ export default function Home() {
                 <h2 id="questions-h">Questions</h2>
                 <p>Approval, ads, results, data and models.</p>
                 <p><a className="link" href="mailto:hello@prachaar.example">Email us</a></p>
+                <Mascot className="faq__mascot" />
               </div>
               <div className="faq span-6 start-7">
                 {FAQ.map(([q, a]) => (
@@ -316,7 +318,7 @@ export default function Home() {
               </div>
               <div className="frame frame--fill span-6 start-7" data-visual="" role="img" aria-label="The pilot’s week one checklist: facts approved, competitors named, then two channels, the monthly cap and the first week’s plan.">
                 <div className="stage stage--fade-b">
-                  <div className="at-rise fit" style={v({ '--fit-max': '340px', '--ax': 'max(24px, 50% - 170px)', '--ay': 'max(24px, 50% - 135px)' })}>
+                  <div className="at-rise fit" style={v({ '--fit-max': '340px', '--ax': 'max(24px, 50% - 170px)', '--ay': 'max(24px, 30% - 135px)' })}>
                     <div className="ui ui-panel ui-checks" data-ui="checklist">
                       <div className="ui-checks__head">
                         <div className="ui-title">Week one</div>
@@ -334,6 +336,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+                <Mascot className="apply__mascot" sizes="240px" />
               </div>
             </div>
           </div>
@@ -348,7 +351,7 @@ export default function Home() {
               <div><h2 id="close-h">One queue for your marketing</h2><p className="t-lead">Start with one brand and one week of posts.</p></div>
               <a className="btn btn--primary" href="#apply">Join the pilot</a>
             </div>
-            <div className="close__word close__lockup" aria-hidden="true"><Lockup id="close-logo" /></div>
+            <div className="close__word close__lockup" aria-hidden="true"><Lockup label="" sizes="(max-width: 639px) 100vw, 640px" /></div>
           </div>
           <div className="closing__links">
             <div className="grid">

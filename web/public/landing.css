@@ -2,14 +2,26 @@
    Loaded after the kit (assets/system.css ... icons/icon.css) and the :root palette block. */
 
 /* the logo (src/components/brand.tsx): the lockup in the bar, and large in the close */
-.nav__logo .logo { display: block; height: 40px; width: auto; }
-@media (max-width: 639px) { .nav__logo .logo { height: 32px; } }
+.nav__logo .logo { display: block; height: 48px; width: auto; }
+@media (max-width: 639px) { .nav__logo .logo { height: 36px; } }
 /* under 400px the bar keeps the P mark alone (the small version), so the menu button stays on screen */
 .nav__logo .logo--small { display: none; }
 @media (max-width: 399px) { .nav__logo .logo--full { display: none; } .nav__logo .logo--small { display: block; } }
+/* the mascot: beside the hero's headline on wide screens, by the questions, waving at the pilot form */
+.hero--centred .hero-text { position: relative; }
+.hero__mascot { position: absolute; left: 0; top: var(--s-5); width: 300px; height: auto; display: none; }
+@media (min-width: 1280px) { .hero__mascot { display: block; } }
+#questions .faq__mascot { display: block; width: 280px; height: auto; margin-top: var(--s-7); }
+@media (max-width: 1023px) {
+  #questions .span-5 { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-5); align-items: start; }
+  #questions .span-5 > :not(.faq__mascot) { grid-column: 1; }
+  #questions .faq__mascot { grid-column: 2; grid-row: 1 / span 3; width: 120px; margin: 0; }
+}
+#apply .frame > .apply__mascot { position: absolute; right: var(--s-6); bottom: var(--s-5); z-index: 2; width: 240px; height: auto; }
+@media (max-width: 1023px) { #apply .frame > .apply__mascot { display: none; } }
 /* the close's lockup: under half the wrap (a signature), the full column on a phone */
-.close__lockup > svg { display: block; width: 49%; height: auto; }
-@media (max-width: 639px) { .close__lockup > svg { width: 100%; } }
+.close__lockup > img { display: block; width: 49%; height: auto; }
+@media (max-width: 639px) { .close__lockup > img { width: 100%; } }
 
 /* ---------------------------------------------------------------- hero window (centred hero) */
 /* the frame's ground, and the still behind the window when WebGL is off or the shader has not linked:
