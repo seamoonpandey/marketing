@@ -2,8 +2,8 @@
 
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { PageHeader, StateBlock, useBrandId } from '@/components/app';
-import { Async, useCompetitors, useObservations, useRuns, useTargets } from './lib';
+import { Async, PageHeader, StateBlock, useBrandId } from '@/components/app';
+import { useCompetitors, useObservations, useRuns, useTargets } from './lib';
 import { ObservationCard } from './observation-card';
 import { RunPanel } from './run-panel';
 import { SchedulePanel } from './schedule-panel';

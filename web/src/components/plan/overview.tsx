@@ -2,9 +2,11 @@
 
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { MoneyText, PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, MoneyText, PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { DraftWeek } from './draft-week';
-import { Async, fmt, label, useOverview, weekRange, type Campaign } from './lib';
+import { useOverview, type Campaign } from './lib';
+import { formatYmd, weekRange } from '@/lib/time';
+import { label } from '@/lib/labels';
 
 export function Overview() {
   const brandId = useBrandId()!;
@@ -13,7 +15,7 @@ export function Overview() {
   return (
     <>
       <PageHeader title="Plan" description="What the brand posts this week and next, and the campaigns behind it. Nothing is final until you approve it." />
-      <Async q={q} what="the plan">
+      <Async q={q} what="plan">
         {(o) => (
           <div className="grid gap-10">
             <section aria-labelledby="weeks-h" className="grid gap-4">
@@ -106,7 +108,7 @@ export function CampaignRow({ c, href }: { c: Campaign; href: string }) {
           <span className="font-semibold break-words">{c.name}</span>
           <span className="text-sm text-muted">
             {label(c.objective)}
-            {c.startsOn ? ` · ${fmt(c.startsOn)}${c.endsOn ? ` to ${fmt(c.endsOn)}` : ''}` : ''}
+            {c.startsOn ? ` · ${formatYmd(c.startsOn)}${c.endsOn ? ` to ${formatYmd(c.endsOn)}` : ''}` : ''}
           </span>
         </span>
         <StatusBadge status={c.status} label={label(c.status)} />

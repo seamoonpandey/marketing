@@ -1,9 +1,7 @@
 'use client';
 
-import { useQuery, useQueryClient, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
-import { StateBlock, type ViewState } from '@/components/app';
-import { api, ApiError, unwrap, type Schemas } from '@/lib/api/client';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { api, unwrap, type Schemas } from '@/lib/api/client';
 
 export type Fact = Schemas['Fact'];
 export type FieldDef = Schemas['FieldDef'];
@@ -56,48 +54,6 @@ export function putFacts(client: QueryClient, brandId: string, next: Fact[]) {
 export function useRefresh(brandId: string) {
   const client = useQueryClient();
   return () => refreshAll(client, brandId);
-}
-
-export function errorState(err: unknown): ViewState {
-  if (err instanceof ApiError) {
-    if (err.code === 'rate_limited' || err.status === 429) return 'rate_limited';
-    if (err.code === 'provider_unavailable') return 'unavailable';
-  }
-  return 'error';
-}
-
-/**
- * Renders a query in its states: loading skeleton, an error with retry, the data, and above the data
- * a stale notice when a refresh failed but the last answer is still on screen.
- */
-export function Loaded<T>({ query, what, rows, children }: { query: UseQueryResult<T>; what: string; rows?: number; children: (data: T) => ReactNode }) {
-  const retry = (
-    <button type="button" className="btn btn-secondary" onClick={() => void query.refetch()}>
-      Try again
-    </button>
-  );
-  if (query.data === undefined) {
-    if (query.isError) {
-      return (
-        <StateBlock state={errorState(query.error)} title={`${what} could not be loaded`} action={retry}>
-          {query.error.message}
-        </StateBlock>
-      );
-    }
-    return <StateBlock state="loading" title={`Loading ${what.toLowerCase()}`} rows={rows} />;
-  }
-  return (
-    <>
-      {query.isError ? (
-        <div className="mb-4">
-          <StateBlock state="stale" size="inline" title="Showing what was loaded before" action={retry}>
-            {what} could not be refreshed: {query.error.message}
-          </StateBlock>
-        </div>
-      ) : null}
-      {children(query.data)}
-    </>
-  );
 }
 
 /** A fact value as plain text (for labels and accessible names). */

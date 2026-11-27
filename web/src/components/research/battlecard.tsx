@@ -1,9 +1,9 @@
 'use client';
 
 import { CircleCheck } from 'lucide-react';
-import { StateBlock, StatusBadge } from '@/components/app';
+import { Async, MutationError, StateBlock, StatusBadge } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { Async, formatDate, MutationError, useAct, useBattlecard } from './lib';
+import { formatDate, useAct, useBattlecard } from './lib';
 
 type Card = NonNullable<Schemas['Battlecard']>;
 
@@ -28,7 +28,7 @@ export function BattlecardSection({ brandId, competitorId }: { brandId: string; 
         </button>
       </div>
       <MutationError error={generate.error ?? approve.error} />
-      <Async q={card} what="the battlecard">
+      <Async q={card} what="battlecard">
         {({ approved, draft }) =>
           !approved && !draft ? (
             <StateBlock state="empty" size="inline" title="No battlecard yet">A draft uses only facts you have approved and what was seen on the competitor’s pages. You approve it before anyone uses it.</StateBlock>

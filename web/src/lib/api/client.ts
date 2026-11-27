@@ -34,3 +34,9 @@ export async function unwrap<T>(call: Promise<{ data?: T; error?: unknown; respo
   // No error body: the proxy answered because the API is down or overloaded.
   throw new ApiError(response.status, response.status === 429 ? 'rate_limited' : 'unavailable', 'Prachaar’s server did not answer.');
 }
+
+/** What to tell the owner about a failure: the API's own message, else the fallback. */
+export const errorMessage = (e: unknown, fallback = 'Something went wrong.'): string => (e instanceof Error && e.message ? e.message : fallback);
+
+/** True for an API answer with this status (a 409 means the thing changed under the owner, a 404 that it is gone). */
+export const hasStatus = (e: unknown, status: number): e is ApiError => e instanceof ApiError && e.status === status;

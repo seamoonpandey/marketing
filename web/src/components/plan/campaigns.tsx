@@ -2,10 +2,11 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { PageHeader, StateBlock, useBrandId } from '@/components/app';
+import { Async, MutationError, PageHeader, StateBlock, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { CampaignRow } from './overview';
-import { Async, label, MutationError, OBJECTIVES, useAct, useCampaigns } from './lib';
+import { OBJECTIVES, useAct, useCampaigns } from './lib';
+import { label } from '@/lib/labels';
 
 export function Campaigns() {
   const brandId = useBrandId()!;

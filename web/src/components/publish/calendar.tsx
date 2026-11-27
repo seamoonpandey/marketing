@@ -3,9 +3,11 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { PageHeader, StateBlock, useBrandId } from '@/components/app';
+import { Async, MutationError, PageHeader, StateBlock, useBrandId } from '@/components/app';
 import { api, ApiError, unwrap, type Schemas } from '@/lib/api/client';
-import { addDays, Async, dayKey, JobBadge, MutationError, PLATFORM, timeLabel, useAct, useJobs, useSchedulable, wallToIso } from './lib';
+import { JobBadge, useAct, useJobs, useSchedulable } from './lib';
+import { addDays, dayKey, timeLabel, wallToIso } from '@/lib/time';
+import { label } from '@/lib/labels';
 
 type Schedulable = Schemas['PublishSchedulable'];
 type Draft = Schedulable['drafts'][number];
@@ -49,7 +51,7 @@ function Week({ brandId, s }: { brandId: string; s: Schedulable }) {
                         {here.map((j) => (
                           <li key={j.id} className="grid gap-1 rounded-md border border-line p-2 text-sm" data-job-state={j.state}>
                             <Link href={`/app/b/${brandId}/publish/jobs/${j.id}`} className="font-medium underline">
-                              <span className="num">{timeLabel(j.scheduledAt, tz)}</span> {j.channel ? PLATFORM[j.channel.platform] : 'Channel removed'}
+                              <span className="num">{timeLabel(j.scheduledAt, tz)}</span> {j.channel ? label(j.channel.platform) : 'Channel removed'}
                             </Link>
                             <JobBadge state={j.state} />
                           </li>
@@ -89,7 +91,7 @@ function DraftCard({ brandId, d, s }: { brandId: string; d: Draft; s: Schedulabl
     const out = await Promise.all(
       [...picked].map(async (channelId) => {
         const c = d.channels.find((x) => x.channelId === channelId)!;
-        const name = `${PLATFORM[c.platform]} · ${c.accountName}`;
+        const name = `${label(c.platform)} · ${c.accountName}`;
         try {
           await unwrap(api.POST('/api/brands/{brandId}/publish/jobs', { params: { path: { brandId } }, body: { draftId: d.draftId, channelId, scheduledAt: wallToIso(date, time, tz) } }));
           return { id: channelId, ok: true, text: `${name}: scheduled` };
@@ -121,7 +123,7 @@ function DraftCard({ brandId, d, s }: { brandId: string; d: Draft; s: Schedulabl
             <div key={c.channelId} className="grid gap-0.5">
               <label className={`flex items-center gap-2.5 ${c.fits ? '' : 'text-muted'}`}>
                 <input type="checkbox" className="size-4" disabled={!c.fits} checked={picked.has(c.channelId)} onChange={() => toggle(c.channelId)} aria-describedby={c.fits ? undefined : `${id}-${c.channelId}`} />
-                {PLATFORM[c.platform]} · {c.accountName}
+                {label(c.platform)} · {c.accountName}
               </label>
               {!c.fits ? <p id={`${id}-${c.channelId}`} className="pl-6.5 text-sm text-danger">Cannot schedule here: {c.reason ?? 'not available'}</p> : null}
             </div>

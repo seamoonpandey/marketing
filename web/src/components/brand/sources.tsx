@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, FileUp, Globe, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
-import { CostConfirm, MoneyText, PageHeader, RunProgress, StateBlock, StatusBadge, useBrand, useBrandId } from '@/components/app';
+import { Async, CostConfirm, MoneyText, PageHeader, RunProgress, StateBlock, StatusBadge, useBrand, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { importKey, Loaded, refreshAll, useAssets, useImports, useSources } from './data';
+import { importKey, refreshAll, useAssets, useImports, useSources } from './data';
 
 type Source = Schemas['Source'];
 type Asset = Schemas['Asset'];
@@ -133,7 +133,7 @@ export function SourcesScreen() {
             </ul>
           ) : null}
 
-          <Loaded query={sources} what="The files" rows={2}>
+          <Async q={sources} what="files" rows={2}>
             {() =>
               uploads.length ? (
                 <ul aria-label="Uploaded files" className="grid gap-3">
@@ -148,7 +148,7 @@ export function SourcesScreen() {
                 <StateBlock state="empty" size="inline" title="No files yet">Add a logo, the brand guide or a price list. You can also import from the website alone.</StateBlock>
               )
             }
-          </Loaded>
+          </Async>
         </section>
 
         <section aria-labelledby="src-run" className="grid gap-4">

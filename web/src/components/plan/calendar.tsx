@@ -4,11 +4,13 @@ import { ChevronLeft, ChevronRight, Plus, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, MutationError, PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
 import { DraftWeek } from './draft-week';
 import { ItemDialog } from './item-dialog';
-import { Async, addDays, factText, useSettings, fmt, label, MutationError, useAct, useCampaigns, useOverview, useWeek, weekRange, type FactRef, type Item, type Week } from './lib';
+import { factText, useSettings, useAct, useCampaigns, useOverview, useWeek, type FactRef, type Item, type Week } from './lib';
+import { addDays, formatYmd, weekRange, weekStartOf } from '@/lib/time';
+import { label } from '@/lib/labels';
 
 export function Calendar() {
   const brandId = useBrandId()!;
@@ -16,7 +18,7 @@ export function Calendar() {
   const overview = useOverview(brandId);
   const first = useSettings(brandId).data?.weekStarts;
   // The API refuses a week that does not start on the settings' first day, so snap a typed date to it.
-  const snap = (iso: string) => (first === undefined ? iso : addDays(iso, -((new Date(`${iso}T00:00:00Z`).getUTCDay() - first + 7) % 7)));
+  const snap = (iso: string) => (first === undefined ? iso : weekStartOf(iso, first));
   const weekStart = asked ? snap(asked) : overview.data?.weeks[0]?.weekStart;
   const week = useWeek(brandId, weekStart);
   const base = `/app/b/${brandId}/plan`;
@@ -36,13 +38,13 @@ export function Calendar() {
           ) : null
         }
       />
-      {asked && first !== undefined ? <Board brandId={brandId} q={week} thisWeek={thisWeek} /> : <Async q={overview} what="the plan">{() => <Board brandId={brandId} q={week} thisWeek={thisWeek} />}</Async>}
+      {asked && first !== undefined ? <Board brandId={brandId} q={week} thisWeek={thisWeek} /> : <Async q={overview} what="plan">{() => <Board brandId={brandId} q={week} thisWeek={thisWeek} />}</Async>}
     </>
   );
 }
 
 function Board({ brandId, q, thisWeek }: { brandId: string; q: ReturnType<typeof useWeek>; thisWeek?: string }) {
-  return <Async q={q} what="the week">{(w) => <WeekView brandId={brandId} w={w} thisWeek={thisWeek} />}</Async>;
+  return <Async q={q} what="week">{(w) => <WeekView brandId={brandId} w={w} thisWeek={thisWeek} />}</Async>;
 }
 
 type Editing = { item: Item } | { day: string } | null;
@@ -71,7 +73,7 @@ function WeekView({ brandId, w, thisWeek }: { brandId: string; w: Week; thisWeek
           <span className="num text-sm text-muted">{w.items.length} idea{w.items.length === 1 ? '' : 's'}</span>
         </div>
         {approved ? (
-          <p className="text-sm text-muted">Approved{w.plan?.approvedAt ? ` on ${fmt(w.plan.approvedAt.slice(0, 10), { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}. Changing an idea sets the week back to draft.</p>
+          <p className="text-sm text-muted">Approved{w.plan?.approvedAt ? ` on ${formatYmd(w.plan.approvedAt.slice(0, 10), { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}. Changing an idea sets the week back to draft.</p>
         ) : (
           <div className="flex flex-wrap items-center gap-3">
             <p id="approve-reason" className={`max-w-[48ch] text-sm ${w.canApprove ? 'text-muted' : 'font-medium'}`}>
@@ -99,19 +101,19 @@ function WeekView({ brandId, w, thisWeek }: { brandId: string; w: Week; thisWeek
         </section>
       ) : null}
 
-      <DraftWeek brandId={brandId} weekStart={w.weekStart} name={w.weekStart === thisWeek ? 'this week' : `the week of ${fmt(w.weekStart)}`} ready={w.ready} latestRun={w.latestRun} hasItems={w.items.length > 0} />
+      <DraftWeek brandId={brandId} weekStart={w.weekStart} name={w.weekStart === thisWeek ? 'this week' : `the week of ${formatYmd(w.weekStart)}`} ready={w.ready} latestRun={w.latestRun} hasItems={w.items.length > 0} />
 
       {w.items.length === 0 && (!w.ready.facts || !w.ready.channels) ? null : (
         <section aria-label="Days" className="@container">
           <ol className="grid gap-3 @6xl:grid-cols-7 @6xl:gap-2">
             {days.map((day) => {
               const items = w.items.filter((i) => i.day === day).sort((a, b) => a.position - b.position);
-              const name = fmt(day, { weekday: 'long' });
+              const name = formatYmd(day, { weekday: 'long' });
               return (
-                <li key={day} aria-label={`${name} ${fmt(day)}`} className="grid content-start gap-2 rounded-lg border border-line bg-[color-mix(in_oklab,var(--theme-ink)_3%,transparent)] p-2.5 @xl:grid-cols-[6.5rem_1fr] @xl:gap-3 @6xl:grid-cols-1 @6xl:gap-2">
+                <li key={day} aria-label={`${name} ${formatYmd(day)}`} className="grid content-start gap-2 rounded-lg border border-line bg-[color-mix(in_oklab,var(--theme-ink)_3%,transparent)] p-2.5 @xl:grid-cols-[6.5rem_1fr] @xl:gap-3 @6xl:grid-cols-1 @6xl:gap-2">
                   <div className="flex items-baseline justify-between gap-2 @xl:grid @xl:content-start @6xl:flex">
                     <h3 className="font-semibold">{name}</h3>
-                    <span className="num text-sm text-muted">{fmt(day)}</span>
+                    <span className="num text-sm text-muted">{formatYmd(day)}</span>
                   </div>
                   <div className="grid content-start gap-2">
                     {items.length > 0 ? (
@@ -163,7 +165,7 @@ function ViolationList({ title, list, byId, danger }: { title: string; list: Wee
             <p className="break-words">{v.message}</p>
             {v.itemIds.length > 0 ? (
               <p className="text-sm break-words text-muted">
-                {v.itemIds.map((id) => byId.get(id)).filter((i): i is Item => !!i).map((i) => `${label(i.channel)} on ${fmt(i.day, { weekday: 'long' })}`).join('; ')}
+                {v.itemIds.map((id) => byId.get(id)).filter((i): i is Item => !!i).map((i) => `${label(i.channel)} on ${formatYmd(i.day, { weekday: 'long' })}`).join('; ')}
               </p>
             ) : null}
           </li>

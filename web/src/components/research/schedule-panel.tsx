@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { StateBlock } from '@/components/app';
+import { Async, MutationError, StateBlock } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
-import { Async, formatDate, MutationError, useAct, useSchedule, WEEKDAYS } from './lib';
+import { formatDate, useAct, useSchedule } from './lib';
+import { WEEKDAYS } from '@/lib/time';
 
 const DAY = 86_400_000;
 
@@ -12,7 +13,7 @@ export function SchedulePanel({ brandId }: { brandId: string }) {
   return (
     <section aria-labelledby="schedule-h" className="grid gap-3">
       <h2 id="schedule-h" className="text-xl font-semibold">Schedule</h2>
-      <Async q={schedule} what="the schedule">{(s) => <Form brandId={brandId} s={s} />}</Async>
+      <Async q={schedule} what="schedule">{(s) => <Form brandId={brandId} s={s} />}</Async>
     </section>
   );
 }

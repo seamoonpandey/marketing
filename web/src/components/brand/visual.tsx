@@ -3,9 +3,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
-import { PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { Loaded, refreshAll, useBook, usePalette } from './data';
+import { refreshAll, useBook, usePalette } from './data';
 
 type Colour = Schemas['PaletteColour'];
 type Role = NonNullable<Colour['role']>;
@@ -20,7 +20,7 @@ export function VisualScreen() {
     <>
       <PageHeader title="Visual identity" description="The logos, the colours and the roles they play, and the fonts. The roles decide which colour is text, which is background and which carries the brand." />
       <div className="grid gap-6">
-        <Loaded query={book} what="The logos and fonts" rows={2}>
+        <Async q={book} what="logos and fonts" rows={2}>
           {(b) => {
             const logos = b.assets.filter((a) => a.kind === 'logo');
             const fonts = b.assets.filter((a) => a.kind === 'font');
@@ -62,8 +62,8 @@ export function VisualScreen() {
               </>
             );
           }}
-        </Loaded>
-        <Loaded query={palette} what="The palette" rows={3}>{(p) => <PaletteEditor brandId={brandId} palette={p} />}</Loaded>
+        </Async>
+        <Async q={palette} what="palette" rows={3}>{(p) => <PaletteEditor brandId={brandId} palette={p} />}</Async>
       </div>
     </>
   );

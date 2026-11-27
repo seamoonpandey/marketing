@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, MutationError, PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { Async, MutationError, PLATFORM, useAct, useCapabilities, useChannels, type Platform } from './lib';
+import { PLATFORMS, useAct, useCapabilities, useChannels, type Platform } from './lib';
+import { label } from '@/lib/labels';
 
 type Channel = Schemas['PublishChannel'];
 const CHANNEL_STATUS: Record<Channel['status'], { badge: string; label: string; next: string }> = {
@@ -42,7 +43,7 @@ export function Channels() {
                   <tbody>
                     {list.map((c) => (
                       <tr key={c.platform} className="border-b border-line last:border-0">
-                        <th scope="row" className="px-3 py-2 font-medium">{PLATFORM[c.platform]}</th>
+                        <th scope="row" className="px-3 py-2 font-medium">{label(c.platform)}</th>
                         <td className="num px-3 py-2">{c.textLimit === null ? 'No limit' : `${c.textLimit} characters`}</td>
                         <td className="px-3 py-2">{c.ratios.join(', ')}</td>
                         <td className="num px-3 py-2">{c.maxMedia}</td>
@@ -66,7 +67,7 @@ function Row({ brandId, c }: { brandId: string; c: Channel }) {
   return (
     <li className="panel flex flex-wrap items-center gap-x-4 gap-y-2 p-4">
       <div className="grid min-w-0 gap-0.5">
-        <p className="font-semibold">{PLATFORM[c.platform]} · {c.accountName}</p>
+        <p className="font-semibold">{label(c.platform)} · {c.accountName}</p>
         <p className="text-sm text-muted">{c.mode === 'manual' ? 'Posted by hand' : 'Posted automatically'}. {s.next}</p>
         {c.accountUrl ? <a href={c.accountUrl} target="_blank" rel="noreferrer" className="text-sm break-all text-brand underline">{c.accountUrl}</a> : null}
       </div>
@@ -96,7 +97,7 @@ function AddForm({ brandId }: { brandId: string }) {
       <div className="field">
         <label htmlFor="ch-platform" className="label">Platform</label>
         <select id="ch-platform" className="input" value={platform} onChange={(e) => setPlatform(e.target.value as Platform)}>
-          {(Object.keys(PLATFORM) as Platform[]).map((p) => <option key={p} value={p}>{PLATFORM[p]}</option>)}
+          {PLATFORMS.map((p) => <option key={p} value={p}>{label(p)}</option>)}
         </select>
       </div>
       <div className="field"><label htmlFor="ch-name" className="label">Account name</label><input id="ch-name" className="input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} placeholder="@himalpashmina" /></div>

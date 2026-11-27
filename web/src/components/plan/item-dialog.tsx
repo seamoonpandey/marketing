@@ -2,8 +2,11 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
+import { MutationError } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { CHANNELS, FORMATS, FUNNELS, INTENTS, PILLARS, factText, fmt, label, MutationError, useAct, type Campaign, type Item, type Week } from './lib';
+import { CHANNELS, FORMATS, FUNNELS, INTENTS, PILLARS, factText, useAct, type Campaign, type Item, type Week } from './lib';
+import { formatYmd } from '@/lib/time';
+import { label } from '@/lib/labels';
 
 type Plan = Schemas['PlanWeekPlan'];
 type Props = {
@@ -71,7 +74,7 @@ export function ItemDialog({ brandId, week, days, campaigns, editing, onClose, o
         {item && week.plan?.status === 'approved' ? <p className="text-sm text-muted">This week is approved. Saving a change sets it back to draft.</p> : null}
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="field"><label htmlFor="it-day" className="label">Day</label>
-            <select id="it-day" className="input" value={v.day} onChange={(e) => set('day', e.target.value)}>{days.map((d) => <option key={d} value={d}>{fmt(d, { weekday: 'long', day: 'numeric', month: 'short' })}</option>)}</select></div>
+            <select id="it-day" className="input" value={v.day} onChange={(e) => set('day', e.target.value)}>{days.map((d) => <option key={d} value={d}>{formatYmd(d, { weekday: 'long', day: 'numeric', month: 'short' })}</option>)}</select></div>
           <div className="field"><label htmlFor="it-channel" className="label">Channel</label>
             <select id="it-channel" className="input" value={v.channel} onChange={(e) => set('channel', e.target.value)}>{options(CHANNELS)}</select></div>
           {SELECTS.map(([k, name, list]) => (

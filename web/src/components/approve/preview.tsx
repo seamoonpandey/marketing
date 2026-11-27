@@ -4,10 +4,11 @@ import { ArrowLeft, CircleAlert, Clock3, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { StateBlock, useBrandId } from '@/components/app';
+import { Async, MutationError, StateBlock, useBrandId } from '@/components/app';
 import { api, ApiError, unwrap, type Schemas } from '@/lib/api/client';
-import { Async, cap, fmtDate, fmtDay, fmtWhen, languageName, MutationError, Notice, NOTE_MIN, RiskTag, StateTag, useAct, usePreview, type Preview } from './lib';
+import { cap, fmtDate, fmtDay, fmtWhen, Notice, NOTE_MIN, RiskTag, StateTag, useAct, usePreview, type Preview } from './lib';
 import { Media } from './media';
+import { languageName } from '@/lib/labels';
 
 type Draft = NonNullable<Preview['draft']>;
 

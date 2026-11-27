@@ -3,10 +3,10 @@
 import { ChevronLeft, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { PageHeader, SourceQuote, StateBlock, useBrandId } from '@/components/app';
+import { Async, PageHeader, SourceQuote, StateBlock, useBrandId } from '@/components/app';
 import { ApiError } from '@/lib/api/client';
 import { BattlecardSection } from './battlecard';
-import { Async, useCompetitors, useObservations, useProfile } from './lib';
+import { useCompetitors, useObservations, useProfile } from './lib';
 import { ObservationCard } from './observation-card';
 import { WatchList } from './watch-list';
 
@@ -17,7 +17,7 @@ export function CompetitorView() {
   const { competitorId } = useParams<{ competitorId: string }>();
   const competitors = useCompetitors(brandId);
   return (
-    <Async q={competitors} what="the competitor">
+    <Async q={competitors} what="competitor">
       {(list) => {
         const c = list.find((x) => x.id === competitorId);
         if (!c)
@@ -60,7 +60,7 @@ function ChangeLog({ brandId, competitorId }: { brandId: string; competitorId: s
   return (
     <section aria-labelledby="log-h" className="grid gap-3">
       <h2 id="log-h" className="text-xl font-semibold">Change log</h2>
-      <Async q={q} what="the change log">
+      <Async q={q} what="change log">
         {(list) =>
           list.length === 0 ? (
             <StateBlock state="empty" size="inline" title="No changes seen yet">Changes appear here after a run finds one on a watched page.</StateBlock>
@@ -81,7 +81,7 @@ function Profile({ brandId, competitorId }: { brandId: string; competitorId: str
       {q.isError && q.error instanceof ApiError && q.error.status === 404 ? (
         <StateBlock state="empty" size="inline" title="No profile yet">The baseline run reads the watched pages and writes it.</StateBlock>
       ) : (
-        <Async q={q} what="the profile">
+        <Async q={q} what="profile">
           {(p) =>
             p.entries.length === 0 ? (
               <StateBlock state="empty" size="inline" title="The profile is empty">Nothing on the watched pages could be quoted.</StateBlock>

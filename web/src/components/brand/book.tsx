@@ -2,9 +2,9 @@
 
 import { ArrowRight, Check, CircleDashed, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
-import { PageHeader, StateBlock, useBrandId } from '@/components/app';
+import { Async, PageHeader, StateBlock, useBrandId } from '@/components/app';
 import type { Schemas } from '@/lib/api/client';
-import { Loaded, useBook, Value, type Fact } from './data';
+import { useBook, Value, type Fact } from './data';
 
 type Readiness = Schemas['Readiness'];
 
@@ -16,7 +16,7 @@ export function BookScreen() {
   return (
     <>
       <PageHeader title="Brand book" description="The approved brand, and how ready it is for Prachaar to work from." />
-      <Loaded query={book} what="The brand book" rows={5}>
+      <Async q={book} what="brand book" rows={5}>
         {(b) => {
           const approved = b.sections.reduce((n, s) => n + s.facts.length, 0);
           const empty = !approved && !b.assets.length && !b.palette.colours.length && !b.competitors.length;
@@ -60,7 +60,7 @@ export function BookScreen() {
             </div>
           );
         }}
-      </Loaded>
+      </Async>
     </>
   );
 }

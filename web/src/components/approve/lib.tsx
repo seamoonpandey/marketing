@@ -1,11 +1,9 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { CircleAlert, ShieldAlert, ShieldCheck, TriangleAlert } from 'lucide-react';
-import { StatusBadge } from '@/components/app';
+import { StatusBadge, useAct as useBrandAct } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-
-export { Async, MutationError } from '@/components/research/lib';
 
 export type State = Schemas['ApproveState'];
 export type Risk = Schemas['ApproveRisk'];
@@ -39,10 +37,7 @@ export const usePreview = (b: string, draftId: string) =>
   });
 
 /** A write that refreshes every approve view of the brand. */
-export function useAct<V, R>(b: string, fn: (v: V) => Promise<R>) {
-  const client = useQueryClient();
-  return useMutation({ mutationFn: fn, onSettled: () => client.invalidateQueries({ queryKey: root(b) }) });
-}
+export const useAct = <V, R>(b: string, fn: (v: V) => Promise<R>) => useBrandAct(root(b), fn);
 
 // ---- formatting ------------------------------------------------------------------------------
 
@@ -53,13 +48,6 @@ export const fmtWhen = (iso: string) =>
   new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 export const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-export function languageName(code: string): string {
-  try {
-    return new Intl.DisplayNames(['en'], { type: 'language' }).of(code) ?? code;
-  } catch {
-    return code;
-  }
-}
 
 // ---- small shared parts ----------------------------------------------------------------------
 

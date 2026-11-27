@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { PageHeader, StateBlock, useBrandId } from '@/components/app';
+import { Async, PageHeader, StateBlock, useBrandId } from '@/components/app';
 import { JobRow } from './job-row';
-import { Async, STATE, useSummary, type Job, type JobState } from './lib';
+import { STATE, useSummary, type Job, type JobState } from './lib';
 
 const COUNTED: JobState[] = ['scheduled', 'awaiting_manual', 'unknown', 'blocked', 'failed', 'published'];
 

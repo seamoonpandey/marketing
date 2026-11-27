@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader, useBrandId } from '@/components/app';
+import { Async, MutationError, PageHeader, useBrandId } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
-import { Async, CHANNELS, label, MutationError, PILLARS, useAct, useSettings, WEEKDAYS, type Settings } from './lib';
+import { CHANNELS, PILLARS, useAct, useSettings, type Settings } from './lib';
+import { WEEKDAYS } from '@/lib/time';
+import { label } from '@/lib/labels';
 
 export function SettingsView() {
   const brandId = useBrandId()!;
@@ -11,7 +13,7 @@ export function SettingsView() {
   return (
     <>
       <PageHeader title="Plan settings" description="Where the brand posts, how often, and what it talks about. Drafts follow these." />
-      <Async q={q} what="the settings">{(s) => <Form brandId={brandId} s={s} />}</Async>
+      <Async q={q} what="settings">{(s) => <Form brandId={brandId} s={s} />}</Async>
     </>
   );
 }

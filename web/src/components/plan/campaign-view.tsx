@@ -4,9 +4,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { CostConfirm, MoneyText, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, CostConfirm, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { Async, factText, fetchRun, fmt, label, MutationError, runKey, SECTIONS, useAct, useBrief, type Body, type FactRef } from './lib';
+import { factText, fetchRun, runKey, SECTIONS, useAct, useBrief, type Body, type FactRef } from './lib';
+import { formatYmd } from '@/lib/time';
+import { label } from '@/lib/labels';
 
 type View = Schemas['PlanBriefView'];
 type Brief = Schemas['PlanBrief'];
@@ -17,7 +19,7 @@ export function CampaignView() {
   const brandId = useBrandId()!;
   const id = useParams<{ id: string }>().id;
   const q = useBrief(brandId, id);
-  return <Async q={q} what="the campaign">{(v) => <Inner brandId={brandId} id={id} v={v} />}</Async>;
+  return <Async q={q} what="campaign">{(v) => <Inner brandId={brandId} id={id} v={v} />}</Async>;
 }
 
 function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
@@ -46,7 +48,7 @@ function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
     <>
       <PageHeader
         title={c.name}
-        description={`${label(c.objective)}${c.startsOn ? ` · ${fmt(c.startsOn)}${c.endsOn ? ` to ${fmt(c.endsOn)}` : ''}` : ''}${c.budgetNpr ? ` · budget NPR ${c.budgetNpr}` : ''}`}
+        description={`${label(c.objective)}${c.startsOn ? ` · ${formatYmd(c.startsOn)}${c.endsOn ? ` to ${formatYmd(c.endsOn)}` : ''}` : ''}${c.budgetNpr ? ` · budget NPR ${c.budgetNpr}` : ''}`}
         actions={
           <>
             <label className="sr-only" htmlFor="c-status">Campaign status</label>

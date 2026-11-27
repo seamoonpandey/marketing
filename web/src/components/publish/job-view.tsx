@@ -1,12 +1,14 @@
 'use client';
 
-import { Check, Copy, Download, ExternalLink } from 'lucide-react';
+import { Download, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
-import { PageHeader, StateBlock, useBrandId } from '@/components/app';
+import { Async, CopyButton, MutationError, PageHeader, StateBlock, Time, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { Async, dayKey, jobPath, JobBadge, MutationError, PLATFORM, STATE, Time, timeLabel, useAct, useJob, wallToIso, type Job } from './lib';
+import { jobPath, JobBadge, STATE, useAct, useJob, type Job } from './lib';
+import { dayKey, timeLabel, wallToIso } from '@/lib/time';
+import { label, languageName } from '@/lib/labels';
 
 type Detail = Schemas['PublishJobDetail'];
 
@@ -32,7 +34,7 @@ function Body({ brandId, d }: { brandId: string; d: Detail }) {
     <>
       <Link href={`/app/b/${brandId}/publish`} className="mb-3 inline-block text-sm text-muted underline">Back to Publish</Link>
       <PageHeader
-        title={manual ? `Post this on ${ch ? PLATFORM[ch.platform] : 'the channel'}` : `${ch ? PLATFORM[ch.platform] : 'Channel removed'} post`}
+        title={manual ? `Post this on ${ch ? label(ch.platform) : 'the channel'}` : `${ch ? label(ch.platform) : 'Channel removed'} post`}
         description={
           <>
             {ch ? <>{ch.accountName} · </> : null}
@@ -64,52 +66,17 @@ function Body({ brandId, d }: { brandId: string; d: Detail }) {
 
 // ---- the package: what to post ----------------------------------------------------------------
 
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const [done, setDone] = useState(false);
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      // No clipboard permission (an old browser): copy through a hidden field.
-      const ta = Object.assign(document.createElement('textarea'), { value: text });
-      document.body.append(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-    }
-    setDone(true);
-    setTimeout(() => setDone(false), 2500);
-  }
-  return (
-    <>
-      <button type="button" onClick={copy} aria-label={`Copy ${label}`} className="btn btn-secondary h-12 shrink-0 px-4 text-base">
-        {done ? <Check className="size-5" aria-hidden /> : <Copy className="size-5" aria-hidden />}
-        {done ? 'Copied' : 'Copy'}
-      </button>
-      <span role="status" className="sr-only">{done ? `${label} copied` : ''}</span>
-    </>
-  );
-}
-
 function CopyBlock({ label, text, lang }: { label: string; text: string; lang: string }) {
   return (
     <div className="grid gap-2">
       <div className="flex items-center justify-between gap-3">
         <h4 className="label">{label}</h4>
-        <CopyButton text={text} label={label} />
+        <CopyButton text={text} label={label} className="h-12 px-4 text-base" />
       </div>
       <p lang={lang} data-copy={label} className="rounded-md bg-[color-mix(in_oklab,var(--theme-ink)_5%,transparent)] p-3 break-words whitespace-pre-wrap">{text}</p>
     </div>
   );
 }
-
-const langName = (code: string) => {
-  try {
-    return new Intl.DisplayNames(['en'], { type: 'language' }).of(code) ?? code;
-  } catch {
-    return code;
-  }
-};
 
 function PackageView({ d }: { d: Detail }) {
   const pkg = d.package;
@@ -124,8 +91,8 @@ function PackageView({ d }: { d: Detail }) {
     <section aria-labelledby="pkg-h" className="grid gap-5">
       <h2 id="pkg-h" className="text-xl font-semibold">What to post</h2>
       {pkg.captions.map((c) => (
-        <div key={c.language} className="panel grid gap-4 p-4" role="group" aria-label={`Text in ${langName(c.language)}`}>
-          {pkg.captions.length > 1 ? <h3 className="font-semibold">{langName(c.language)}</h3> : null}
+        <div key={c.language} className="panel grid gap-4 p-4" role="group" aria-label={`Text in ${languageName(c.language)}`}>
+          {pkg.captions.length > 1 ? <h3 className="font-semibold">{languageName(c.language)}</h3> : null}
           <CopyBlock label="Caption" text={c.caption} lang={c.language} />
           {c.cta ? <CopyBlock label="Call to action" text={c.cta} lang={c.language} /> : null}
           {c.hashtags.length ? <CopyBlock label="Hashtags" text={c.hashtags.join(' ')} lang={c.language} /> : null}

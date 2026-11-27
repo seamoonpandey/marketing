@@ -5,13 +5,11 @@ import { ArrowLeft, CircleAlert, CircleCheck, Film, ImageIcon, Info, Plus, Save,
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState, type MutableRefObject } from 'react';
-import { MoneyText, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { Preview } from './preview';
-import {
-  Async, CHANNEL_LABEL, CHECK_LABEL, KIND_LABEL, LANGUAGE_LABEL, MutationError, NO_COST, cancelRun, fetchRun, retryRun, runKey, useAct, useAssets, useDraft, useTemplates, whyUnavailable,
-  type Asset, type DraftView, type Ratio, type Template,
-} from './lib';
+import { CHECK_LABEL, LANGUAGE_LABEL, NO_COST, cancelRun, fetchRun, retryRun, runKey, useAct, useAssets, useDraft, useTemplates, whyUnavailable, type Asset, type DraftView, type Ratio, type Template } from './lib';
+import { label } from '@/lib/labels';
 
 type Sentence = Schemas['StudioSentence'];
 // The contract's bounds: a carousel has 2 to 10 slides, a video 1 to 10 scenes, a caption at most 30 sentences.
@@ -71,7 +69,7 @@ function Screen({ brandId, v }: { brandId: string; v: DraftView }) {
   const isReady = v.draft.status === 'ready';
   const reason = dirty ? 'Save your changes first: Ready applies to a saved version.' : v.cannotMarkReadyReason ?? 'Something still blocks this draft.';
   const canReady = !dirty && v.canMarkReady && !isReady;
-  const title = v.planItem?.idea ?? `${CHANNEL_LABEL[v.channel] ?? v.channel} ${KIND_LABEL[v.draft.kind].toLowerCase()}`;
+  const title = v.planItem?.idea ?? `${label(v.channel)} ${label(v.draft.kind).toLowerCase()}`;
   const blocking = v.findings.filter((f) => f.blocking);
 
   return (
@@ -83,7 +81,7 @@ function Screen({ brandId, v }: { brandId: string; v: DraftView }) {
         title={title}
         description={
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span>{CHANNEL_LABEL[v.channel] ?? v.channel} · {KIND_LABEL[v.draft.kind]}</span>
+            <span>{label(v.channel)} · {label(v.draft.kind)}</span>
             <span className="num">Version {v.version.version}, written by {v.version.origin === 'model' ? 'the model' : 'you'}</span>
             <StatusBadge status={isReady ? 'completed' : 'draft'} label={isReady ? `Ready as version ${v.draft.readyVersion}` : 'Draft'} />
           </span>

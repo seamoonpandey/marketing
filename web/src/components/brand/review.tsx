@@ -5,9 +5,9 @@ import { GitCompareArrows, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useId, useMemo, useState } from 'react';
-import { PageHeader, StateBlock, useBrand, useBrandId } from '@/components/app';
+import { Async, PageHeader, StateBlock, useBrand, useBrandId } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
-import { Loaded, refreshAll, useCatalogue, useCompetitors, useFacts, useSubjects, type Fact, type SectionDef } from './data';
+import { refreshAll, useCatalogue, useCompetitors, useFacts, useSubjects, type Fact, type SectionDef } from './data';
 import { ConflictGroup, FactCard, useFactActions, ValueExtras } from './fact-card';
 import { expiryIso, parseValue, ValueInput } from './value-input';
 
@@ -30,11 +30,11 @@ export function ReviewScreen() {
         title="Review facts"
         description="Approve what is right, fix what is not, reject what is wrong. Only approved facts reach the brand book and the modules that use it."
       />
-      <Loaded query={catalogue} what="The brand fields" rows={4}>
+      <Async q={catalogue} what="brand fields" rows={4}>
         {(sections) => (
-          <Loaded query={facts} what="The facts" rows={6}>{(items) => <Workspace brandId={brandId} sections={sections} facts={items} />}</Loaded>
+          <Async q={facts} what="facts" rows={6}>{(items) => <Workspace brandId={brandId} sections={sections} facts={items} />}</Async>
         )}
-      </Loaded>
+      </Async>
     </>
   );
 }
@@ -361,7 +361,7 @@ function CompetitorsPanel({ brandId }: { brandId: string }) {
         <h2 className="text-xl font-semibold">Competitors</h2>
         <p className="max-w-[65ch] text-sm text-muted">Readiness asks for three, each with a website. Research watches them later.</p>
       </div>
-      <Loaded query={list} what="The competitors" rows={2}>
+      <Async q={list} what="competitors" rows={2}>
         {(items) =>
           items.length ? (
             <ul aria-label="Competitors" className="grid gap-2">
@@ -381,7 +381,7 @@ function CompetitorsPanel({ brandId }: { brandId: string }) {
             <StateBlock state="empty" size="inline" title="No competitors yet">Add the brands your customers compare you with.</StateBlock>
           )
         }
-      </Loaded>
+      </Async>
       <form className="panel grid gap-4 p-4" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
         <h3 className="text-base font-semibold">Add a competitor</h3>
         <div className="grid gap-4 sm:grid-cols-3">

@@ -1,6 +1,8 @@
 import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import { Time, JobBadge, PLATFORM, STATE, type Job } from './lib';
+import { Time } from '@/components/app';
+import { JobBadge, STATE, type Job } from './lib';
+import { label } from '@/lib/labels';
 
 /** One job as a card: what, where, when, its state, and what to do about it. Text wraps, never truncates. */
 export function JobRow({ job, tz, brandId, cta, showNext = true }: { job: Job; tz: string; brandId: string; cta?: string; showNext?: boolean }) {
@@ -9,7 +11,7 @@ export function JobRow({ job, tz, brandId, cta, showNext = true }: { job: Job; t
     <li className="panel grid gap-2 p-4" data-job-state={job.state}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <JobBadge state={job.state} />
-        <span className="font-semibold">{ch ? `${PLATFORM[ch.platform]} · ${ch.accountName}` : 'Channel removed'}</span>
+        <span className="font-semibold">{ch ? `${label(ch.platform)} · ${ch.accountName}` : 'Channel removed'}</span>
         {job.kind ? <span className="text-sm text-muted">{job.kind}</span> : null}
         <span className="ml-auto text-sm"><Time iso={job.dueAt} tz={tz} /></span>
       </div>

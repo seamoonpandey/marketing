@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader, StateBlock, useBrandId } from '@/components/app';
+import { Async, MutationError, PageHeader, StateBlock, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { Async, MutationError, useAct, useObservations, useOpportunities } from './lib';
+import { useAct, useObservations, useOpportunities } from './lib';
 
 type Status = Schemas['Opportunity']['status'];
 const TABS: [Status, string][] = [['new', 'New'], ['accepted', 'Accepted'], ['dismissed', 'Dismissed']];
