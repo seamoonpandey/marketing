@@ -18,6 +18,7 @@ grant select, insert, update, delete on all tables in schema public to ${APP_ROL
 grant usage, select on all sequences in schema public to ${APP_ROLE};
 revoke insert, update, delete, truncate on tenants from ${APP_ROLE};
 revoke update, delete, truncate on audit_events from ${APP_ROLE};
+revoke update, delete, truncate on approvals from ${APP_ROLE};
 `;
 
 /**
