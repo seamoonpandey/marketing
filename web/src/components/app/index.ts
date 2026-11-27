@@ -15,3 +15,4 @@ export { ModuleTabs } from './module-tabs';
 export { Time } from './time';
 export { BackLink } from './back-link';
 export { WeekNav } from './week-nav';
+export { LiveStatus } from './live-status';

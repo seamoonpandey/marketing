@@ -52,8 +52,8 @@ export function BrandList() {
                   {[...b.name.trim()][0]?.toUpperCase()}
                 </span>
                 <span className="grid min-w-0 flex-1 gap-0.5">
-                  <span className="truncate font-semibold">{b.name}</span>
-                  <span className="truncate text-sm text-muted">{b.website ? b.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : 'No website yet'}</span>
+                  <span className="font-semibold break-words">{b.name}</span>
+                  <span className="text-sm break-all text-muted">{b.website ? b.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : 'No website yet'}</span>
                 </span>
                 {b.status === 'archived' ? <StatusBadge status="archived" /> : null}
                 <span className="num hidden text-sm text-muted sm:block">Added <Time iso={b.createdAt} tz={b.timezone} year /></span>

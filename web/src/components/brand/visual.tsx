@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
-import { Async, MutationError, PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, LiveStatus, MutationError, PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { refreshAll, useBook, usePalette } from './data';
 
@@ -96,6 +96,7 @@ function PaletteEditor({ brandId, palette }: { brandId: string; palette: Schemas
         </button>
       </div>
       <MutationError error={save.error} />
+      <LiveStatus message={save.isSuccess && !draft ? 'Palette saved.' : ''} />
 
       {colours.length ? (
         <ul aria-label="Colours" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

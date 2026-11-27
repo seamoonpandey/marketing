@@ -47,7 +47,7 @@ export function RunProgress<R extends Run>({ queryKey, fetchRun, onCancel, onRet
     <section aria-label={label} aria-busy={state === 'running'} className="panel grid gap-3 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3" role="status">
-          <span className="truncate font-semibold">{label}</span>
+          <span className="font-semibold">{label}</span>
           {state ? <StatusBadge status={state} /> : <span className="text-sm text-muted">Checking…</span>}
         </div>
         <div className="flex gap-2">

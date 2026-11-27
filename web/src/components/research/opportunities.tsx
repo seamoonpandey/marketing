@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Async, MutationError, PageHeader, StateBlock, useBrandId } from '@/components/app';
+import { Async, LiveStatus, MutationError, PageHeader, StateBlock, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { useAct, useObservations, useOpportunities } from './lib';
 
@@ -25,6 +25,7 @@ export function Opportunities() {
         ))}
       </div>
       <MutationError error={decide.error} />
+      <LiveStatus message={decide.isSuccess ? `${decide.variables.to === 'accept' ? 'Accepted' : 'Dismissed'} the opportunity.` : ''} />
       <Async q={q} what="opportunities">
         {(list) =>
           list.length === 0 ? (

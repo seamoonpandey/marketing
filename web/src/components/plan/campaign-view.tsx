@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Async, BackLink, CostConfirm, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, BackLink, CostConfirm, LiveStatus, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { factText, fetchRun, runKey, SECTIONS, useAct, useBrief, type Body, type FactRef } from './lib';
 import { formatYmd } from '@/lib/time';
@@ -61,6 +61,7 @@ function Inner({ brandId, id, v }: { brandId: string; id: string; v: View }) {
         }
       />
       <MutationError error={setStatus.error} />
+      <LiveStatus message={setStatus.isSuccess ? `Campaign status is now ${label(setStatus.variables)}.` : ''} />
 
       <div className="grid gap-6">
         {!v.ready.facts ? (

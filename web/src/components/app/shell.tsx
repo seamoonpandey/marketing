@@ -124,7 +124,7 @@ function BrandSwitcher() {
         aria-controls={panelId}
         aria-label={name ? `Active brand: ${name}. Switch brand` : 'Choose a brand'}
         onClick={() => setOpen((o) => !o)}
-        className="flex h-12 w-56 max-w-full items-center gap-2.5 rounded-lg border border-line bg-panel py-1.5 pr-2 pl-2 text-left transition-colors duration-150 hover:border-line-strong md:w-full"
+        className="flex min-h-12 w-56 max-w-full items-center gap-2.5 rounded-lg border border-line bg-panel py-1.5 pr-2 pl-2 text-left transition-colors duration-150 hover:border-line-strong md:w-full"
       >
         <span
           aria-hidden
@@ -132,9 +132,9 @@ function BrandSwitcher() {
         >
           {name ? [...name.trim()][0]?.toUpperCase() : <Layers className="size-4" strokeWidth={1.75} />}
         </span>
-        <span className="grid min-w-0 flex-1 leading-tight">
+        <span className="grid min-w-0 flex-1 leading-snug">
           <span className="text-xs text-muted">{name ? 'Brand' : 'No brand chosen'}</span>
-          <span data-testid="active-brand" className="truncate text-sm font-semibold">{name ?? 'Choose a brand'}</span>
+          <span data-testid="active-brand" className="text-sm font-semibold break-words">{name ?? 'Choose a brand'}</span>
         </span>
         <ChevronsUpDown className="size-4 shrink-0 text-muted" strokeWidth={1.75} aria-hidden />
       </button>
@@ -152,9 +152,9 @@ function BrandSwitcher() {
                 <Link
                   href={`/app/b/${b.id}/${section}`}
                   aria-current={b.id === brandId ? 'true' : undefined}
-                  className="flex h-9 items-center gap-2 rounded-md px-2 text-sm hover:bg-[color-mix(in_oklab,var(--theme-ink)_6%,transparent)]"
+                  className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-[color-mix(in_oklab,var(--theme-ink)_6%,transparent)]"
                 >
-                  <span className="min-w-0 flex-1 truncate">{b.name}</span>
+                  <span className="min-w-0 flex-1 break-words">{b.name}</span>
                   {b.id === brandId ? <Check className="size-4 text-brand" strokeWidth={2} aria-hidden /> : null}
                 </Link>
               </li>

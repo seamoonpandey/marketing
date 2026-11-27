@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Async, MutationError, StateBlock, StatusBadge } from '@/components/app';
+import { Async, LiveStatus, MutationError, StateBlock, StatusBadge } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
 import { useAct, useTargets } from './lib';
 
@@ -104,6 +104,7 @@ export function WatchList({ brandId, competitorId, site }: { brandId: string; co
                 </div>
               </form>
               <MutationError error={add.error ?? suggest.error ?? toggle.error ?? remove.error} />
+              <LiveStatus message={remove.isSuccess ? 'Page removed.' : toggle.isSuccess ? 'Page updated.' : add.isSuccess ? 'Page added.' : ''} />
             </>
           );
         }}

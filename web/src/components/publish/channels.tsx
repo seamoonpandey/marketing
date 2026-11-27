@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Async, MutationError, PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
+import { Async, LiveStatus, MutationError, PageHeader, StateBlock, StatusBadge, useBrandId } from '@/components/app';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { PLATFORMS, useAct, useCapabilities, useChannels, type Platform } from './lib';
 import { label } from '@/lib/labels';
@@ -81,6 +81,7 @@ function Row({ brandId, c }: { brandId: string; c: Channel }) {
         )}
       </div>
       <MutationError error={set.error} />
+      <LiveStatus message={set.isSuccess ? 'Channel updated.' : ''} />
     </li>
   );
 }
@@ -106,6 +107,7 @@ function AddForm({ brandId }: { brandId: string }) {
       <div className="flex items-center gap-3 sm:col-span-2">
         <button type="submit" className="btn btn-primary" disabled={add.isPending || !name.trim()}>{add.isPending ? 'Adding…' : 'Add channel'}</button>
         <MutationError error={add.error} />
+        <LiveStatus message={add.isSuccess ? 'Channel added.' : ''} />
       </div>
     </form>
   );

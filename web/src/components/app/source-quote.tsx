@@ -27,19 +27,19 @@ export function SourceQuote({ quote, source, page }: { quote: string; source: Qu
       <blockquote className="max-w-[70ch] text-[0.9375rem] leading-relaxed">
         <p>“{quote}”</p>
       </blockquote>
-      <figcaption className="flex min-w-0 items-center gap-1.5 text-sm text-muted">
+      <figcaption className="flex min-w-0 items-baseline gap-1.5 text-sm text-muted">
         <Icon className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
         {href ? (
           <a
             href={href}
-            className="min-w-0 truncate text-action underline decoration-line-strong hover:decoration-current"
+            className="min-w-0 break-words text-action underline decoration-line-strong hover:decoration-current"
             {...(isPage ? { target: '_blank', rel: 'noopener noreferrer' } : { download: label })}
           >
             {label}
             {isPage ? <span className="sr-only"> (opens in a new tab)</span> : null}
           </a>
         ) : (
-          <span className="min-w-0 truncate">{label}</span>
+          <span className="min-w-0 break-words">{label}</span>
         )}
         {page ? <span className="shrink-0" aria-label={`page ${page}`}>· page {page}</span> : null}
       </figcaption>
