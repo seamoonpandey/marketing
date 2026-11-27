@@ -24,8 +24,8 @@ export const executorId = (instance = config.NODE_APP_INSTANCE) => (instance ===
  * Launches DBOS against its system database and registers the queue. Workflows must be
  * registered (by importing src/modules.ts) before this runs.
  */
-export async function launchWorkflows(systemDatabaseUrl = config.DBOS_SYSTEM_DATABASE_URL): Promise<void> {
-  DBOS.setConfig({ name: 'prachaar', systemDatabaseUrl, applicationVersion: APPLICATION_VERSION, executorID: executorId(), logLevel: 'warn' });
+export async function launchWorkflows(systemDatabaseUrl = config.DBOS_SYSTEM_DATABASE_URL, systemDatabasePoolSize?: number): Promise<void> {
+  DBOS.setConfig({ name: 'prachaar', systemDatabaseUrl, systemDatabasePoolSize, applicationVersion: APPLICATION_VERSION, executorID: executorId(), logLevel: 'warn' });
   await DBOS.launch();
   await DBOS.registerQueue(QUEUE);
 }
