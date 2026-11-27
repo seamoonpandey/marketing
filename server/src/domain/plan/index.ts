@@ -7,3 +7,4 @@ export { checkBalance } from './balance.ts';
 export { addItem, approveWeek, editItem, getWeek, removeItem } from './weeks.ts';
 export { cancelRun, estimateWeek, generateBrief, getRun, retryRun, startWeekDraft } from './draft.ts';
 export { overview } from './overview.ts';
+export { currentPlans, getItem, getPlan, listItems } from './weeks.ts';

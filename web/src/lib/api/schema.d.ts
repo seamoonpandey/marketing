@@ -3569,7 +3569,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanApprove"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -3578,6 +3582,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["PlanBriefView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
                     };
                 };
                 /** @description Error: `{ error: { code, message } }` */
@@ -3815,7 +3828,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanApprove"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -4848,7 +4865,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    /** @description Worked out on every read, never stored. waiting: ready, no decision for its current version. approved: valid now. rejected: rejected for its current version. invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved or a used asset lost its rights. expired: approved, past its expiry. paused: approved and otherwise valid while the brand is paused. */
+                    /** @description Worked out on every read, never stored. waiting: ready, no decision for its current version. approved: valid now. rejected: rejected for its current version. invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved, a used asset lost its rights, Studio now reports a blocking issue, or the draft turned high risk after a bulk or note-less approval. expired: approved, past its expiry. paused: approved and otherwise valid while the brand is paused. */
                     state?: components["schemas"]["ApproveState"];
                 };
                 header?: never;
@@ -4995,7 +5012,7 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Refused. The message `changed since you opened it` means the draft changed: reload the preview. */
+                /** @description Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`. */
                 409: {
                     headers: {
                         [name: string]: unknown;
@@ -5064,7 +5081,7 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Refused. The message `changed since you opened it` means the draft changed: reload the preview. */
+                /** @description Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`. */
                 409: {
                     headers: {
                         [name: string]: unknown;
@@ -5132,7 +5149,7 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Refused. The message `changed since you opened it` means the draft changed: reload the preview. */
+                /** @description Refused. The code `changed` means the draft changed since you opened it: reload the preview. Any other refusal has the code `conflict`. */
                 409: {
                     headers: {
                         [name: string]: unknown;
@@ -6265,6 +6282,10 @@ export interface components {
             estimate: components["schemas"]["PlanMoney"];
             remaining: components["schemas"]["PlanMoney"] & unknown;
         };
+        /** @description The version of the draft the owner is looking at. The server approves only when it is still the current draft, else 409. */
+        PlanApprove: {
+            version: number;
+        };
         PlanWeekView: {
             /**
              * @description A calendar date, YYYY-MM-DD
@@ -6567,6 +6588,8 @@ export interface components {
             planItem: components["schemas"]["StudioPlanItem"] | null;
             /** @description False when the item was deleted or its week went back to draft: the draft is stale, readable, and cannot be regenerated. */
             planApproved: boolean;
+            /** @description The first day of the plan item's week, so a screen can link back to it; null when the item was deleted. */
+            weekStart: string | null;
             channel: string;
             /** @description The brand languages. */
             languages: string[];
@@ -6711,7 +6734,7 @@ export interface components {
             latest: components["schemas"]["ApproveDecision"] | null;
         };
         /**
-         * @description Worked out on every read, never stored. waiting: ready, no decision for its current version. approved: valid now. rejected: rejected for its current version. invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved or a used asset lost its rights. expired: approved, past its expiry. paused: approved and otherwise valid while the brand is paused.
+         * @description Worked out on every read, never stored. waiting: ready, no decision for its current version. approved: valid now. rejected: rejected for its current version. invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved, a used asset lost its rights, Studio now reports a blocking issue, or the draft turned high risk after a bulk or note-less approval. expired: approved, past its expiry. paused: approved and otherwise valid while the brand is paused.
          * @enum {string}
          */
         ApproveState: "waiting" | "approved" | "rejected" | "invalid" | "expired" | "paused";
@@ -6755,7 +6778,7 @@ export interface components {
          * @enum {string}
          */
         ApproveRisk: "low" | "medium" | "high";
-        /** @description A decision is never edited. One per draft version: a version that has one cannot be decided again; a new version can. */
+        /** @description A decision is never edited; the newest one on the current version counts. On one version: an approval that expired or became invalid can be approved again (renewed, with every check), an approval can be withdrawn by a rejection, and a rejected version can be approved after all. */
         ApproveDecision: {
             id: string;
             draftId: string;

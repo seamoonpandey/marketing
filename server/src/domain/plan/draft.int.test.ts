@@ -1,12 +1,13 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { F1, F2, facts, fact } from '../../../test/fixtures/plan/facts.ts';
 import { launchTestWorkflows, testDb, type TestDb } from '../../../test/helpers.ts';
 import { mockAi } from '../../ai/index.ts';
+import { mockModel } from '../../ai/mock.ts';
 import { withBrand } from '../../db/tenant.ts';
 import { createCampaign } from './campaigns.ts';
 import { cancelRun, estimateWeek, generateBrief, getRun, retryRun, startWeekDraft } from './draft.ts';
 import { setSettings } from './settings.ts';
-import { approveWeek, getWeek } from './weeks.ts';
+import { addItem, approveWeek, getWeek } from './weeks.ts';
 
 let t: TestDb;
 let stop: () => Promise<void>;
@@ -18,7 +19,10 @@ afterAll(async () => {
   await stop();
   await t.close();
 });
-afterEach(() => mockAi.reset());
+afterEach(() => {
+  mockAi.reset();
+  vi.restoreAllMocks();
+});
 
 const SUN = '2026-11-29';
 const channels2 = [{ channel: 'facebook', postsPerWeek: 3 }, { channel: 'instagram', postsPerWeek: 3 }];
@@ -43,6 +47,22 @@ const wait = async (brand: string, runId: string) => {
 };
 const draft = async (brand: string, f = facts) => wait(brand, (await startWeekDraft(brand, SUN, f)).runId);
 const week = (b: string) => withBrand(b, (tx) => getWeek(tx, b, SUN, facts));
+
+// Holds the model call open until `release()`.
+const slowModel = () => {
+  const generate = (mockModel as any).doGenerate;
+  let entered!: () => void;
+  let release!: () => void;
+  const inCall = new Promise<void>((r) => (entered = r));
+  const gate = new Promise<void>((r) => (release = r));
+  vi.spyOn(mockModel as any, 'doGenerate').mockImplementation(async (o) => {
+    entered();
+    await gate;
+    return generate.call(mockModel, o);
+  });
+  return { inCall, release };
+};
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 describe('week draft', () => {
   it('drafts six items for two channels at three posts each, with no blocking violation and one cost row', async () => {
@@ -71,13 +91,13 @@ describe('week draft', () => {
     const b = await brandWith();
     mockAi.queue({ items: six() }, { items: six().map((x, i) => ({ ...x, idea: `Second take ${i}` })) });
     await draft(b);
-    await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts));
+    await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 1));
     await draft(b);
     const w = await week(b);
     expect(w.plan).toMatchObject({ status: 'draft', version: 2 });
     expect(w.approvedPlan).toMatchObject({ status: 'approved', version: 1 });
     expect((await t.adminQuery(`select count(*)::int as n from plan_items where week_plan_id = $1`, [w.approvedPlan!.id]))[0]!.n).toBe(6);
-    await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts));
+    await withBrand(b, (tx) => approveWeek(tx, b, SUN, facts, 2));
     const rows = await t.adminQuery(`select status from week_plans where brand_id = $1 order by version`, [b]);
     expect(rows.map((r) => r.status)).toEqual(['replaced', 'approved']);
   });
@@ -131,6 +151,58 @@ describe('week draft', () => {
     expect((await week(b)).items).toHaveLength(6);
   });
 
+  it('a failure after the model answered does not pay for the answer again on retry', async () => {
+    const b = await brandWith();
+    const model = slowModel();
+    mockAi.queue({ items: six() });
+    const { runId } = await startWeekDraft(b, SUN, facts);
+    await model.inCall;
+    // The owner's first item takes version 1 while the draft is being stored, so the store fails once.
+    let added!: () => void;
+    let commit!: () => void;
+    const at = new Promise<void>((r) => (added = r));
+    const held = new Promise<void>((r) => (commit = r));
+    const adding = withBrand(b, async (tx) => {
+      await addItem(tx, b, SUN, { day: SUN, channel: 'facebook', idea: 'Mine' });
+      added();
+      await held;
+    });
+    await at;
+    model.release();
+    await sleep(300);
+    commit();
+    await adding;
+    expect((await wait(b, runId)).state).toBe('failed_retryable');
+    await retryRun(b, runId);
+    expect((await wait(b, runId)).state).toBe('completed');
+    expect(mockAi.calls).toHaveLength(1);
+    expect(await t.adminQuery(`select 1 from cost_events where run_id = $1`, [runId])).toHaveLength(1);
+  });
+
+  it('stores a model answer with a NUL byte without it, instead of leaving the run running', async () => {
+    const b = await brandWith([{ channel: 'facebook', postsPerWeek: 1 }]);
+    mockAi.queue({ items: [mk(0, 'facebook', 0, { idea: 'a\u0000b', cta: 'c\u0000d' })] });
+    expect((await draft(b)).state).toBe('completed');
+    expect((await week(b)).items[0]).toMatchObject({ idea: 'ab', cta: 'cd' });
+  });
+
+  it('a run cancelled while the model answers stores nothing and keeps the owner\'s draft', async () => {
+    const b = await brandWith();
+    await withBrand(b, (tx) => addItem(tx, b, SUN, { day: SUN, channel: 'facebook', idea: 'Mine' }));
+    const model = slowModel();
+    mockAi.queue({ items: six() });
+    const { runId } = await startWeekDraft(b, SUN, facts);
+    await model.inCall;
+    await cancelRun(b, runId);
+    model.release();
+    for (let i = 0; i < 100 && !(await t.adminQuery(`select 1 from cost_events where run_id = $1`, [runId])).length; i++) await sleep(50);
+    await sleep(500);
+    const w = await week(b);
+    expect(w.plan!.version).toBe(1);
+    expect(w.items.map((i) => i.idea)).toEqual(['Mine']);
+    expect((await withBrand(b, (tx) => getRun(tx, b, runId))).state).toBe('cancelled');
+  });
+
   it('a refusal ends the run as failed_final; a second draft while one runs is a 409; cancel stops a run', async () => {
     const b = await brandWith();
     mockAi.queue(mockAi.refusal);
@@ -155,5 +227,19 @@ describe('brief draft', () => {
     expect(await wait(b, runId)).toMatchObject({ state: 'completed', kind: 'brief', targetId: c.id });
     expect(await t.adminQuery(`select run_type from cost_events where run_id = $1`, [runId])).toEqual([{ run_type: 'plan_brief' }]);
     expect(await t.adminQuery(`select status from campaign_briefs where campaign_id = $1`, [c.id])).toEqual([{ status: 'draft' }]);
+  });
+
+  it('a brief run cancelled while the model answers stores no version', async () => {
+    const b = await brandWith();
+    const c = await withBrand(b, (tx) => createCampaign(tx, b, { name: 'Tihar', objective: 'conversion' }));
+    const model = slowModel();
+    mockAi.queue({ audience: [{ text: 'Gift buyers', factIds: [F1] }] });
+    const { runId } = await generateBrief(b, c.id, facts);
+    await model.inCall;
+    await cancelRun(b, runId);
+    model.release();
+    for (let i = 0; i < 100 && !(await t.adminQuery(`select 1 from cost_events where run_id = $1`, [runId])).length; i++) await sleep(50);
+    await sleep(500);
+    expect(await t.adminQuery(`select 1 from campaign_briefs where campaign_id = $1`, [c.id])).toEqual([]);
   });
 });

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { estimateTokens, extract } from '../../ai/index.ts';
 import { config } from '../../config.ts';
 import type { ApprovedFact, Money } from '../../contracts/common.ts';
-import { campaignBriefs } from '../../db/schema/plan.ts';
+import { campaignBriefs, campaigns } from '../../db/schema/plan.ts';
 import { withBrand, type Tx } from '../../db/tenant.ts';
 import { ConflictError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
@@ -11,6 +11,7 @@ import { estimateCost } from '../costs/index.ts';
 import { listOpportunities } from '../research/index.ts';
 import { getCampaign } from './campaigns.ts';
 import { briefSections } from './enums.ts';
+import { data } from './steps.ts';
 
 export type Statement = { text: string; factIds?: string[] };
 export type BriefBody = Record<(typeof briefSections)[number], Statement[]>;
@@ -63,10 +64,11 @@ function prompt(c: Awaited<ReturnType<typeof context>>, facts: ApprovedFact[]) {
   const { campaign: k, opp } = c;
   return [{
     type: 'text' as const,
-    text:
-      `<campaign>\n${JSON.stringify({ name: k.name, objective: k.objective, startsOn: k.startsOn, endsOn: k.endsOn, budgetNpr: k.budgetNpr })}\n</campaign>\n` +
-      `<opportunity>\n${JSON.stringify(opp ? { title: opp.title, hypothesis: opp.hypothesis, suggestedAction: opp.suggestedAction } : null)}\n</opportunity>\n` +
-      `<approved_facts>\n${JSON.stringify(facts.map((f) => ({ id: f.id, field: f.field, subject: f.subjectName, value: f.value, unit: f.unit })))}\n</approved_facts>`,
+    text: [
+      data('campaign', { name: k.name, objective: k.objective, startsOn: k.startsOn, endsOn: k.endsOn, budgetNpr: k.budgetNpr }),
+      data('opportunity', opp ? { title: opp.title, hypothesis: opp.hypothesis, suggestedAction: opp.suggestedAction } : null),
+      data('approved_facts', facts.map((f) => ({ id: f.id, field: f.field, subject: f.subjectName, value: f.value, unit: f.unit }))),
+    ].join('\n'),
   }];
 }
 
@@ -78,22 +80,34 @@ export async function estimateBrief(brandId: string, campaignId: string, facts: 
   return estimateCost(config.AI_MODEL, estimateTokens([{ type: 'text', text: SYSTEM }, ...prompt(c, facts)]), BRIEF_MAX_OUTPUT);
 }
 
-/** The model call and the new draft version. Run by the draft workflow; `runId` keys the cost row. */
-export async function draftBrief(brandId: string, runId: string, campaignId: string, facts: ApprovedFact[]): Promise<{ briefId: string; cost: Money }> {
+/** The model call. Run by the draft workflow as a step of its own, before storeBrief; `runId` keys the cost row. */
+export async function draftBrief(brandId: string, runId: string, campaignId: string, facts: ApprovedFact[]): Promise<{ draft: BriefBody; cost: Money }> {
   if (!facts.length) throw new ValidationError(NO_FACTS);
   const c = await context(brandId, campaignId);
   const { object, cost } = await extract({
     brandId, runType: 'plan_brief', runId, system: SYSTEM, parts: prompt(c, facts), schema: Answer, maxOutputTokens: BRIEF_MAX_OUTPUT,
   });
-  const { body, leftOut } = buildBrief({ draft: object as BriefBody, facts });
+  return { draft: object as BriefBody, cost };
+}
+
+/** The model's draft as a new draft version, keeping only cited claims. */
+export async function storeBrief(brandId: string, campaignId: string, draft: BriefBody, facts: ApprovedFact[]): Promise<{ briefId: string }> {
+  const { body, leftOut } = buildBrief({ draft, facts });
   return withBrand(brandId, async (tx) => {
+    await lockCampaign(tx, brandId, campaignId);
     const row = await insertVersion(tx, brandId, campaignId, body, leftOut);
     await audit(tx, { brandId, actor: 'system', action: 'plan.brief.generate', objectType: 'campaign_brief', objectId: row.id, objectVersion: row.version, result: 'ok' });
-    return { briefId: row.id, cost };
+    return { briefId: row.id };
   });
 }
 
 // ---------- versions
+/** Brief edits, approvals and new versions of one campaign run one at a time: each locks the campaign first. */
+async function lockCampaign(tx: Tx, brandId: string, campaignId: string): Promise<void> {
+  await getCampaign(tx, brandId, campaignId); // 404 for a malformed or another brand's id
+  await tx.select({ id: campaigns.id }).from(campaigns).where(eq(campaigns.id, campaignId)).for('update');
+}
+
 async function insertVersion(tx: Tx, brandId: string, campaignId: string, body: BriefBody, leftOut: LeftOut[]): Promise<Brief> {
   const [last] = await tx.select({ v: campaignBriefs.version }).from(campaignBriefs)
     .where(and(eq(campaignBriefs.brandId, brandId), eq(campaignBriefs.campaignId, campaignId))).orderBy(desc(campaignBriefs.version)).limit(1);
@@ -116,6 +130,7 @@ export async function currentBrief(tx: Tx, brandId: string, campaignId: string):
  * retired (approval invalidated) and its edit stored as a new draft. Citations are checked as for the model.
  */
 export async function editBrief(tx: Tx, brandId: string, campaignId: string, edit: BriefBody, facts: ApprovedFact[]): Promise<Brief> {
+  await lockCampaign(tx, brandId, campaignId);
   const { approved, draft } = await currentBrief(tx, brandId, campaignId);
   const { body, leftOut } = buildBrief({ draft: edit, facts });
   if (draft) {
@@ -132,9 +147,14 @@ export async function editBrief(tx: Tx, brandId: string, campaignId: string, edi
   return row;
 }
 
-export async function approveBrief(tx: Tx, brandId: string, campaignId: string): Promise<Brief> {
+export async function approveBrief(tx: Tx, brandId: string, campaignId: string, facts: ApprovedFact[], version: number): Promise<Brief> {
+  await lockCampaign(tx, brandId, campaignId);
   const { draft } = await currentBrief(tx, brandId, campaignId);
   if (!draft) throw new ConflictError('There is no draft to approve; generate or edit one first');
+  if (draft.version !== version) throw new ConflictError('This brief changed since you opened it; look at it again before approving');
+  // An approval cannot outlive its facts: the same rule as an edit, against today's facts.
+  const { leftOut } = buildBrief({ draft: draft.body as BriefBody, facts });
+  if (leftOut.length) throw new ConflictError(`Cannot approve: ${leftOut.length} statement${leftOut.length === 1 ? ' cites' : 's cite'} facts that are no longer approved; edit the brief to fix them`);
   await tx.update(campaignBriefs).set({ status: 'replaced' })
     .where(and(eq(campaignBriefs.brandId, brandId), eq(campaignBriefs.campaignId, campaignId), eq(campaignBriefs.status, 'approved')));
   const [row] = await tx.update(campaignBriefs).set({ status: 'approved', approvedAt: new Date() }).where(eq(campaignBriefs.id, draft.id)).returning();

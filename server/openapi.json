@@ -3429,6 +3429,19 @@
         ],
         "description": "The most the draft can cost. Show it before starting."
       },
+      "PlanApprove": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "description": "The version of the draft the owner is looking at. The server approves only when it is still the current draft, else 409."
+      },
       "PlanWeekView": {
         "type": "object",
         "properties": {
@@ -4572,6 +4585,20 @@
             "type": "boolean",
             "description": "False when the item was deleted or its week went back to draft: the draft is stale, readable, and cannot be regenerated."
           },
+          "weekStart": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "example": "2026-11-29",
+                "description": "A calendar date, YYYY-MM-DD"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The first day of the plan item's week, so a screen can link back to it; null when the item was deleted."
+          },
           "channel": {
             "type": "string"
           },
@@ -4649,6 +4676,7 @@
           "versions",
           "planItem",
           "planApproved",
+          "weekStart",
           "channel",
           "languages",
           "missingLanguages",
@@ -9722,6 +9750,16 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanApprove"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -9729,6 +9767,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlanBriefView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -9990,6 +10038,16 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanApprove"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
