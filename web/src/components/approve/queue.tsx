@@ -13,7 +13,7 @@ export function Queue() {
   const q = useQueue(brandId, filter);
   return (
     <>
-      <PageHeader title="Approve" description="Nothing goes out until you approve the exact version. Open an item to see it as it will appear." />
+      <PageHeader title="Approve" description="Nothing goes out until you approve the exact version. Open an item to see it as it will appear." actions={<Link href={`/app/b/${brandId}/approve/settings`} className="btn btn-secondary">Settings</Link>} />
       <Async q={q} what="approval queue">
         {({ summary, items }) => (
           <div className="grid gap-8">

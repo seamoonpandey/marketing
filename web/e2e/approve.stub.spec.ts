@@ -33,8 +33,8 @@ function previewOf(s: Required<Spec>) {
       facts: [{ id: 'f-1', section: 'products', subjectName: 'Pashmina shawl', field: 'price', value: 3900, unit: 'NPR', expiresAt: '2027-01-15T00:00:00.000Z' }], missingFactIds: [],
       renders: Array.from({ length: n }, (_, i) => ({ ratio: s.kind === 'video' ? '9:16' : '4:5', width: s.kind === 'video' ? 1080 : 1080, height: s.kind === 'video' ? 1920 : 1350, overflow: i === 1, index: i, type: s.kind === 'video' ? 'video' : 'image', url: `${IMG}/${s.id}-${i}.png` })),
       risk: s.risk, riskReasons: s.riskReasons, payloadHash: s.hash, expiresIfApproved: '2026-12-11T06:00:00.000Z',
-      noteRequired: s.noteRequired || s.risk === 'high', canApprove: s.state === 'waiting' && s.findings.length === 0, cannotApproveReason: s.findings.length ? 'A blocking check failed.' : null,
-      canReject: s.state === 'waiting', cannotRejectReason: null,
+      noteRequired: s.noteRequired || s.risk === 'high', canApprove: ['waiting', 'expired', 'invalid'].includes(s.state) && s.findings.length === 0, cannotApproveReason: s.findings.length ? 'A blocking check failed.' : null,
+      canReject: s.state === 'waiting' || s.state === 'approved', cannotRejectReason: null,
     },
     history: s.history,
   };
@@ -51,11 +51,12 @@ function itemOf(s: Required<Spec>) {
   };
 }
 
-type World = { drafts: Required<Spec>[]; paused: boolean; pausedReason: string | null; calls: string[]; bodies: Record<string, any[]>; conflictOnce: boolean; afterConflict?: Spec };
+type World = {
+  settings: { maxAgeDays: number; approvers: string[] }; drafts: Required<Spec>[]; paused: boolean; pausedReason: string | null; calls: string[]; bodies: Record<string, any[]>; conflictOnce: boolean; afterConflict?: Spec };
 let w: World;
 
 async function stub(page: Page, drafts: Spec[]) {
-  w = { drafts: drafts.map(spec), paused: false, pausedReason: null, calls: [], bodies: {}, conflictOnce: false };
+  w = { settings: { maxAgeDays: 14, approvers: ['Sita'] }, drafts: drafts.map(spec), paused: false, pausedReason: null, calls: [], bodies: {}, conflictOnce: false };
   await page.route('**/img/**', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
   await page.route('**/api/**', async (route) => {
     const req = route.request();
@@ -85,7 +86,7 @@ async function stub(page: Page, drafts: Spec[]) {
         w.conflictOnce = false;
         const v = w.afterConflict!.version!;
         Object.assign(s, w.afterConflict, { hash: `hash-${s.id}-v${v}` });
-        return send({ error: { code: 'conflict', message: 'changed since you opened it' } }, 409);
+        return send({ error: { code: 'changed', message: 'the wording differs now' } }, 409);
       }
       s.state = x[2] === 'approve' ? 'approved' : 'rejected';
       s.history = [decision({ draftId: s.id, version: s.version, decision: s.state, reason: body.reason ?? null, reviewNote: body.reviewNote ?? null, risk: s.risk })];
@@ -94,6 +95,10 @@ async function stub(page: Page, drafts: Spec[]) {
     if (path === '/approve/bulk-approve') {
       for (const i of body.items) w.drafts.find((d) => d.id === i.draftId)!.state = 'approved';
       return send({ bulkId: 'bulk-1', decisions: body.items.map((i: any) => decision({ draftId: i.draftId, bulkId: 'bulk-1' })) });
+    }
+    if (path === '/approve/settings') {
+      if (m === 'PUT') w.settings = body;
+      return send({ ...w.settings, paused: w.paused, pausedReason: w.pausedReason, pausedAt: null });
     }
     if (path === '/approve/pause' || path === '/approve/resume') {
       w.paused = path === '/approve/pause';
@@ -228,6 +233,67 @@ test('a draft that changed is reloaded, said so, and not retried', async ({ page
   await page.getByRole('button', { name: 'Approve version 3' }).click();
   await expect(page.getByRole('heading', { name: 'You approved this version' })).toBeVisible();
   expect(w.bodies['POST /approve/queue/d-1/approve']?.[1]).toEqual({ payloadHash: 'hash-d-1-v3' });
+});
+
+test('a conflict that is not a changed payload is shown as a refusal and the message text decides nothing', async ({ page }) => {
+  await stub(page, [{ id: 'd-1', text: 'A post.' }]);
+  await page.route('**/approve/queue/d-1/approve', (r) => r.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'conflict', message: 'the draft changed, says this text' } }) }));
+  await page.goto(`/app/b/${B}/approve/d-1`);
+  await page.getByRole('button', { name: 'Approve version 2' }).click();
+  const notice = page.getByRole('alert').filter({ hasText: 'Not done: the draft changed, says this text.' });
+  await expect(notice).toBeVisible();
+  await expect(page.getByText('This draft changed since you opened it.')).toHaveCount(0);
+});
+
+test('an expired or invalid approval says why and is approved again through the same hash', async ({ page }) => {
+  await stub(page, [
+    { id: 'd-exp', text: 'Old post.', state: 'expired', stateReason: 'The approval expired on 20 Nov 2026.' },
+    { id: 'd-inv', text: 'Blocked post.', state: 'invalid', stateReason: 'A cited fact is no longer approved', findings: [{ blocking: true, where: 'caption', message: 'x' }] },
+  ]);
+  await page.goto(`/app/b/${B}/approve/d-exp`);
+  const side = page.getByRole('complementary', { name: 'Decision' });
+  await expect(side).toContainText('This approval no longer counts');
+  await expect(side).toContainText('The approval expired on 20 Nov 2026.');
+  await expect(page.getByRole('button', { name: 'Approve version 2' })).toHaveCount(0);
+  await side.getByRole('button', { name: 'Approve again' }).click();
+  await expect(page.getByRole('heading', { name: 'You approved this version' })).toBeVisible();
+  expect(w.bodies['POST /approve/queue/d-exp/approve']).toEqual([{ payloadHash: 'hash-d-exp-v2' }]);
+  // Still blocked by a check: it says why it lapsed and offers nothing to press.
+  await page.goto(`/app/b/${B}/approve/d-inv`);
+  await expect(page.getByRole('complementary', { name: 'Decision' })).toContainText('A cited fact is no longer approved');
+  await expect(page.getByRole('button', { name: 'Approve again' })).toHaveCount(0);
+});
+
+test('an approval is withdrawn with a reason, as a secondary action', async ({ page }) => {
+  await stub(page, [{ id: 'd-1', text: 'A post.', state: 'approved' }]);
+  await page.goto(`/app/b/${B}/approve/d-1`);
+  await expect(page.getByRole('button', { name: 'Reject this version…' })).toHaveCount(0);
+  const open = page.getByRole('button', { name: 'Withdraw approval…' });
+  await expect(open).toHaveClass(/btn-secondary/);
+  await open.click();
+  const go = page.getByRole('button', { name: 'Withdraw approval', exact: true });
+  await expect(go).toBeDisabled();
+  await page.getByLabel(/Why are you withdrawing it/).fill('Wrong season');
+  await go.click();
+  await expect(page.getByRole('heading', { name: 'You rejected this version' })).toBeVisible();
+  expect(w.bodies['POST /approve/queue/d-1/reject']).toEqual([{ payloadHash: 'hash-d-1-v2', reason: 'Wrong season' }]);
+  await expect(page.getByText('Reason: Wrong season')).toBeVisible();
+});
+
+test('the settings screen, linked from the queue, saves the approvers and the validity days', async ({ page }) => {
+  await stub(page, []);
+  await page.goto(`/app/b/${B}/approve`);
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await expect(page).toHaveURL(new RegExp('/approve/settings$'));
+  await expect(page.getByLabel('Approvers')).toHaveValue('Sita');
+  await expect(page.getByLabel('Days an approval stays valid')).toHaveValue('14');
+  await page.getByLabel('Approvers').fill('Sita\n  Ram  \n');
+  await page.getByLabel('Days an approval stays valid').fill('0');
+  await expect(page.getByRole('button', { name: 'Save settings' })).toBeDisabled();
+  await page.getByLabel('Days an approval stays valid').fill('7');
+  await page.getByRole('button', { name: 'Save settings' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved.');
+  expect(w.bodies['PUT /approve/settings']).toEqual([{ maxAgeDays: 7, approvers: ['Sita', 'Ram'] }]);
 });
 
 test('a draft Studio no longer has shows its history instead of failing', async ({ page }) => {

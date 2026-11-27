@@ -129,37 +129,66 @@ function Findings({ d }: { d: Draft }) {
 
 // ---- the decision --------------------------------------------------------------------------------
 
+type Sent = Schemas['ApproveApprove'] | Schemas['ApproveReject'];
+
 function Decision({ brandId, draftId, p, d, onChanged, onDecided }: { brandId: string; draftId: string; p: Preview; d: Draft; onChanged: (m: string) => void; onDecided: () => void }) {
   const [note, setNote] = useState('');
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
-  const act = useAct(brandId, async (v: { to: 'approve' | 'reject'; body: Schemas['ApproveApprove'] | Schemas['ApproveReject'] }): Promise<Preview> =>
+  const act = useAct(brandId, async (v: { to: 'approve' | 'reject'; body: Sent }): Promise<Preview> =>
     unwrap(api.POST(`/api/brands/{brandId}/approve/queue/{draftId}/${v.to}`, { params: { path: { brandId, draftId } }, body: v.body as never })) as Promise<Preview>,
   );
   const hash = d.payloadHash;
   const noteOk = !d.noteRequired || note.trim().length >= NOTE_MIN;
-  const send = (to: 'approve' | 'reject', body: Schemas['ApproveApprove'] | Schemas['ApproveReject']) =>
+  const send = (to: 'approve' | 'reject', body: Sent) =>
     act.mutate({ to, body }, {
-      onSuccess: onDecided,
+      onSuccess: () => { setRejecting(false); onDecided(); },
       // Never retried: a refused decision reloads the preview (onSettled) and asks for another look.
-      onError: (e) => { if (e instanceof ApiError && e.status === 409) onChanged(/changed/i.test(e.message) ? 'This draft changed since you opened it.' : `Not done: ${e.message}.`); },
+      onError: (e) => { if (e instanceof ApiError && e.status === 409) onChanged(e.code === 'changed' ? 'This draft changed since you opened it.' : `Not done: ${e.message}.`); },
     });
   const conflict = act.error instanceof ApiError && act.error.status === 409;
+  const first = p.state === 'waiting';
+  // A lapsed (expired or no longer valid) or rejected version the server would take a new approval for.
+  const again = !first && (p.state === 'expired' || p.state === 'invalid' || p.state === 'rejected') && d.canApprove;
+  const withdrawable = (p.state === 'approved' || p.state === 'paused') && d.canReject;
 
-  if (p.state !== 'waiting' || !hash) {
+  if (!hash || (!first && !again)) {
     return (
       <aside aria-label="Decision" className="panel grid gap-3 p-5 lg:sticky lg:top-6">
-        <h2 className="text-lg font-semibold">{p.state === 'approved' ? 'You approved this version' : p.state === 'rejected' ? 'You rejected this version' : 'No decision to make'}</h2>
+        <h2 className="text-lg font-semibold">{p.state === 'approved' || p.state === 'paused' ? 'You approved this version' : p.state === 'rejected' ? 'You rejected this version' : 'No decision to make'}</h2>
         <StateTag state={p.state} />
-        <p className="text-sm break-words text-muted">{p.stateReason ?? 'A decision is recorded once for each version.'}</p>
+        <p className="text-sm break-words text-muted">{p.stateReason ?? (p.state === 'approved' ? 'Valid until the approval runs out or something it depends on changes.' : 'A decision is recorded once for each version.')}</p>
         <p className="flex items-start gap-2 text-sm"><Lock className="mt-0.5 size-4 shrink-0" aria-hidden />Any later edit makes a new version. It comes back for a new decision, and this approval stops counting.</p>
+        {withdrawable && hash ? (
+          <div className="grid gap-3 border-t border-line pt-4">
+            {rejecting ? (
+              <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); if (reason.trim()) send('reject', { payloadHash: hash, reason: reason.trim() }); }}>
+                <div className="field">
+                  <label className="label" htmlFor="withdraw-reason">Why are you withdrawing it? (required)</label>
+                  <textarea id="withdraw-reason" className="input h-auto min-h-20 py-2" maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
+                  <p className="hint">The approval ends now. You can approve this version again afterwards.</p>
+                </div>
+                <MutationError error={conflict ? null : act.error} />
+                <div className="flex gap-2">
+                  <button type="submit" className="btn btn-secondary" disabled={!reason.trim() || act.isPending}>Withdraw approval</button>
+                  <button type="button" className="btn btn-quiet" onClick={() => setRejecting(false)}>Cancel</button>
+                </div>
+              </form>
+            ) : (
+              <button type="button" className="btn btn-secondary justify-self-start" onClick={() => setRejecting(true)}>Withdraw approval…</button>
+            )}
+          </div>
+        ) : null}
       </aside>
     );
   }
+  const label = first ? `Approve version ${d.version}` : 'Approve again';
   return (
     <aside aria-label="Decision" className="panel grid gap-5 p-5 lg:sticky lg:top-6">
       <div className="grid gap-2">
-        <h2 className="text-lg font-semibold">Your decision</h2>
+        <h2 className="text-lg font-semibold">{first ? 'Your decision' : p.state === 'rejected' ? 'You rejected this version' : 'This approval no longer counts'}</h2>
+        {!first ? <p className="text-sm break-words text-muted">{p.stateReason ?? (p.state === 'rejected' ? 'You can still approve this same version.' : null)}</p> : null}
+        {!first ? <p className="text-sm">The same version can be approved again. Every check runs again, on what is shown here.</p> : null}
         <p>You are approving <strong className="font-semibold">version {d.version}</strong>, exactly as shown. <span className="text-muted">Fingerprint <code className="font-mono text-xs">{hash.slice(0, 10)}</code></span></p>
         <p className="flex items-start gap-2 text-sm"><Lock className="mt-0.5 size-4 shrink-0" aria-hidden />If anyone edits this draft afterwards, your approval is undone and it returns here to be approved again.</p>
         {d.expiresIfApproved ? <p className="flex items-start gap-2 text-sm text-muted"><Clock3 className="mt-0.5 size-4 shrink-0" aria-hidden />An approval given now is valid until {fmtWhen(d.expiresIfApproved)}.</p> : null}
@@ -180,29 +209,31 @@ function Decision({ brandId, draftId, p, d, onChanged, onDecided }: { brandId: s
       <div className="grid gap-2">
         <button type="button" className="btn btn-primary h-11 text-base" disabled={!d.canApprove || !noteOk || act.isPending}
           onClick={() => send('approve', { payloadHash: hash, ...(d.noteRequired ? { reviewNote: note.trim() } : {}) })}>
-          Approve version {d.version}
+          {label}
         </button>
         {!d.canApprove && d.cannotApproveReason ? <p className="text-sm break-words text-danger">{d.cannotApproveReason}</p> : null}
         {d.canApprove && !noteOk ? <p className="text-sm text-muted">Write the review note to approve.</p> : null}
         {conflict ? null : <MutationError error={act.error} />}
       </div>
-      <div className="grid gap-3 border-t border-line pt-4">
-        {rejecting ? (
-          <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); if (reason.trim()) send('reject', { payloadHash: hash, reason: reason.trim() }); }}>
-            <div className="field">
-              <label className="label" htmlFor="reason">Why are you rejecting it? (required)</label>
-              <textarea id="reason" className="input h-auto min-h-20 py-2" maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
-            </div>
-            <div className="flex gap-2">
-              <button type="submit" className="btn btn-danger" disabled={!d.canReject || !reason.trim() || act.isPending}>Send rejection</button>
-              <button type="button" className="btn btn-quiet" onClick={() => setRejecting(false)}>Cancel</button>
-            </div>
-            {!d.canReject && d.cannotRejectReason ? <p className="text-sm text-danger">{d.cannotRejectReason}</p> : null}
-          </form>
-        ) : (
-          <button type="button" className="btn btn-quiet justify-self-start text-muted" onClick={() => setRejecting(true)}>Reject this version…</button>
-        )}
-      </div>
+      {first ? (
+        <div className="grid gap-3 border-t border-line pt-4">
+          {rejecting ? (
+            <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); if (reason.trim()) send('reject', { payloadHash: hash, reason: reason.trim() }); }}>
+              <div className="field">
+                <label className="label" htmlFor="reason">Why are you rejecting it? (required)</label>
+                <textarea id="reason" className="input h-auto min-h-20 py-2" maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
+              </div>
+              <div className="flex gap-2">
+                <button type="submit" className="btn btn-danger" disabled={!d.canReject || !reason.trim() || act.isPending}>Send rejection</button>
+                <button type="button" className="btn btn-quiet" onClick={() => setRejecting(false)}>Cancel</button>
+              </div>
+              {!d.canReject && d.cannotRejectReason ? <p className="text-sm text-danger">{d.cannotRejectReason}</p> : null}
+            </form>
+          ) : (
+            <button type="button" className="btn btn-quiet justify-self-start text-muted" onClick={() => setRejecting(true)}>Reject this version…</button>
+          )}
+        </div>
+      ) : null}
     </aside>
   );
 }
