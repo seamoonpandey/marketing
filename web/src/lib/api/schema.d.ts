@@ -977,15 +977,6 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
             };
         };
         put?: never;
@@ -1031,15 +1022,6 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
             };
         };
         delete?: never;
@@ -1078,15 +1060,6 @@ export interface paths {
                 };
                 /** @description Error: `{ error: { code, message } }` */
                 404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1152,15 +1125,6 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
             };
         };
         delete?: never;
@@ -1210,15 +1174,6 @@ export interface paths {
                 };
                 /** @description Error: `{ error: { code, message } }` */
                 409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1282,15 +1237,6 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
             };
         };
         delete?: never;
@@ -1335,15 +1281,6 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
             };
         };
         put: {
@@ -1381,15 +1318,6 @@ export interface paths {
                 };
                 /** @description Error: `{ error: { code, message } }` */
                 404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1448,15 +1376,6 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
             };
         };
         put?: never;
@@ -1497,15 +1416,6 @@ export interface paths {
                 };
                 /** @description Error: `{ error: { code, message } }` */
                 404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1554,15 +1464,6 @@ export interface paths {
                 };
                 /** @description Error: `{ error: { code, message } }` */
                 404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1619,15 +1520,6 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
             };
         };
         delete?: never;
@@ -1675,15 +1567,6 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
             };
         };
         delete?: never;
@@ -1722,15 +1605,6 @@ export interface paths {
                 };
                 /** @description Error: `{ error: { code, message } }` */
                 404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1787,15 +1661,6 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
             };
         };
         delete?: never;
@@ -1845,15 +1710,6 @@ export interface paths {
                 };
                 /** @description Error: `{ error: { code, message } }` */
                 409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Error: `{ error: { code, message } }` */
-                501: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2066,8 +1922,8 @@ export interface components {
              * @example 2026-11-27T06:00:00.000Z
              */
             finishedAt: string | null;
-            estimate: components["schemas"]["Money"] & (Record<string, never> | null);
-            actual: components["schemas"]["Money"] & (Record<string, never> | null);
+            estimate: components["schemas"]["RunMoney"] | null;
+            actual: components["schemas"]["RunMoney"] | null;
             counts: components["schemas"]["WatchRunCounts"];
             /**
              * @description ISO 8601 timestamp
@@ -2079,6 +1935,11 @@ export interface components {
         WatchRunTrigger: "baseline" | "weekly" | "manual";
         /** @enum {string} */
         WatchRunState: "running" | "awaiting_approval" | "completed" | "failed_retryable" | "failed_final" | "cancelled";
+        /** @description Decimal strings: usd to 4 places, npr to 2. */
+        RunMoney: {
+            usd: string;
+            npr: string;
+        };
         WatchRunCounts: {
             pages?: number;
             changed?: number;
@@ -2122,7 +1983,7 @@ export interface components {
             runId: string;
             type: components["schemas"]["ObservationType"];
             summary: string;
-            before: components["schemas"]["ResearchEvidence"];
+            before: components["schemas"]["ResearchEvidence"] | null;
             after: components["schemas"]["ResearchEvidence"];
             url: string;
             /**
@@ -2138,7 +1999,7 @@ export interface components {
             quote: string;
             /** @description A base source row: GET /brands/{brandId}/sources/{id} */
             sourceId: string;
-        } | null;
+        };
         /** @enum {string} */
         ResearchConfidence: "low" | "medium" | "high";
         CompetitorProfile: {
@@ -2185,8 +2046,8 @@ export interface components {
             createdAt: string;
         };
         BattlecardPair: {
-            approved: components["schemas"]["Battlecard"];
-            draft: components["schemas"]["Battlecard"] & unknown;
+            approved: components["schemas"]["Battlecard"] | null;
+            draft: components["schemas"]["Battlecard"] | null;
         };
         Battlecard: {
             id: string;
@@ -2210,7 +2071,7 @@ export interface components {
              * @example 2026-11-27T06:00:00.000Z
              */
             createdAt: string;
-        } | null;
+        };
         BattlecardBody: {
             differ: components["schemas"]["BattlecardStatement"][];
             proof: components["schemas"]["BattlecardStatement"][];
