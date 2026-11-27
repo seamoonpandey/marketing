@@ -35,7 +35,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ label, totalBudget, spen
         <div className="p-5 pb-4">
           <div className="mb-1 flex items-start justify-between">
             <p className="text-[15px] text-zinc-600">{label}</p>
-            <span className="border-[1.6px] border-zinc-200 px-3 py-1 text-[13px] text-zinc-600">Cap on</span>
+            <span className="text-[13px] text-zinc-600">Cap on</span>
           </div>
           <p className="mb-4 text-[28px] leading-none font-medium tracking-tight text-zinc-900 tabular-nums">
             {npr(totalBudget)}
