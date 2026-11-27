@@ -115,7 +115,12 @@ export async function dueBrands(now: Date): Promise<string[]> {
   for (const b of all) {
     const s = await withBrand(b.id, (tx) => getSchedule(tx, b.id));
     if (!s.enabled || (s.lastRunAt && now.getTime() - s.lastRunAt.getTime() < 6 * 86_400_000)) continue;
-    const parts = new Intl.DateTimeFormat('en-US', { timeZone: b.timezone, weekday: 'short', hour: 'numeric', hourCycle: 'h23' }).formatToParts(now);
+    let parts: Intl.DateTimeFormatPart[];
+    try {
+      parts = new Intl.DateTimeFormat('en-US', { timeZone: b.timezone, weekday: 'short', hour: 'numeric', hourCycle: 'h23' }).formatToParts(now);
+    } catch {
+      continue; // an invalid timezone (brands accept any string) skips only that brand
+    }
     const get = (t: string) => parts.find((p) => p.type === t)!.value;
     if (DAYS.indexOf(get('weekday')) === s.weekday && Number(get('hour')) === s.hour) due.push(b.id);
   }

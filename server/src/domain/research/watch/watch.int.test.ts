@@ -211,4 +211,14 @@ describe('watch run', () => {
     await t.adminQuery(`update watch_schedules set last_run_at = $2 where brand_id = $1`, [brand, monday]);
     expect(await dueBrands(monday)).not.toContain(brand);
   });
+
+  it('skips a brand with an invalid timezone and still finds the others due', async () => {
+    const bad = await t.makeBrand();
+    const good = await t.makeBrand();
+    await t.adminQuery(`update brands set timezone = 'Nepal' where id = $1`, [bad]);
+    for (const b of [bad, good]) await withBrand(b, (tx) => setSchedule(tx, b, { enabled: true, weekday: 1, hour: 6 }));
+    const due = await dueBrands(new Date('2026-11-30T00:15:00Z'));
+    expect(due).toContain(good);
+    expect(due).not.toContain(bad);
+  });
 });
