@@ -20,4 +20,21 @@ const schema = z.object({
 
 export type Config = z.infer<typeof schema>;
 
-export const config: Config = schema.parse(process.env);
+/** The development defaults above, with the passwords of docker-compose.dev.yml: never a production value. */
+const DEV_ONLY = ['DATABASE_URL', 'DATABASE_ADMIN_URL', 'DBOS_SYSTEM_DATABASE_URL', 'S3_ENDPOINT', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const;
+const DEV_PASSWORDS = new Set(['', 'marketing', 'marketing_app', 'dev']);
+
+/** Parses the environment. With NODE_ENV=production it refuses the development defaults, the mock model and a missing key. */
+export function parseConfig(env: Record<string, string | undefined>): Config {
+  const c = schema.parse(env);
+  if (env.NODE_ENV !== 'production') return c;
+  const unsafe: string[] = DEV_ONLY.filter((k) => !env[k] || DEV_PASSWORDS.has(env[k]!));
+  for (const k of ['DATABASE_URL', 'DATABASE_ADMIN_URL', 'DBOS_SYSTEM_DATABASE_URL'] as const)
+    if (env[k] && !unsafe.includes(k) && DEV_PASSWORDS.has(decodeURIComponent(URL.parse(env[k]!)?.password ?? ''))) unsafe.push(k);
+  if (c.AI_MODEL === 'mock') unsafe.push('AI_MODEL');
+  if (c.AI_MODEL.startsWith('anthropic:') && !c.ANTHROPIC_API_KEY) unsafe.push('ANTHROPIC_API_KEY');
+  if (unsafe.length) throw new Error(`NODE_ENV=production: set ${unsafe.join(', ')} (unset, a development value, or a development password)`);
+  return c;
+}
+
+export const config: Config = parseConfig(process.env);
