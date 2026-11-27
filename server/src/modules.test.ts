@@ -13,8 +13,8 @@ beforeAll(async () => {
 afterAll(() => t.close());
 
 describe('module stubs', () => {
-  it('mounts the knowledge and research routers and the app starts', async () => {
-    expect(moduleRoutes).toHaveLength(2);
+  it('mounts the knowledge, research and plan routers and the app starts', async () => {
+    expect(moduleRoutes).toHaveLength(3);
     for (const r of moduleRoutes) expect(r).toBeInstanceOf(OpenAPIHono);
     expect((await createApp().request('/api/health')).status).toBe(200);
   });
