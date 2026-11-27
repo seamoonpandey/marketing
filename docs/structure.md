@@ -270,3 +270,28 @@ The module registers itself with one line each in `server/src/modules.ts`, `serv
 Plan reads other modules only through `approvedFacts` (`domain/knowledge`) and `listOpportunities` (`domain/research`).
 
 Ports: server work uses web 3940 and API 3941; screens use 4040 and 4041; the full-flow test uses 4140 and 4141.
+
+## 9. Studio module (module 4)
+
+Branch `product/studio`, built from `product/base` with `product/plan` merged in. Plan: `docs/superpowers/plans/2026-11-27-studio-module.md`. Design: `docs/superpowers/specs/2026-11-27-studio-design.md`.
+
+Paths tagged **studio**:
+
+| Path | Holds |
+|---|---|
+| `server/src/render/` | The render engine: templates, slide and video rendering. No database access |
+| `server/assets/fonts/` | Bundled fonts and their licence |
+| `server/src/db/schema/studio.ts` | Drafts, versions, runs |
+| `server/src/contracts/studio.ts` | Request and response schemas |
+| `server/src/domain/studio/` | Copy composition, checks, generation, rendering runs, routes |
+| `server/src/workflows/studio-run.ts` | The generate and render workflow |
+| `server/test/fixtures/studio/` | Fixtures and render samples |
+| `web/src/app/(app)/app/b/[brandId]/studio/**` | Screens |
+| `web/src/components/studio/` | Components |
+| `web/e2e/studio*.spec.ts` | End-to-end tests |
+
+The module registers itself with one line each in `server/src/modules.ts`, `server/src/db/schema/index.ts`, `web/src/nav.ts` and `web/src/app/(app)/app.css`. API paths start `/api/brands/{brandId}/studio/`.
+
+Studio reads other modules only through `domain/knowledge/index.ts` and `domain/plan/index.ts`.
+
+Ports: domain work uses web 4240 and API 4241; render work needs none; screens use 4340 and 4341; the full-flow test uses 4440 and 4441.
