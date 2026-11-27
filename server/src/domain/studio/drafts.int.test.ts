@@ -243,8 +243,12 @@ describe('render, ready and edit', () => {
     const { s, id } = await carousel();
     await render(s, id);
     await withBrand(s.brand, (tx) => markReady(tx, s.brand, id, s.facts));
+    const files = (await read(s, id)).renders;
     await render(s, id);
-    expect(await read(s, id)).toMatchObject({ status: 'draft' });
+    expect(await read(s, id)).toMatchObject({ status: 'draft', currentVersion: 2, readyVersion: null });
+    // The files the ready version was marked with are kept on it; the new ones are a new version.
+    expect((await t.adminQuery(`select renders from studio_versions where draft_id = $1 and version = 1`, [id]))[0]!.renders.map((r: { key: string }) => r.key))
+      .toEqual(files.map((r) => r.key));
   });
 
   it('refuses markReady while a blocking finding exists, and an edit with an unbacked claim leaves the claim out', async () => {

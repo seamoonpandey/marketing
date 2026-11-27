@@ -1,7 +1,7 @@
 // The render step: the current version's cards at the draft's ratios, and the video for a video draft.
 import { createHash, randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
-import { studioVersions, type RenderRecord } from '../../db/schema/studio.ts';
+import { studioDrafts, studioVersions, type RenderRecord } from '../../db/schema/studio.ts';
 import { tenantOf, withBrand } from '../../db/tenant.ts';
 import { putObject, objectKey } from '../../storage/index.ts';
 import { audit } from '../audit/index.ts';
@@ -64,9 +64,14 @@ export async function renderDraft(brandId: string, runId: string, draftId: strin
   }
   await withBrand(brandId, async (tx) => {
     const d = await getDraftRow(tx, brandId, draftId, true);
-    await tx.update(studioVersions).set({ renders: records }).where(and(eq(studioVersions.draftId, d.id), eq(studioVersions.version, plan.version)));
-    // New files replace the ones a ready version was approved with.
-    if (d.readyVersion === plan.version) await invalidateReady(tx, brandId, d, 'draft re-rendered');
+    const at = and(eq(studioVersions.draftId, d.id), eq(studioVersions.version, plan.version));
+    if (d.readyVersion === plan.version) {
+      // A ready version keeps the files it was marked ready with; new files are a change after ready, so a new version.
+      const [v] = await tx.select().from(studioVersions).where(at);
+      await tx.insert(studioVersions).values({ brandId, draftId: d.id, version: d.currentVersion + 1, origin: 'owner', content: v!.content, leftOut: v!.leftOut, renders: records });
+      await tx.update(studioDrafts).set({ currentVersion: d.currentVersion + 1 }).where(eq(studioDrafts.id, d.id));
+      await invalidateReady(tx, brandId, d, 'draft re-rendered');
+    } else await tx.update(studioVersions).set({ renders: records }).where(at);
     await audit(tx, { brandId, actor: 'system', action: 'studio.draft.render', objectType: 'studio_draft', objectId: d.id, objectVersion: plan.version, result: 'ok', reason: `${records.length} files` });
   });
   return { rendered: records.length, ...(note ? { note } : {}) };
