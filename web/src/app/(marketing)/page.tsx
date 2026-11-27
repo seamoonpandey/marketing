@@ -46,11 +46,11 @@ const QUEUE = [
 ] as const;
 
 const FAQ = [
-  ['Does Pracharo post without asking me?', 'No. Posts, replies and messages wait for your approval, and an edited draft has to be approved again.'],
-  ['Will Pracharo launch ads or change my budget?', 'No. It prepares ad tests and recommends changes; a person on your team launches them and sets the spend.'],
-  ['Can Pracharo promise more sales?', 'No. It reports what each post and campaign brought in, so you keep what works and drop what does not.'],
-  ['Does it train AI models on my data?', 'No, not without your written permission. Your brand’s data is kept apart from every other brand’s.'],
-  ['Which AI models does it use?', 'Local and open models first. Paid ones run only when a job needs them, with the cost shown before it starts.'],
+  ['Does the software post on its own?', 'No. Posts, replies and messages wait for your approval, and an edited draft has to be approved again.'],
+  ['Will it launch ads or change my marketing budget?', 'No. It prepares ad tests and recommends changes; a person on your team launches them and sets the spend.'],
+  ['Can it promise more product sales?', 'No. It reports what each post and campaign brought in, so you keep what works and drop what does not.'],
+  ['Does it train AI models on my customer data?', 'No, not without your written permission. Your brand’s data is kept apart from every other brand’s.'],
+  ['Which AI models does it use, and at what price?', 'Local and open models first. Paid ones run only when a job needs them, with the cost shown before it starts.'],
 ];
 
 const check = <svg viewBox="0 0 16 16"><path d="m4.5 8.2 2.3 2.3 4.7-5" /></svg>;
@@ -195,21 +195,21 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="section g2" id="features" aria-labelledby="features-h">
+        <section className="section g2 g2m" id="features" aria-labelledby="features-h">
           <div className="wrap">
             <div className="group">
               <div className="section-head">
-                <h2 id="features-h">What Pracharo checks before posting. <span className="muted">Formats, approval, cost and competitors.</span></h2>
+                <h2 id="features-h">Formats, approval, prices and competitors</h2>
               </div>
               <div className="grid">
                 <article className="card card--row card--open span-6 m-nolift" id="formats">
-                  <h3>Turns one marketing brief into seven formats</h3>
-                  <p>An approved brief becomes a landing page, email, posts, video script, carousel, FAQ and sales notes.</p>
+                  <h3>Turns one marketing brief into 7 formats</h3>
+                  <p>An approved brief becomes a landing page, email, posts, a video script and three more.</p>
                   <div className="panel"><BriefFanout /></div>
                 </article>
                 <article className="card card--row card--open span-6 m-nolift" id="approval">
-                  <h3>Holds every AI draft for your approval</h3>
-                  <p>Nothing reaches Facebook, Instagram or WhatsApp until you approve that exact version.</p>
+                  <h3>Holds each marketing post for approval</h3>
+                  <p>You approve the exact version that posts.</p>
                   <div className="panel"><div className="stage stage--fade-b"><div className="island ui ui-island tw" style={v({ '--iw': '224px', '--ib': '32px' })}><AIToolApproval /></div></div></div>
                 </article>
               </div>
@@ -256,7 +256,7 @@ export default function Home() {
           <div className="wrap">
             <div className="grid">
               <div className="span-5 stack-5">
-                <h2 id="channels-h">Posts to eight channels from one calendar</h2>
+                <h2 id="channels-h">Posts to 8 channels from one calendar</h2>
                 <p className="t-lead">Each channel keeps its own sizes, limits and rules. The pilot connects two or three of yours; the rest get a finished draft to post by hand.</p>
                 <ul className="facts">
                   <li>Comments and messages are sorted, with replies drafted for you</li>
