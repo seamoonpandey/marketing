@@ -70,7 +70,7 @@ describe('readiness', () => {
     await withBrand(brand, (tx) =>
       proposeFacts(tx, brand, randomUUID(), [
         { section: 'products', subjectName: 'Ilam Green Tea 250 g', field: 'name', value: 'Ilam Green Tea', language: 'en', origin: 'inferred', confidence: 0.5 },
-      ]),
+      ], []),
     );
     const r = await score(brand);
     expect(r.dimensions.flatMap((d) => d.criteria).filter((c) => c.pass)).toEqual([]);
@@ -119,7 +119,7 @@ describe('readiness', () => {
     await withBrand(brand, (tx) =>
       proposeFacts(tx, brand, randomUUID(), [
         { section: 'products', subjectName: 'Ilam Green Tea 250 g', field: 'price', value: 5000, unit: 'NPR', language: 'en', origin: 'stated', sourceId: s!.id, quote: 'Ilam Green Tea 250 g: NPR 5000 per tin', confidence: 0.9 },
-      ]),
+      ], [s!.id]),
     );
     await withBrand(brand, async (tx) => createAsset(tx, brand, { sourceId: await uploadRow(brand, 'hero.jpg'), kind: 'photo' }));
     const r = await score(brand);

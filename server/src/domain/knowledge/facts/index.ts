@@ -271,14 +271,17 @@ async function ownerKey(
 /**
  * Stores what an import extracted. A stated fact whose quote is found in its source's text is
  * `unverified`; any other is `inferred`, and a stated one gets the warning `quote not found in source`.
- * Only a verified fact keeps its source and quote. A value equal to a current fact changes nothing;
- * a different value on a single-valued field marks it and every live rival `conflicting`.
+ * Only a verified fact keeps its source and quote, and only a source in `sourceIds` (those the model
+ * read) can verify one. A value equal to a current fact changes nothing; a different value on a
+ * single-valued field marks it and every live rival `conflicting`.
  */
-export async function proposeFacts(tx: Tx, brandId: string, runId: string, items: ProposedFact[]): Promise<ProposeCounts> {
+export async function proposeFacts(
+  tx: Tx, brandId: string, runId: string, items: ProposedFact[], sourceIds: string[],
+): Promise<ProposeCounts> {
   const counts: ProposeCounts = { unverified: 0, inferred: 0, conflicts: 0, unchanged: 0, dropped: 0 };
   const texts = new Map<string, string | null>();
   const sourceText = async (id: string) => {
-    if (!UUID.test(id)) return null;
+    if (!UUID.test(id) || !sourceIds.includes(id)) return null;
     if (!texts.has(id)) {
       const [s] = await tx.select({ text: sources.text }).from(sources).where(and(eq(sources.id, id), eq(sources.brandId, brandId)));
       texts.set(id, s?.text ?? null);

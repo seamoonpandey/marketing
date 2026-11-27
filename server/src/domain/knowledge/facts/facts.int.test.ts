@@ -29,7 +29,9 @@ const price = (sourceId: string, value: unknown, quote: string): ProposedFact =>
   origin: 'stated', sourceId, quote, confidence: 0.9,
 });
 
-const propose = (brand: string, items: ProposedFact[]) => withBrand(brand, (tx) => proposeFacts(tx, brand, randomUUID(), items));
+/** As an import whose batch read every source these items cite. */
+const propose = (brand: string, items: ProposedFact[]) =>
+  withBrand(brand, (tx) => proposeFacts(tx, brand, randomUUID(), items, items.flatMap((i) => (i.sourceId ? [i.sourceId] : []))));
 const list = (brand: string, f: Parameters<typeof listFacts>[2] = {}) => withBrand(brand, (tx) => listFacts(tx, brand, f));
 const approved = (brand: string) => withBrand(brand, (tx) => approvedFacts(tx, brand));
 

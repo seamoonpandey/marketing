@@ -76,7 +76,7 @@ describe('knowledge API', () => {
         { section: 'products', subjectName: 'Green tea', field: 'price', value: 4500, unit: 'NPR', language: 'en', origin: 'stated', sourceId: s, quote: 'Green tea costs NPR 4500', confidence: 0.9 },
         { section: 'products', subjectName: 'Green tea', field: 'price', value: 5000, unit: 'NPR', language: 'en', origin: 'stated', sourceId: s, quote: 'Green tea costs NPR 5000', confidence: 0.9 },
         { section: 'identity', field: 'country', value: 'Nepal', language: 'en', origin: 'stated', sourceId: s, quote: 'We were founded in Ilam in 2009', confidence: 0.6 },
-      ]),
+      ], [s]),
     );
     const { items } = (await call('GET', `/brands/${brand}/knowledge/facts`)).body;
     const unverified = items.find((f: any) => f.status === 'unverified');

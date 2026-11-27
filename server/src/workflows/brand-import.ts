@@ -28,7 +28,7 @@ export const brandImportExtract = DBOS.registerWorkflow(
       answers.push(await step(brandId, runId, `extract-${i}`, () => run.extractStage(brandId, runId, ids)));
     const counts: Awaited<ReturnType<typeof run.verifyStage>>[] = [];
     for (const [i, facts] of answers.entries())
-      counts.push(await step(brandId, runId, `verify-${i}`, () => run.verifyStage(brandId, runId, facts)));
+      counts.push(await step(brandId, runId, `verify-${i}`, () => run.verifyStage(brandId, runId, batches[i]!, facts)));
     const colours = await step(brandId, runId, 'palette', () => run.paletteStage(brandId, runId));
     await step(brandId, runId, 'finish', () => run.finishStage(brandId, runId, counts, colours));
   },

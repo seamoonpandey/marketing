@@ -146,6 +146,19 @@ describe('brand import', () => {
     expect(price).toMatchObject({ value: 1, status: 'inferred', warning: 'quote not found in source', source: null });
   });
 
+  it('stores a fact citing a source the run did not read as inferred, even when its quote is in that source', async () => {
+    const brand = await t.makeBrand();
+    const other = await upload(brand, 'old-terms.txt', 'text/plain', new TextEncoder().encode('Unopened tins can be returned within 90 days for a full refund.'));
+    const txt = await upload(brand, 'about.txt', 'text/plain', new TextEncoder().encode('Ilam Leaf Co. sells green tea.'));
+    const { runId } = await startImport(brand, { sourceIds: [txt.id] });
+    expect((await settle(brand, runId)).state).toBe('awaiting_approval');
+    mockAi.queue({ facts: [{ section: 'legal', field: 'refund', value: 'Within 90 days', language: 'en', origin: 'stated', sourceId: other.id, quote: 'returned within 90 days for a full refund', confidence: 0.9 }] });
+    await confirmImport(brand, runId);
+    expect((await settle(brand, runId)).state).toBe('completed');
+    const [refund] = await facts(brand);
+    expect(refund).toMatchObject({ status: 'inferred', warning: 'quote not found in source', source: null, quote: null });
+  });
+
   it('blocks an estimate above the remaining cap: the run waits with a reason and confirm refuses', async () => {
     const brand = await t.makeBrand();
     const [spent] = await t.adminQuery<{ id: string }>(

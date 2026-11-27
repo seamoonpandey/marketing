@@ -295,10 +295,10 @@ export async function extractStage(brandId: string, runId: string, sourceIds: st
   return toProposed(object);
 }
 
-/** Checks the quotes of one batch's facts and stores them, finding conflicts. */
-export async function verifyStage(brandId: string, runId: string, facts: ProposedFact[]): Promise<ProposeCounts> {
+/** Checks the quotes of one batch's facts against that batch's sources and stores them, finding conflicts. */
+export async function verifyStage(brandId: string, runId: string, sourceIds: string[], facts: ProposedFact[]): Promise<ProposeCounts> {
   await updateRunning(brandId, runId, { stage: 'verify' });
-  return withBrand(brandId, (tx) => proposeFacts(tx, brandId, runId, facts));
+  return withBrand(brandId, (tx) => proposeFacts(tx, brandId, runId, facts, sourceIds));
 }
 
 /** Adds the logo assets' dominant colours and the homepage's CSS colours the palette lacks. Never fails the run. */
