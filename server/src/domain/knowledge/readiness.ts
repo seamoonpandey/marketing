@@ -54,8 +54,8 @@ export async function readiness(tx: Tx, brandId: string): Promise<ReadinessOut> 
     const v = find(section, field)?.value;
     return Array.isArray(v) && v.length > 0;
   };
-  // A product counts once it has a fact that is not rejected.
-  const products = subjectRows.filter((s) => s.type === 'product' && live.some((f) => f.subjectId === s.id));
+  // A product counts once it has an approved fact.
+  const products = subjectRows.filter((s) => s.type === 'product' && approved.some((f) => f.subjectId === s.id));
   const segments = subjectRows.filter((s) => s.type === 'segment');
   const conflicts = live.filter((f) => f.status === 'conflicting');
   const licensed = (r: (typeof assetRows)[number]) => typeof r.rights.licence === 'string' && r.rights.licence.trim() !== '';

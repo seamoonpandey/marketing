@@ -65,6 +65,18 @@ describe('readiness', () => {
     expect(r.dimensions.map((d) => d.weight).reduce((a, b) => a + b)).toBe(100);
   });
 
+  it('scores nothing for product facts the owner has not approved', async () => {
+    const brand = await t.makeBrand();
+    await withBrand(brand, (tx) =>
+      proposeFacts(tx, brand, randomUUID(), [
+        { section: 'products', subjectName: 'Ilam Green Tea 250 g', field: 'name', value: 'Ilam Green Tea', language: 'en', origin: 'inferred', confidence: 0.5 },
+      ]),
+    );
+    const r = await score(brand);
+    expect(r.dimensions.flatMap((d) => d.criteria).filter((c) => c.pass)).toEqual([]);
+    expect(r.score).toBe(0);
+  });
+
   it('scores the complete fixture brand 70, limited_pilot, with three dimensions set up later', async () => {
     const brand = await t.makeBrand();
     await completeBrand(brand);
