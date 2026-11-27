@@ -97,7 +97,7 @@ export default function Home() {
       <main id="top">
         <section className="hero hero--centred" data-enter="" aria-labelledby="hero-h">
           <div className="wrap"><div className="hero-text">
-            <Mascot mood="happy" className="hero__mascot" sizes="300px" />
+            <Mascot art="wave-left" className="hero__mascot" />
             <div className="hero__c">
               <a className="pill" href="#apply"><span>Pilot</span><span className="muted">Starts with one brand in Nepal</span></a>
               <h1 id="hero-h">AI marketing team for Nepali brands</h1>
@@ -261,7 +261,7 @@ export default function Home() {
                 <h2 id="statement-h" className="mo-la__type">Make your brand heard</h2>
                 <p className="mo-la__sub">One brief in the morning becomes a week of posts, each priced before it runs and held for your approval.</p>
               </div>
-              <Mascot mood="love" className="statement__mascot span-5 start-8" sizes="(max-width: 1023px) 320px, 520px" />
+              <Mascot art="celebrate" sizes="(max-width: 639px) 280px, 520px" className="statement__mascot span-5 start-8" />
             </div>
           </div>
         </section>
@@ -293,7 +293,7 @@ export default function Home() {
                 <h2 id="questions-h">Questions</h2>
                 <p>Approval, ads, results, data and models.</p>
                 <p><a className="link" href="mailto:hello@prachaar.example">Email us</a></p>
-                <Mascot mood="confused" className="faq__mascot" />
+                <Mascot art="think-right" narrow="think-left" className="faq__mascot" />
               </div>
               <div className="faq span-6 start-7">
                 {FAQ.map(([q, a]) => (
@@ -348,7 +348,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <Mascot mood="wink" className="apply__mascot" sizes="240px" />
+                <Mascot art="point" sizes="240px" className="apply__mascot" />
               </div>
             </div>
           </div>
@@ -358,12 +358,11 @@ export default function Home() {
 
       <footer className="footer closing footer--statement" id="contact" aria-labelledby="close-h">
         <div className="wrap">
-          <div className="closing__cta close--word">
+          <div className="closing__cta">
             <div className="section-head--split">
               <div><h2 id="close-h">One queue for your marketing</h2><p className="t-lead">Start with one brand and one week of posts.</p></div>
               <a className="btn btn--primary" href="#apply">Join the pilot</a>
             </div>
-            <div className="close__word close__lockup" aria-hidden="true"><Lockup label="" sizes="(max-width: 639px) 100vw, 640px" /></div>
           </div>
           <div className="closing__links">
             <div className="grid">
@@ -372,8 +371,11 @@ export default function Home() {
               <div className="span-4 footer__col"><h3>Contact</h3><ul><li><a href="mailto:hello@prachaar.example">Email us</a></li></ul></div>
             </div>
             <div className="footer__legal">
-              <span>&copy; 2026 Prachaar</span>
-              <span className="credits">Product names and logos are trademarks of their owners</span>
+              <div className="footer__fine">
+                <span>&copy; 2026 Prachaar</span>
+                <span className="credits">Product names and logos are trademarks of their owners</span>
+              </div>
+              <Lockup className="footer__logo" sizes="200px" />
             </div>
           </div>
         </div>

@@ -1,8 +1,7 @@
-/* Prachaar's logo and mascot. The artwork is the owner's master files in public/brand/:
-   prachaar-logo-master.png (the mascot, a robot in a dhaka topi with a megaphone, beside the wordmark whose P
-   is a speech bubble with a play triangle) and prachaar-mascot-master.png (the mascot alone); the web copies
-   beside them are trimmed and resized from those. The P mark is redrawn as vector for the smallest uses, where a
-   picture would blur; the favicon is the mascot's head (public/brand/favicon-*.png). */
+/* Prachaar's logo and mascot. The logo is the owner's artwork, public/brand/prachaar-logo-master.png (the
+   mascot beside the wordmark whose P is a speech bubble with a play triangle); the web copies beside it are
+   trimmed and resized from it. The mascot's poses are the owner's artwork in public/brand/mascot. The P mark is redrawn as vector for the smallest uses, where a
+   picture would blur; the favicon is the mascot's head (public/brand/favicon-*.png, from mascot/head-master.jpg). */
 
 const MARK = 'M12 12A8 8 0 0 1 20 4H27A15 15 0 0 1 27 34H24L12 46ZM23.5 12.5L33.5 19L23.5 25.5Z';
 
@@ -25,13 +24,24 @@ export function Lockup({ className, label = 'Prachaar', sizes = '160px' }: Props
   );
 }
 
-export type Mood = 'smile' | 'happy' | 'wink' | 'love' | 'surprised' | 'sad' | 'confused' | 'frustrated';
+/** The mascot artwork in public/brand/mascot: each <name>-master.jpg as delivered, and its web copies
+    (<name>.webp 640 wide, <name>-small.webp 280 wide, made by scripts/mascot-assets.py). Heights at 640 wide. */
+const ART = { wave: 677, 'wave-left': 677, celebrate: 728, point: 827, 'think-right': 801, 'think-left': 813, head: 549 } as const;
+export type Art = keyof typeof ART;
+const set = (a: Art) => `/brand/mascot/${a}-small.webp 280w, /brand/mascot/${a}.webp 640w`;
 
-/** The mascot alone, in one of its moods (public/brand/mascot/: the master artwork with its eyes repainted and
-    small accents added). Decorative by default: pass a label where it carries meaning. */
-export function Mascot({ className, label = '', sizes = '280px', mood = 'smile' }: Props & { mood?: Mood }) {
+/** The mascot, turned toward the content beside it. `narrow` swaps in another picture under 1024px, where the
+    layout moves the content to its other side. Decorative by default: pass a label where it carries meaning. */
+export function Mascot({ className, label = '', art, narrow, sizes = '300px' }: Props & { art: Art; narrow?: Art }) {
+  const img = (
+    <img className={narrow ? undefined : className} src={`/brand/mascot/${art}.webp`} srcSet={set(art)} sizes={sizes}
+      width={640} height={ART[art]} alt={label} loading="lazy" />
+  );
+  if (!narrow) return img;
   return (
-    <img className={className} src={`/brand/mascot/${mood}.png`} srcSet={`/brand/mascot/${mood}-small.png 240w, /brand/mascot/${mood}.png 560w`}
-      sizes={sizes} width={560} height={553} alt={label} loading="lazy" />
+    <picture className={className}>
+      <source media="(max-width: 1023px)" srcSet={set(narrow)} sizes={sizes} />
+      {img}
+    </picture>
   );
 }

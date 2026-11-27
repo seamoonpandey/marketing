@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     images: ['/share.jpg'],
   },
   twitter: { card: 'summary_large_image' },
-  // the mascot's head (public/brand: favicon-32, favicon-64, apple-touch-icon on the mist ground)
+  // the mascot's head (public/brand: favicon-32, favicon-64, apple-touch-icon; made from mascot/head-master.jpg)
   icons: {
     icon: [
       { url: '/brand/favicon-32.png', sizes: '32x32', type: 'image/png' },

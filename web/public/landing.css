@@ -9,9 +9,10 @@
 @media (max-width: 399px) { .nav__logo .logo--full { display: none; } .nav__logo .logo--small { display: block; } }
 /* the mascot: beside the hero's headline on wide screens, by the questions, waving at the pilot form */
 .hero--centred .hero-text { position: relative; }
-.hero__mascot { position: absolute; left: 0; top: var(--s-5); width: 300px; height: auto; display: none; }
+.hero__mascot { position: absolute; right: 0; top: var(--s-5); width: 300px; height: auto; display: none; }
 @media (min-width: 1280px) { .hero__mascot { display: block; } }
 #questions .faq__mascot { display: block; width: 280px; height: auto; margin-top: var(--s-7); }
+#questions .faq__mascot > img { display: block; width: 100%; height: auto; }
 @media (max-width: 1023px) {
   #questions .span-5 { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-5); align-items: start; }
   #questions .span-5 > :not(.faq__mascot) { grid-column: 1; }
@@ -21,18 +22,24 @@
 @media (max-width: 1023px) { #apply .frame > .apply__mascot { display: none; } }
 /* the statement (letters-assemble): the line large on the left, the mascot beside it */
 #statement .statement { align-items: start; }
-#statement .mo-la__type { font-size: clamp(48px, 8vw, 120px); max-width: none; }
+#statement .mo-la__type { font-size: clamp(48px, 7.2vw, 104px); max-width: none; }
 #statement .mo-la__sub { color: var(--ink); }
-#statement .statement__mascot { width: 100%; max-width: 520px; height: auto; justify-self: end; }
+#statement .statement__mascot { width: 100%; max-width: 520px; height: auto; justify-self: start; }
+/* from 1024 the mascot stands on the left, the line on the right (the owner's layout) */
+@media (min-width: 1024px) {
+  #statement .statement > .span-7 { grid-column: 7 / span 6; grid-row: 1; }
+  #statement .statement > .statement__mascot { grid-column: 1 / span 6; grid-row: 1; }
+}
 /* 640 to 1023: stacked, the mascot's box runs the full row at a set height, the picture centred in it */
 @media (min-width: 640px) and (max-width: 1023px) {
   #statement .statement__mascot { max-width: none; width: 100%; height: 440px; object-fit: contain; justify-self: stretch; }
 }
 
 @media (max-width: 639px) { #statement .statement__mascot { max-width: none; justify-self: stretch; } }
-/* the close's lockup: under half the wrap (a signature), the full column on a phone */
-.close__lockup > img { display: block; width: 49%; height: auto; }
-@media (max-width: 639px) { .close__lockup > img { width: 100%; } }
+/* the lockup at the right end of the bottom bar, across from the copyright lines */
+.footer__legal { align-items: center; }
+.footer__fine { display: grid; gap: var(--s-4); }
+.footer__logo { display: block; height: 56px; width: auto; margin-left: auto; }
 
 /* ---------------------------------------------------------------- hero window (centred hero) */
 /* the frame's ground, and the still behind the window when WebGL is off or the shader has not linked:
@@ -174,5 +181,3 @@
 .d-win .loop-pause:focus-visible { outline-color: var(--theme-inv-action); }
 /* the centred hero's notice pill sits off the phone's lines; the h1 says the same */
 @media (max-width: 639px) { .hero--centred .pill { display: none; } }
-/* the name's clip stays on x (its nowrap guard): Geist's line box (1.3em) outgrows the .86 leading, so a y clip cuts it */
-.closing .close__word { overflow-y: visible; }
