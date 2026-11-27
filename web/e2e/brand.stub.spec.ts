@@ -130,7 +130,12 @@ async function stubApi(page: Page, st: State) {
     };
 
     if (rel === '/knowledge/catalogue') return ok(catalogue);
-    if (rel === '/knowledge/facts' && method === 'GET') return ok({ items: st.facts, next: null });
+    if (rel === '/knowledge/facts' && method === 'GET') {
+      // Pages like the server: at most `limit` (500) facts, and a cursor (the offset) for the next page.
+      const limit = Math.min(Number(url.searchParams.get('limit') ?? 100), 500);
+      const at = Number(url.searchParams.get('cursor') ?? 0);
+      return ok({ items: st.facts.slice(at, at + limit), next: at + limit < st.facts.length ? String(at + limit) : null });
+    }
     if (rel === '/knowledge/facts' && method === 'POST') {
       const f = fact({ id: `new-${++st.n}`, section: body!.section, subjectType: 'brand', subjectId: null, subjectName: null, field: body!.field, fieldLabel: String(body!.field).replaceAll('_', ' '), value: body!.value, unit: body!.unit ?? null, language: body!.language, status: 'approved', origin: 'owner', confidence: null, source: null, quote: null, verifiedBy: 'operator', verifiedAt: '2026-11-27T09:00:00Z' });
       st.facts.push(f);
@@ -338,6 +343,15 @@ test.describe('review', () => {
     // The conflict and the inferred fact are still waiting.
     await expect(page.locator('[data-conflict]')).toBeVisible();
     await expect(row(page, 'Description')).toBeVisible();
+  });
+
+  test('loads every page of facts for a brand with more than 500', async ({ page }) => {
+    await open(page, '/review?section=products', (st) => {
+      for (let i = 0; i < 1100; i++) st.facts.push(fact({ id: `bulk-${i}`, subjectId: `bulk-sub-${i}`, subjectName: `Bulk product ${i}`, field: 'name', fieldLabel: 'Name', value: `Bulk ${i}`, quote: `Bulk ${i} quote text` }));
+    });
+    // The last fact is on the third page; the seven seeded ones are on the first.
+    await expect(page.getByRole('heading', { name: 'Bulk product 1099' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^To review 1105$/ })).toBeVisible();
   });
 
   test('enters a goal and a competitor', async ({ page }) => {

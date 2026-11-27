@@ -47,7 +47,8 @@ function Workspace({ brandId, sections, facts }: { brandId: string; sections: Se
   const pending = (k: string) => bySection(k).filter((f) => PENDING.includes(f.status)).length;
   const conflicts = (k: string) => bySection(k).filter((f) => f.status === 'conflicting').length;
 
-  const fallback = sections.find((s) => conflicts(s.key))?.key ?? sections.find((s) => pending(s.key))?.key ?? sections[0]?.key;
+  // Chosen once: resolving the last conflict must not move the owner to another section.
+  const [fallback] = useState(() => sections.find((s) => conflicts(s.key))?.key ?? sections.find((s) => pending(s.key))?.key ?? sections[0]?.key);
   const active = param === 'competitors' || sections.some((s) => s.key === param) ? param! : fallback;
   const section = sections.find((s) => s.key === active);
   const totalConflicts = sections.reduce((n, s) => n + conflicts(s.key), 0);
@@ -104,7 +105,7 @@ function Workspace({ brandId, sections, facts }: { brandId: string; sections: Se
         {active === 'competitors' ? (
           <CompetitorsPanel brandId={brandId} />
         ) : section ? (
-          <SectionView brandId={brandId} section={section} facts={bySection(section.key)} filter={filter} setFilter={setFilter} />
+          <SectionView key={section.key} brandId={brandId} section={section} facts={bySection(section.key)} filter={filter} setFilter={setFilter} />
         ) : (
           <StateBlock state="empty" title="No sections">The brand fields did not load.</StateBlock>
         )}

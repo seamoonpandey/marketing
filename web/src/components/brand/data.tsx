@@ -16,11 +16,20 @@ const path = (brandId: string) => ({ params: { path: { brandId } } });
 export const useCatalogue = (b: string) =>
   useQuery({ queryKey: key(b, 'catalogue'), queryFn: () => unwrap(api.GET('/api/brands/{brandId}/knowledge/catalogue', path(b))), staleTime: Infinity });
 
-// shortcut: one page of up to 500 facts, no cursor loop; add paging when a brand holds more.
+/** Every page of facts: the server pages at 500 and answers with the next cursor. */
 export const useFacts = (b: string) =>
   useQuery({
     queryKey: key(b, 'facts'),
-    queryFn: () => unwrap(api.GET('/api/brands/{brandId}/knowledge/facts', { params: { path: { brandId: b }, query: { limit: 500 } } })).then((r) => r.items),
+    queryFn: async () => {
+      const items: Fact[] = [];
+      let cursor: string | undefined;
+      do {
+        const page = await unwrap(api.GET('/api/brands/{brandId}/knowledge/facts', { params: { path: { brandId: b }, query: { limit: 500, cursor } } }));
+        items.push(...page.items);
+        cursor = page.next ?? undefined;
+      } while (cursor);
+      return items;
+    },
   });
 export const useBook = (b: string) => useQuery({ queryKey: key(b, 'book'), queryFn: () => unwrap(api.GET('/api/brands/{brandId}/knowledge/book', path(b))) });
 export const usePalette = (b: string) => useQuery({ queryKey: key(b, 'palette'), queryFn: () => unwrap(api.GET('/api/brands/{brandId}/knowledge/palette', path(b))) });
