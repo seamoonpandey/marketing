@@ -35,12 +35,15 @@ export function SourcesScreen() {
   const brand = useBrand(brandId);
   const client = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
-  const [site, setSite] = useState<string | null>(null);
+  const [site, setSite] = useState('');
+  const [edited, setEdited] = useState(false);
   const [include, setInclude] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState<Pending[]>([]);
   const [runId, setRunId] = useState<string | null>(null);
 
-  const url = site ?? brand.data?.website ?? '';
+  // Filled after mount, so the first client render matches the server's (no data yet).
+  useEffect(() => { if (!edited && brand.data?.website) setSite(brand.data.website); }, [edited, brand.data?.website]);
+  const url = site;
   const uploads = (sources.data ?? []).filter((s) => s.kind === 'upload');
   const latest = [...(imports.data ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
   const activeRunId = runId ?? latest?.id ?? null;
@@ -86,7 +89,7 @@ export function SourcesScreen() {
           <h2 id="src-site" className="flex items-center gap-2 text-lg font-semibold"><Globe className="size-[1.125rem]" strokeWidth={1.75} aria-hidden /> Website</h2>
           <div className="field max-w-xl">
             <label htmlFor="site" className="label">Website address</label>
-            <input id="site" className="input" inputMode="url" value={url} placeholder="himalpashmina.com.np" onChange={(e) => setSite(e.target.value)} />
+            <input id="site" className="input" inputMode="url" value={url} placeholder="himalpashmina.com.np" onChange={(e) => { setEdited(true); setSite(e.target.value); }} />
             <p className="hint">Prachaar picks the pages that matter. Reading pages costs nothing.</p>
           </div>
         </section>
@@ -301,7 +304,11 @@ function FileRow({ brandId, source, asset, included, onInclude }: { brandId: str
             <label className="flex items-center gap-2"><input type="checkbox" className="size-4" checked={!!rights.paidUse} onChange={(e) => set({ paidUse: e.target.checked })} /> Paid ads allowed</label>
           </div>
           {save.isError ? <p role="alert" className="text-sm font-medium text-danger">{save.error.message}</p> : null}
-          {save.isSuccess ? <p role="status" className="text-sm font-medium text-success">Saved.</p> : null}
+          {save.isSuccess ? (
+            <p role="status" className="text-sm font-medium text-success">
+              Saved.{use === 'logo' ? ' The logo’s colours appear in the palette after the next import.' : ''}
+            </p>
+          ) : null}
           <div><button type="submit" className="btn btn-secondary" disabled={save.isPending}>{save.isPending ? 'Saving…' : `Save rights for ${name}`}</button></div>
         </form>
       ) : null}

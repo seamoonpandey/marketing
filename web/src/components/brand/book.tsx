@@ -71,6 +71,7 @@ function ReadinessCard({ r }: { r: Readiness }) {
       {r.gates.length ? (
         <div role="alert" className="grid gap-2 rounded-lg border-2 border-danger/50 bg-panel p-4">
           <p className="flex items-center gap-2 font-semibold text-danger"><ShieldAlert className="size-5" aria-hidden /> Fix these first</p>
+          <p className="text-sm text-muted">While any of these is open, the brand stays Blocked, whatever the score.</p>
           <ul aria-label="Gates" className="grid gap-1.5">
             {r.gates.map((g) => (
               <li key={g.label} className="flex flex-wrap items-center gap-x-3 gap-y-1">

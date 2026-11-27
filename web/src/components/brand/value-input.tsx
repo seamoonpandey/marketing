@@ -27,7 +27,8 @@ export function ValueInput({ id, field, label, value, onChange }: { id: string; 
     );
   } else if (t === 'longtext' || t === 'list') {
     control = (
-      <textarea id={id} className="input min-h-24 py-2 leading-relaxed" rows={t === 'list' ? 4 : 3} value={value} onChange={(e) => onChange(e.target.value)} aria-describedby={t === 'list' ? `${id}-hint` : undefined} />
+      <textarea id={id} className="input min-h-24 py-2 leading-relaxed" rows={t === 'list' ? 4 : 3} value={value} onChange={(e) => onChange(e.target.value)} aria-describedby={t === 'list' ? `${id}-hint` : undefined}
+        onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) e.currentTarget.form?.requestSubmit(); }} />
     );
   } else {
     control = (
@@ -38,7 +39,7 @@ export function ValueInput({ id, field, label, value, onChange }: { id: string; 
     <div className="field">
       <label htmlFor={id} className="label">{label}</label>
       {control}
-      {t === 'list' ? <p id={`${id}-hint`} className="hint">One item per line.</p> : null}
+      {t === 'list' ? <p id={`${id}-hint`} className="hint">One item per line. Ctrl+Enter saves.</p> : t === 'longtext' ? <p className="hint">Ctrl+Enter saves.</p> : null}
     </div>
   );
 }
