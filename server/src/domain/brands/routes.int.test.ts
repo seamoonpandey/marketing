@@ -52,6 +52,22 @@ describe('brands API', () => {
     expect(r.body.error.code).toBe('validation');
   });
 
+  it('answers a body that is not JSON, or an empty update, with the error body and not 500', async () => {
+    const { body: brand } = await call('POST', '/brands', { name: 'Bodies' });
+    const { body: rival } = await call('POST', `/brands/${brand.id}/competitors`, { name: 'Rival' });
+    const send = (method: string, path: string, body: string, headers: Record<string, string> = {}) =>
+      app.request(`/api${path}`, { method, headers, body });
+    for (const [res, status] of [
+      [await send('POST', '/brands', '{bad', { 'content-type': 'application/json' }), 400],
+      [await send('POST', `/brands/${brand.id}/competitors`, '{"name":"x"}'), 415],
+      [await send('PATCH', `/brands/${brand.id}`, '{}', { 'content-type': 'application/json' }), 400],
+      [await send('PATCH', `/brands/${brand.id}/competitors/${rival.id}`, '{}', { 'content-type': 'application/json' }), 400],
+    ] as const) {
+      expect(res.status).toBe(status);
+      expect(((await res.json()) as any).error.code).toBe('validation');
+    }
+  });
+
   it('updates and archives a brand, keeping its audit and cost rows', async () => {
     const { body: brand } = await call('POST', '/brands', { name: 'Archive me' });
     expect((await call('PATCH', `/brands/${brand.id}`, { website: 'https://archive.example' })).body.website).toBe(

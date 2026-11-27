@@ -31,7 +31,9 @@ export const BrandCreate = z
   })
   .openapi('BrandCreate');
 
-export const BrandUpdate = BrandCreate.partial().openapi('BrandUpdate');
+const notEmpty = [(o: object) => Object.keys(o).length > 0, 'Send at least one field to change'] as const;
+
+export const BrandUpdate = BrandCreate.partial().refine(...notEmpty).openapi('BrandUpdate');
 
 export const CompetitorKind = z.enum(['direct', 'indirect', 'aspirational']);
 
@@ -58,7 +60,7 @@ export const CompetitorCreate = z
   })
   .openapi('CompetitorCreate');
 
-export const CompetitorUpdate = CompetitorCreate.partial().openapi('CompetitorUpdate');
+export const CompetitorUpdate = CompetitorCreate.partial().refine(...notEmpty).openapi('CompetitorUpdate');
 
 export const SourceOut = z
   .object({

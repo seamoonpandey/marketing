@@ -1,5 +1,5 @@
 import {
-  CreateBucketCommand, DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client,
+  CreateBucketCommand, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { config } from '../config.ts';
@@ -30,6 +30,11 @@ export async function putObject(key: string, body: Uint8Array, contentType: stri
 export async function getObject(key: string): Promise<Uint8Array> {
   const res = await client.send(new GetObjectCommand({ Bucket, Key: key }));
   return res.Body!.transformToByteArray();
+}
+
+/** The stored object's size in bytes (HEAD, no body); throws when it is missing. */
+export async function objectSize(key: string): Promise<number> {
+  return (await client.send(new HeadObjectCommand({ Bucket, Key: key }))).ContentLength ?? 0;
 }
 
 export async function deleteObject(key: string): Promise<void> {
