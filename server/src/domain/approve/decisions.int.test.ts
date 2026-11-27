@@ -3,9 +3,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { testDb, type TestDb } from '../../../test/helpers.ts';
 import { withBrand } from '../../db/tenant.ts';
 import { approve, bulkApprove, recordView, reject, validApproval } from './decisions.ts';
+import { preview } from './queue.ts';
 import { setPaused, setSettings } from './settings.ts';
 import { content, fact, fakeStudio, hashOf } from './studio.fake.ts';
-import type { ReadyDraft } from './studio.ts';
+import type { ReadyDraft, StudioReads } from './studio.ts';
 
 let t: TestDb;
 beforeAll(async () => {
@@ -23,6 +24,38 @@ const view = (b: string, d: ReadyDraft) => withBrand(b, (tx) => recordView(tx, b
 const bulk = (b: string, ds: ReadyDraft[]) => withBrand(b, (tx) => bulkApprove(tx, b, ds.map((d) => ({ draftId: d.id, payloadHash: hashOf(d) })), facts, studio.reads));
 const stored = async (b: string) => (await t.adminQuery(`select count(*)::int as n from approvals where brand_id = $1`, [b]))[0].n as number;
 const risky = { content: content('Results guaranteed in a week.') };
+const no = (b: string, d: ReadyDraft, reason = 'Withdrawn: the photo is wrong') =>
+  withBrand(b, (tx) => reject(tx, b, { draftId: d.id, payloadHash: hashOf(d), reason }, facts, studio.reads));
+// The owner role may update; the app role may not. Moves an approval's expiry into the past.
+const expire = (id: string) => t.adminQuery(`update approvals set expires_at = now() - interval '1 second' where id = $1`, [id]);
+const state = async (b: string, d: ReadyDraft) => (await withBrand(b, (tx) => preview(tx, b, d.id, facts, studio.reads, { record: false }))).state;
+const blocking = [{ check: 'prohibited_word', blocking: true, where: 'caption en', message: 'Uses "miracle"' }];
+const sameVersion = { currentVersion: 1, status: 'ready' as const, readyVersion: 1 };
+
+/**
+ * Two approvals and a rejection of one draft at the same instant: Studio answers all three together, so each reads the
+ * same latest decision and takes the same seq. Exactly one is stored; the others are refused by the unique index.
+ */
+async function race(b: string, d: ReadyDraft) {
+  let held: (() => void)[] = [];
+  const together: StudioReads = {
+    ...studio.reads,
+    async getDraft(...a) {
+      await new Promise<void>((go) => {
+        held.push(go);
+        if (held.length === 3) for (const g of held.splice(0)) g();
+      });
+      return studio.reads.getDraft(...a);
+    },
+  };
+  const results = await Promise.allSettled([
+    withBrand(b, (tx) => approve(tx, b, { draftId: d.id, payloadHash: hashOf(d) }, facts, together)),
+    withBrand(b, (tx) => approve(tx, b, { draftId: d.id, payloadHash: hashOf(d) }, facts, together)),
+    withBrand(b, (tx) => reject(tx, b, { draftId: d.id, payloadHash: hashOf(d), reason: 'No' }, facts, together)),
+  ]);
+  expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+  for (const r of results.filter((x) => x.status === 'rejected')) expect(String((r as PromiseRejectedResult).reason)).toMatch(/same moment/);
+}
 
 describe('approve decisions', () => {
   it('refuses a stale hash; with the current one stores one approval with its risk, expiry and an audit event carrying version and hash', async () => {
@@ -53,9 +86,9 @@ describe('approve decisions', () => {
     await expect(ok(b, studio.put(b, { assetIds: [randomUUID()] }))).rejects.toThrow(/no rights/);
 
     const d = studio.put(b);
-    await withBrand(b, (tx) => reject(tx, b, { draftId: d.id, payloadHash: hashOf(d), reason: 'Wrong photo' }, facts, studio.reads));
-    await expect(ok(b, d)).rejects.toThrow(/already has a decision/);
-    await expect(withBrand(b, (tx) => reject(tx, b, { draftId: d.id, payloadHash: hashOf(d), reason: '  ​ ' }, facts, studio.reads))).rejects.toThrow(/needs a reason/);
+    await no(b, d, 'Wrong photo');
+    await expect(no(b, d, 'Still wrong')).rejects.toThrow(/already rejected/);
+    await expect(no(b, d, '  ​ ')).rejects.toThrow(/needs a reason/);
     expect(await stored(b)).toBe(1);
   });
 
@@ -108,10 +141,72 @@ describe('approve decisions', () => {
   it('(review focus 1) stores one decision when two approvals of one draft race; the other is refused', async () => {
     const b = await t.makeBrand();
     const d = studio.put(b);
-    const results = await Promise.allSettled([ok(b, d), ok(b, d), withBrand(b, (tx) => reject(tx, b, { draftId: d.id, payloadHash: hashOf(d), reason: 'No' }, facts, studio.reads))]);
-    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
-    for (const r of results.filter((x) => x.status === 'rejected')) expect(String((r as PromiseRejectedResult).reason)).toMatch(/already has a decision/);
+    await race(b, d);
     expect(await stored(b)).toBe(1);
+  });
+
+  it('renews an approval once it has expired, with every check run again, and refuses to renew one that is still valid', async () => {
+    const b = await t.makeBrand();
+    const d = studio.put(b);
+    const first = await ok(b, d);
+    await expect(ok(b, d)).rejects.toThrow(/already approved/); // nothing to renew
+    await withBrand(b, (tx) => setPaused(tx, b, true, 'Checking the week'));
+    await expect(ok(b, d)).rejects.toThrow(/already approved/); // paused, not expired: resuming is the remedy
+    await withBrand(b, (tx) => setPaused(tx, b, false, 'Checked'));
+    expect(await stored(b)).toBe(1);
+
+    await expire(first.id);
+    expect(await state(b, d)).toBe('expired');
+    expect(await gate(b, d)).toBeNull();
+    // Today's findings and risk apply to the renewal.
+    studio.edit(b, d.id, { ...sameVersion, findings: blocking });
+    await expect(ok(b, d)).rejects.toThrow(/blocked/);
+    studio.edit(b, d.id, { ...sameVersion, findings: [] });
+    const pharmacy = [...facts, fact(randomUUID(), { section: 'identity', subjectType: 'brand', field: 'industry', value: 'Pharmacy', unit: null })];
+    await expect(withBrand(b, (tx) => approve(tx, b, { draftId: d.id, payloadHash: hashOf(d) }, pharmacy, studio.reads))).rejects.toThrow(/high risk/);
+    expect(await stored(b)).toBe(1);
+
+    const renewed = await ok(b, d);
+    expect(renewed).toMatchObject({ objectVersion: 1, seq: 2, decision: 'approved' });
+    expect(renewed.expiresAt!.getTime()).toBeGreaterThan(Date.now() + 13 * 86_400_000);
+    expect(await gate(b, d)).toMatchObject({ id: renewed.id });
+    expect(await state(b, d)).toBe('approved');
+  });
+
+  it('renews an approval made invalid at the same version, against the new payload only', async () => {
+    const b = await t.makeBrand();
+    const d = studio.put(b);
+    await ok(b, d);
+    const rerendered = studio.edit(b, d.id, { ...sameVersion, renders: [{ ...d.renders[0]!, sha256: 'b'.repeat(64) }] });
+    expect(await state(b, d)).toBe('invalid');
+    await expect(ok(b, d)).rejects.toThrow(/changed since you opened it/);
+    expect(await ok(b, rerendered)).toMatchObject({ seq: 2, payloadHash: hashOf(rerendered) });
+    expect(await gate(b, d)).not.toBeNull();
+  });
+
+  it('withdraws an approval with a reject, after which the gate returns nothing and an approve is allowed again with every check', async () => {
+    const b = await t.makeBrand();
+    const d = studio.put(b);
+    await ok(b, d);
+    await expect(no(b, d, '   ')).rejects.toThrow(/needs a reason/);
+    expect(await no(b, d)).toMatchObject({ decision: 'rejected', seq: 2, reason: 'Withdrawn: the photo is wrong' });
+    expect(await gate(b, d)).toBeNull();
+    expect(await state(b, d)).toBe('rejected');
+
+    studio.edit(b, d.id, { ...sameVersion, findings: blocking });
+    await expect(ok(b, d)).rejects.toThrow(/blocked/);
+    studio.edit(b, d.id, { ...sameVersion, findings: [] });
+    expect(await ok(b, d)).toMatchObject({ decision: 'approved', seq: 3 });
+    expect(await gate(b, d)).not.toBeNull();
+    expect(await stored(b)).toBe(3);
+  });
+
+  it('stores one decision when two renewals of an expired approval race', async () => {
+    const b = await t.makeBrand();
+    const d = studio.put(b);
+    await expire((await ok(b, d)).id);
+    await race(b, d);
+    expect(await stored(b)).toBe(2);
   });
 
   it('refuses a high-risk draft without a long enough note, accepts it with one, and refuses it in a bulk approval', async () => {
@@ -167,7 +262,7 @@ describe('approve decisions', () => {
     expect(await gate(b, y)).not.toBeNull();
     // A second bulk including an approved item fails as a whole.
     await view(b, unseen);
-    await expect(bulk(b, [unseen, x])).rejects.toThrow(/already has a decision/);
+    await expect(bulk(b, [unseen, x])).rejects.toThrow(/already approved/);
     expect(await stored(b)).toBe(2);
   });
 

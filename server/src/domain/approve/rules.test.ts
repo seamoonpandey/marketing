@@ -25,7 +25,7 @@ const draft = (over: Partial<ReadyDraft> = {}): ReadyDraft => ({
   factIds: [F1], assetIds: [A1], ...over,
 });
 const approval = (over: Partial<Approval> = {}): Approval => ({
-  id: 'x', tenantId: 't', brandId: 'b', objectType: 'studio_draft', objectId: ID, objectVersion: 3, payloadHash: payloadHash(payloadOf(draft())!),
+  id: 'x', tenantId: 't', brandId: 'b', objectType: 'studio_draft', objectId: ID, objectVersion: 3, seq: 1, payloadHash: payloadHash(payloadOf(draft())!),
   decision: 'approved', reason: null, risk: 'low', reviewNote: null, decidedBy: 'operator', decidedAt: NOW,
   expiresAt: new Date(NOW.getTime() + 14 * DAY), bulkId: null, createdAt: NOW, ...over,
 });

@@ -26,7 +26,11 @@ export const Decision = z
     expiresAt: iso.nullable().openapi({ description: 'When an approval stops being valid; null for a rejection.' }),
     bulkId: z.string().nullable().openapi({ description: 'Shared by every approval of one bulk approval.' }),
   })
-  .openapi('ApproveDecision', { description: 'A decision is never edited. One per draft version: a version that has one cannot be decided again; a new version can.' });
+  .openapi('ApproveDecision', {
+    description:
+      'A decision is never edited; the newest one on the current version counts. On one version: an approval that expired or became invalid can be approved again (renewed, ' +
+      'with every check), an approval can be withdrawn by a rejection, and a rejected version can be approved after all.',
+  });
 
 export const Counts = z
   .object({

@@ -142,7 +142,10 @@ describe('approve API', () => {
     const stale = await call('POST', `${p}/queue/${d.id}/approve`, { payloadHash: '0'.repeat(64) });
     expect(stale).toMatchObject({ status: 409, body: { error: { code: 'conflict', message: 'changed since you opened it' } } });
     const done = await call('POST', `${p}/queue/${d.id}/approve`, { payloadHash: pv.draft.payloadHash });
-    expect(done).toMatchObject({ status: 200, body: { state: 'approved', draft: { canApprove: false, cannotApproveReason: 'this version already has a decision' }, history: [{ decision: 'approved', risk: 'medium' }] } });
+    expect(done).toMatchObject({
+      status: 200,
+      body: { state: 'approved', draft: { canApprove: false, cannotApproveReason: 'this version is already approved', canReject: true }, history: [{ decision: 'approved', risk: 'medium' }] },
+    });
     expect((await call('POST', `${p}/queue/${d.id}/approve`, { payloadHash: pv.draft.payloadHash })).status).toBe(409);
 
     expect((await call('POST', `${p}/pause`, { reason: 'Election silence' })).body).toMatchObject({ paused: true, pausedReason: 'Election silence' });
@@ -152,10 +155,18 @@ describe('approve API', () => {
     expect((await call('POST', `${p}/resume`, { reason: 'Over' })).body).toMatchObject({ paused: false, pausedReason: null, pausedAt: null });
     expect((await call('GET', `${p}/summary`)).body.counts.approved).toBe(1);
 
+    // Withdraw, then approve the same version again.
+    const withdrawn = await call('POST', `${p}/queue/${d.id}/reject`, { payloadHash: pv.draft.payloadHash, reason: 'Hold it for now' });
+    expect(withdrawn).toMatchObject({ status: 200, body: { state: 'rejected', draft: { canApprove: true, canReject: false, cannotRejectReason: 'this version is already rejected' } } });
+    expect((await call('POST', `${p}/queue/${d.id}/approve`, { payloadHash: pv.draft.payloadHash })).body.state).toBe('approved');
+
     const v2 = studio.edit(brand, d.id, { status: 'ready', readyVersion: 2 });
     expect((await call('GET', `${p}/queue`)).body.items[0].state).toBe('waiting');
     const rej = await call('POST', `${p}/queue/${d.id}/reject`, { payloadHash: hashOf(v2), reason: 'Price is out of date' });
-    expect(rej).toMatchObject({ status: 200, body: { state: 'rejected', stateReason: 'Price is out of date', history: [{ version: 2, decision: 'rejected' }, { version: 1, decision: 'approved' }] } });
+    expect(rej).toMatchObject({
+      status: 200,
+      body: { state: 'rejected', stateReason: 'Price is out of date', history: [{ version: 2, decision: 'rejected' }, { version: 1, decision: 'approved' }, { version: 1, decision: 'rejected' }, { version: 1, decision: 'approved' }] },
+    });
 
     expect((await call('PUT', `${p}/settings`, { maxAgeDays: 30, approvers: ['Sita', 'Ram'] })).body).toMatchObject({ maxAgeDays: 30, approvers: ['Sita', 'Ram'], paused: false });
     expect((await call('GET', `${p}/settings`)).body.maxAgeDays).toBe(30);

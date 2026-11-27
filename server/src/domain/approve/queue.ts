@@ -8,7 +8,7 @@ import type { Tx } from '../../db/tenant.ts';
 import { NotFoundError } from '../../http/errors.ts';
 import { presignDownload } from '../../storage/index.ts';
 import { getSettings as getPlanSettings } from '../plan/index.ts';
-import { expiryFor, history, recordView, refusal, riskOfDraft, ruleContext, stateOf, weekStartOf, type RuleContext } from './decisions.ts';
+import { alreadyDecided, expiryFor, history, recordView, refusal, riskOfDraft, ruleContext, stateOf, weekStartOf, type RuleContext } from './decisions.ts';
 import { payloadHash, payloadOf } from './hash.ts';
 import type { Approval, ApprovalState } from './state.ts';
 import { draftOf, type ReadyDraft, type StudioReads } from './studio.ts';
@@ -35,10 +35,11 @@ function excerptOf(content: unknown): string {
 function decidability(ctx: RuleContext, d: ReadyDraft, latest: Approval | null) {
   const payload = payloadOf(d);
   const hash = payload && payloadHash(payload);
-  const decided = !!payload && !!latest && latest.objectVersion >= payload.version ? 'this version already has a decision' : null;
   const risk = riskOfDraft(ctx, d);
   return {
-    hash, risk, cannotApprove: decided ?? refusal(ctx, d, 'approve'), cannotReject: decided ?? refusal(ctx, d, 'reject'),
+    hash, risk,
+    cannotApprove: refusal(ctx, d, 'approve') ?? alreadyDecided(ctx, d, latest, 'approve'),
+    cannotReject: refusal(ctx, d, 'reject') ?? alreadyDecided(ctx, d, latest, 'reject'),
     blockingCount: d.findings.filter((f) => f.blocking).length,
   };
 }
@@ -52,7 +53,7 @@ export async function queue(tx: Tx, brandId: string, facts: ApprovedFact[], stud
   const latest = new Map(
     (await tx.selectDistinctOn([approvals.objectId]).from(approvals)
       .where(and(eq(approvals.brandId, brandId), eq(approvals.objectType, 'studio_draft')))
-      .orderBy(approvals.objectId, desc(approvals.objectVersion), desc(approvals.decidedAt)))
+      .orderBy(approvals.objectId, desc(approvals.objectVersion), desc(approvals.seq)))
       .map((a) => [a.objectId, a]),
   );
   const byId = new Map(drafts.map((d) => [d.id, d]));

@@ -5353,7 +5353,7 @@
           "expiresAt",
           "bulkId"
         ],
-        "description": "A decision is never edited. One per draft version: a version that has one cannot be decided again; a new version can."
+        "description": "A decision is never edited; the newest one on the current version counts. On one version: an approval that expired or became invalid can be approved again (renewed, with every check), an approval can be withdrawn by a rejection, and a rejected version can be approved after all."
       },
       "ApprovePreview": {
         "type": "object",

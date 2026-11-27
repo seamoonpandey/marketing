@@ -71,6 +71,23 @@ export function refusal(ctx: RuleContext, d: ReadyDraft, kind: 'approve' | 'reje
   return null;
 }
 
+/**
+ * Why the latest decision on the draft's current version rules out a new one, or null. An approval that expired or
+ * became invalid can be renewed, an approval can be withdrawn with a reject, and a rejected version approved after all.
+ */
+export function alreadyDecided(ctx: RuleContext, d: ReadyDraft, latest: Approval | null, kind: 'approve' | 'reject'): string | null {
+  if (!latest || latest.objectVersion !== d.currentVersion) return null;
+  if (latest.decision === 'rejected') return kind === 'reject' ? 'this version is already rejected' : null;
+  if (kind === 'reject') return null;
+  const { state } = stateOf(ctx, latest, d);
+  return state === 'expired' || state === 'invalid' ? null : 'this version is already approved';
+}
+
+/** The seq a new decision on the draft's current version takes. */
+const nextSeq = (d: ReadyDraft, latest: Approval | null) => (latest?.objectVersion === d.currentVersion ? latest.seq + 1 : 1);
+
+const latestOf = async (tx: Tx, brandId: string, draftId: string) => (await history(tx, brandId, draftId))[0] ?? null;
+
 /** A review note counts only its visible characters, so padding and invisible characters do not make it long enough. */
 export const noteLength = (note: string | undefined) => [...plain(note ?? '')].length;
 
@@ -82,10 +99,10 @@ async function mustDraft(studio: StudioReads, tx: Tx, brandId: string, draftId: 
 
 type NewDecision = typeof approvals.$inferInsert & { brandId: string; objectId: string; objectVersion: number; payloadHash: string };
 
-// The unique index decides a race: of two inserts for one version, the second stores nothing.
+// The unique index decides a race: of two inserts of one seq for one version, the second stores nothing.
 async function store(tx: Tx, v: NewDecision): Promise<Approval> {
   const [row] = await tx.insert(approvals).values(v).onConflictDoNothing().returning();
-  if (!row) throw new ConflictError('this version already has a decision');
+  if (!row) throw new ConflictError('this version was decided at the same moment: reload it');
   await audit(tx, {
     brandId: v.brandId, actor: 'operator', action: `approve.${v.decision}`, objectType: 'studio_draft', objectId: v.objectId,
     objectVersion: v.objectVersion, result: 'ok', reason: `payload ${v.payloadHash}${v.reason ? `: ${v.reason}` : ''}`,
@@ -93,9 +110,9 @@ async function store(tx: Tx, v: NewDecision): Promise<Approval> {
   return row;
 }
 
-function approvalOf(ctx: RuleContext, brandId: string, d: ReadyDraft, hash: string, note: string | undefined, bulkId: string | null): NewDecision {
+function approvalOf(ctx: RuleContext, brandId: string, d: ReadyDraft, hash: string, note: string | undefined, bulkId: string | null, seq: number): NewDecision {
   return {
-    brandId, objectType: 'studio_draft', objectId: d.id, objectVersion: d.currentVersion, payloadHash: hash, decision: 'approved',
+    brandId, objectType: 'studio_draft', objectId: d.id, objectVersion: d.currentVersion, seq, payloadHash: hash, decision: 'approved',
     risk: riskOfDraft(ctx, d).risk, reviewNote: note?.trim() || null, decidedBy: 'operator', decidedAt: ctx.now, expiresAt: expiryFor(ctx, d), bulkId,
   };
 }
@@ -110,11 +127,12 @@ export async function approve(
   studio ??= await studioReads();
   const ctx = await ruleContext(tx, brandId, facts);
   const d = await mustDraft(studio, tx, brandId, i.draftId, ctx);
-  const why = refusal(ctx, d, 'approve', i.payloadHash);
+  const latest = await latestOf(tx, brandId, d.id);
+  const why = refusal(ctx, d, 'approve', i.payloadHash) ?? alreadyDecided(ctx, d, latest, 'approve');
   if (why) throw new ConflictError(why);
   if (riskOfDraft(ctx, d).risk === 'high' && noteLength(i.reviewNote) < MIN_NOTE)
     throw new ConflictError(`high risk: a review note of at least ${MIN_NOTE} characters is needed`);
-  return store(tx, approvalOf(ctx, brandId, d, i.payloadHash, i.reviewNote, null));
+  return store(tx, approvalOf(ctx, brandId, d, i.payloadHash, i.reviewNote, null, nextSeq(d, latest)));
 }
 
 export async function reject(
@@ -125,10 +143,11 @@ export async function reject(
   studio ??= await studioReads();
   const ctx = await ruleContext(tx, brandId, facts);
   const d = await mustDraft(studio, tx, brandId, i.draftId, ctx);
-  const why = refusal(ctx, d, 'reject', i.payloadHash);
+  const latest = await latestOf(tx, brandId, d.id);
+  const why = refusal(ctx, d, 'reject', i.payloadHash) ?? alreadyDecided(ctx, d, latest, 'reject');
   if (why) throw new ConflictError(why);
   return store(tx, {
-    brandId, objectType: 'studio_draft', objectId: d.id, objectVersion: d.currentVersion, payloadHash: i.payloadHash, decision: 'rejected',
+    brandId, objectType: 'studio_draft', objectId: d.id, objectVersion: d.currentVersion, seq: nextSeq(d, latest), payloadHash: i.payloadHash, decision: 'rejected',
     reason, risk: riskOfDraft(ctx, d).risk, decidedBy: 'operator', decidedAt: ctx.now, expiresAt: null, bulkId: null,
   });
 }
@@ -150,8 +169,11 @@ export async function bulkApprove(
   if (!items.length) throw new ValidationError('Nothing to approve');
   studio ??= await studioReads();
   const ctx = await ruleContext(tx, brandId, facts);
-  const loaded: { d: ReadyDraft; hash: string }[] = [];
-  for (const it of items) loaded.push({ d: await mustDraft(studio, tx, brandId, it.draftId, ctx), hash: it.payloadHash });
+  const loaded: { d: ReadyDraft; hash: string; latest: Approval | null }[] = [];
+  for (const it of items) {
+    const d = await mustDraft(studio, tx, brandId, it.draftId, ctx);
+    loaded.push({ d, hash: it.payloadHash, latest: await latestOf(tx, brandId, d.id) });
+  }
   if (new Set(loaded.map((x) => x.d.id)).size !== loaded.length) throw new ValidationError('A draft is listed twice');
 
   const ids = loaded.map((x) => x.d.id);
@@ -159,8 +181,9 @@ export async function bulkApprove(
     (await tx.select().from(approvalViews).where(and(eq(approvalViews.brandId, brandId), inArray(approvalViews.objectId, ids))))
       .map((v) => `${v.objectId}:${v.objectVersion}:${v.payloadHash}`),
   );
-  for (const { d, hash } of loaded) {
+  for (const { d, hash, latest } of loaded) {
     const why = refusal(ctx, d, 'approve', hash)
+      ?? alreadyDecided(ctx, d, latest, 'approve')
       ?? (riskOfDraft(ctx, d).risk === 'high' ? 'high risk: approve it on its own with a review note' : null)
       ?? (seen.has(`${d.id}:${d.currentVersion}:${hash}`) ? null : 'open its preview first');
     if (why) throw new ConflictError(`${d.id}: ${why}`);
@@ -172,19 +195,19 @@ export async function bulkApprove(
 
   const bulkId = randomUUID();
   const out: Approval[] = [];
-  for (const { d, hash } of loaded) out.push(await store(tx, approvalOf(ctx, brandId, d, hash, undefined, bulkId)));
+  for (const { d, hash, latest } of loaded) out.push(await store(tx, approvalOf(ctx, brandId, d, hash, undefined, bulkId, nextSeq(d, latest))));
   return out;
 }
 
-/** Every decision on a draft, newest first. */
+/** Every decision on a draft, newest first: by version, then seq within it. */
 export async function history(tx: Tx, brandId: string, draftId: string): Promise<Approval[]> {
   if (!isUuid(draftId)) return [];
   return tx.select().from(approvals)
     .where(and(eq(approvals.brandId, brandId), eq(approvals.objectType, 'studio_draft'), eq(approvals.objectId, draftId)))
-    .orderBy(desc(approvals.objectVersion), desc(approvals.decidedAt));
+    .orderBy(desc(approvals.objectVersion), desc(approvals.seq));
 }
 
-/** The gate: the draft's latest decision when it is an approval that is valid right now, else null. */
+/** The gate: the draft's latest decision (highest version, then highest seq) when it is an approval that is valid right now, else null. */
 export async function validApproval(tx: Tx, brandId: string, draftId: string, facts: ApprovedFact[], studio?: StudioReads): Promise<Approval | null> {
   const [latest] = await history(tx, brandId, draftId);
   if (latest?.decision !== 'approved') return null;
