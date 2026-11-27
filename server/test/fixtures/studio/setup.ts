@@ -2,7 +2,7 @@
 import type { ApprovedFact } from '../../../src/contracts/common.ts';
 import { withBrand } from '../../../src/db/tenant.ts';
 import { approvedFacts, enterFact, findOrCreateSubject } from '../../../src/domain/knowledge/index.ts';
-import { addItem, approveWeek, setSettings } from '../../../src/domain/plan/index.ts';
+import { addItem, approveWeek, getWeek, setSettings } from '../../../src/domain/plan/index.ts';
 import type { Renderer } from '../../../src/domain/studio/render-types.ts';
 import { SIZES } from '../../../src/domain/studio/render-types.ts';
 import type { TestDb } from '../../helpers.ts';
@@ -29,7 +29,7 @@ export async function studioBrand(t: TestDb, o: { formats?: (string | null)[]; l
       });
       itemIds.push(item.id);
     }
-    if (o.approve !== false) await approveWeek(tx, brand, SUN, facts);
+    if (o.approve !== false) await approveWeek(tx, brand, SUN, facts, (await getWeek(tx, brand, SUN, facts)).plan!.version);
     return { facts, itemIds };
   });
   const fact = (field: string) => facts.find((f: ApprovedFact) => f.field === field)!;
