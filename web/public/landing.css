@@ -132,5 +132,8 @@
 .d-win--dark .loop-pause:focus-visible { outline-color: #c3d7e5; }
 /* the centred hero's notice pill sits off the phone's lines; the h1 says the same */
 @media (max-width: 639px) { .hero--centred .pill { display: none; } }
-/* 640 to 1023: the footer's three link columns share the row after the name */
-@media (min-width: 640px) and (max-width: 1023px) { .closing__links .footer__col { grid-column: span 4; } }
+/* under 1024: the footer's three link columns share the row after the name (on a phone too, so the
+   close and its links stay one screen) */
+@media (max-width: 1023px) { .closing__links .footer__col { grid-column: span 4; } }
+/* the name's clip stays on x (its nowrap guard): Geist's line box (1.3em) outgrows the .86 leading, so a y clip cuts it */
+.closing .close__word { overflow-y: visible; }
