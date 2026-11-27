@@ -1,9 +1,11 @@
+import { randomUUID } from 'node:crypto';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { APICallError, generateText, type LanguageModel, type ModelMessage } from 'ai';
+import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { config } from '../config.ts';
 import type { Money } from '../contracts/common.ts';
-import { withBrand } from '../db/tenant.ts';
+import { tenantOf, withBrand } from '../db/tenant.ts';
 import { estimateCost, recordCost, remainingMonthlyCap } from '../domain/costs/index.ts';
 import { BudgetError } from '../http/errors.ts';
 import { estimateTokens, type AiPart } from './estimate.ts';
@@ -85,18 +87,24 @@ export async function extract<T>(o: {
   const used = { input: 0, output: 0 };
 
   const attempt = async (): Promise<{ call: Call; parsed?: T; problem?: string }> => {
-    const estimate = estimateCost(model, estimateTokens([{ type: 'text', text: system }, ...o.parts]) + used.input, maxOutputTokens);
-    const remaining = await withBrand(o.brandId, (tx) => remainingMonthlyCap(tx));
-    if (Number(estimate.npr) > Number(remaining.npr))
-      throw new BudgetError(`This call may cost NPR ${estimate.npr}; NPR ${remaining.npr} of this month's AI budget is left`);
+    const inputTokens = estimateTokens([{ type: 'text', text: system }, ...o.parts]) + used.input;
+    const estimate = estimateCost(model, inputTokens, maxOutputTokens);
+    const cost = { id: randomUUID(), brandId: o.brandId, runType: o.runType, runId: o.runId, model };
+    // The check and a cost row reserving the estimate commit together, one tenant transaction at a
+    // time, so concurrent calls cannot each spend the same remainder. The row gets the real usage below.
+    await withBrand(o.brandId, async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`ai-cap:${await tenantOf(tx)}`}, 0))`);
+      const remaining = await remainingMonthlyCap(tx);
+      if (Number(estimate.npr) > Number(remaining.npr))
+        throw new BudgetError(`This call may cost NPR ${estimate.npr}; NPR ${remaining.npr} of this month's AI budget is left`);
+      await recordCost(tx, { ...cost, inputTokens, outputTokens: maxOutputTokens, ok: false });
+    });
 
     let call: Call;
     try {
       call = await callModel(system, messages, maxOutputTokens);
     } catch (e) {
-      await withBrand(o.brandId, (tx) =>
-        recordCost(tx, { brandId: o.brandId, runType: o.runType, runId: o.runId, model, inputTokens: 0, outputTokens: 0, ok: false }),
-      );
+      await withBrand(o.brandId, (tx) => recordCost(tx, { ...cost, inputTokens: 0, outputTokens: 0, ok: false }));
       throw e;
     }
     used.input += call.inputTokens;
@@ -113,10 +121,7 @@ export async function extract<T>(o: {
       }
     }
     await withBrand(o.brandId, (tx) =>
-      recordCost(tx, {
-        brandId: o.brandId, runType: o.runType, runId: o.runId, model,
-        inputTokens: call.inputTokens, outputTokens: call.outputTokens, ok: parsed !== undefined,
-      }),
+      recordCost(tx, { ...cost, inputTokens: call.inputTokens, outputTokens: call.outputTokens, ok: parsed !== undefined }),
     );
     return { call, parsed, problem };
   };

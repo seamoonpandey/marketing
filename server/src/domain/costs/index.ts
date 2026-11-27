@@ -49,6 +49,8 @@ function nprMoney(npr: string): Money {
 }
 
 export type CostRecord = {
+  /** Set to rewrite the row written earlier with this id (ai.extract reserves, then settles). */
+  id?: string;
   brandId: string;
   runType: string;
   runId: string;
@@ -61,7 +63,7 @@ export type CostRecord = {
 /** Writes one cost_events row with its rate snapshot. Used by ai.extract, not by modules. */
 export async function recordCost(tx: Tx, c: CostRecord): Promise<Money> {
   const { m, usd12, npr14 } = price(c.model, c.inputTokens, c.outputTokens);
-  await tx.insert(costEvents).values({
+  const row = {
     brandId: c.brandId,
     runType: c.runType,
     runId: c.runId,
@@ -75,7 +77,8 @@ export async function recordCost(tx: Tx, c: CostRecord): Promise<Money> {
     usdNpr: config.USD_NPR,
     costUsd: format(usd12, 12, 6),
     costNpr: format(npr14, 14, 2),
-  });
+  };
+  await tx.insert(costEvents).values({ id: c.id, ...row }).onConflictDoUpdate({ target: costEvents.id, set: row });
   return { usd: format(usd12, 12, 4), npr: format(npr14, 14, 2) };
 }
 
