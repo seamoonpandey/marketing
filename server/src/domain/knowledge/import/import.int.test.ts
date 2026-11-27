@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { DBOS } from '@dbos-inc/dbos-sdk';
 import sharp from 'sharp';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { launchTestWorkflows, testDb, type TestDb } from '../../../../test/helpers.ts';
 import { mockAi } from '../../../ai/index.ts';
 import { withBrand } from '../../../db/tenant.ts';
@@ -202,6 +203,50 @@ describe('brand import', () => {
     const callsFor = (id: string) => mockAi.calls.filter((c) => c.parts.some((p) => p.type === 'text' && p.text.includes(id))).length;
     expect(callsFor(a.id)).toBe(1);
     expect((await facts(brand)).map((f) => f.field).sort()).toEqual(['owner', 'refund']);
+  });
+
+  it('a crash between the confirm and the enqueue leaves the run awaiting approval, and confirming again runs it once', async () => {
+    const brand = await t.makeBrand();
+    const txt = await upload(brand, 'about.txt', 'text/plain', new TextEncoder().encode('Ilam Leaf Co. sells green tea.'));
+    const { runId } = await startImport(brand, { sourceIds: [txt.id] });
+    expect((await settle(brand, runId)).state).toBe('awaiting_approval');
+    const died = () => async () => {
+      throw new Error('process died');
+    };
+    vi.spyOn(DBOS, 'startWorkflow').mockImplementationOnce(died as never);
+    await expect(confirmImport(brand, runId)).rejects.toThrow('process died');
+    vi.restoreAllMocks();
+    expect((await run(brand, runId)).state).toBe('awaiting_approval');
+
+    mockAi.queue({ facts: [] });
+    await confirmImport(brand, runId);
+    expect((await settle(brand, runId)).state).toBe('completed');
+    expect(mockAi.calls).toHaveLength(1);
+  });
+
+  it('a crash after the enqueue but before the confirm commits stops that workflow, and confirming again runs it once', async () => {
+    const brand = await t.makeBrand();
+    const txt = await upload(brand, 'about.txt', 'text/plain', new TextEncoder().encode('Ilam Leaf Co. sells green tea.'));
+    const { runId } = await startImport(brand, { sourceIds: [txt.id] });
+    expect((await settle(brand, runId)).state).toBe('awaiting_approval');
+    const real = DBOS.startWorkflow.bind(DBOS) as (...a: unknown[]) => (...b: unknown[]) => Promise<unknown>;
+    const enqueuedThenDied = (fn: unknown, params: unknown) => async (...args: unknown[]) => {
+      await real(fn, params)(...args);
+      throw new Error('process died');
+    };
+    vi.spyOn(DBOS, 'startWorkflow').mockImplementationOnce(enqueuedThenDied as never);
+    await expect(confirmImport(brand, runId)).rejects.toThrow('process died');
+    vi.restoreAllMocks();
+    const orphan = `brand-import:${runId}:extract`;
+    for (let i = 0; i < 200 && (await DBOS.getWorkflowStatus(orphan))?.status !== 'ERROR'; i++) await new Promise((r) => setTimeout(r, 50));
+    expect((await DBOS.getWorkflowStatus(orphan))?.status).toBe('ERROR');
+    expect((await run(brand, runId)).state).toBe('awaiting_approval');
+    expect(mockAi.calls).toHaveLength(0);
+
+    mockAi.queue({ facts: [] });
+    await confirmImport(brand, runId);
+    expect((await settle(brand, runId)).state).toBe('completed');
+    expect(mockAi.calls).toHaveLength(1);
   });
 
   it('cancels a run awaiting approval without any model call', async () => {

@@ -42,13 +42,23 @@ export async function startImport(brandId: string, i: { websiteUrl?: string | nu
   return { runId };
 }
 
-/** Enqueues the paid extraction. The workflow ID is the run's, so it starts at most once. */
+const UNFINISHED = ['PENDING', 'ENQUEUED', 'DELAYED', 'SUSPENDED'];
+
+/**
+ * Enqueues the paid extraction. The workflow ID is the run's, so it starts at most once. The enqueue
+ * commits before the confirm does, so a crash leaves the run awaiting approval, never running with no
+ * workflow; the workflow's first step waits on the run row (running() locks it) for that commit.
+ */
 export async function confirmImport(brandId: string, runId: string): Promise<void> {
-  // shortcut: a crash between this commit and the enqueue leaves the run `running` with no workflow;
-  // move the enqueue into the same transaction (DBOS client with the app pool) if that ever happens.
   const workflowId = `brand-import:${runId}:extract`;
-  await withBrand(brandId, (tx) => run.confirmRun(tx, brandId, runId, workflowId));
-  await DBOS.startWorkflow(brandImportExtract, { workflowID: workflowId, queueName: QUEUE })(brandId, runId);
+  await withBrand(brandId, async (tx) => {
+    await run.confirmRun(tx, brandId, runId, workflowId);
+    const handle = await DBOS.startWorkflow(brandImportExtract, { workflowID: workflowId, queueName: QUEUE })(brandId, runId);
+    // Already finished while the run awaited approval: an earlier confirm enqueued it, then rolled back,
+    // so it stopped at its first step without a model call. Replay it.
+    const status = (await handle.getStatus())?.status;
+    if (status && !UNFINISHED.includes(status)) await DBOS.rewindWorkflow(workflowId, { queueName: QUEUE });
+  });
 }
 
 export async function cancelImport(brandId: string, runId: string): Promise<void> {

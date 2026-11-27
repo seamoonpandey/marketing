@@ -43,10 +43,9 @@ const iso = (d: Date | null) => (d ? d.toISOString() : null);
 
 // ── Reading ────────────────────────────────────────────────────────────────
 
-async function runRow(tx: Tx, brandId: string, runId: string): Promise<RunRow> {
-  const [row] = UUID.test(runId)
-    ? await tx.select().from(importRuns).where(and(eq(importRuns.id, runId), eq(importRuns.brandId, brandId)))
-    : [];
+async function runRow(tx: Tx, brandId: string, runId: string, lock = false): Promise<RunRow> {
+  const q = tx.select().from(importRuns).where(and(eq(importRuns.id, runId), eq(importRuns.brandId, brandId)));
+  const [row] = UUID.test(runId) ? await (lock ? q.for('share') : q) : [];
   if (!row) throw new NotFoundError('import', runId);
   return row;
 }
@@ -161,8 +160,9 @@ async function sourcesOf(tx: Tx, brandId: string, ids: string[]) {
   return list;
 }
 
+/** The run, if it is running. Locks the row, so a step enqueued by a confirm not yet committed waits for it. */
 async function running(brandId: string, runId: string): Promise<RunRow> {
-  const run = await withBrand(brandId, (tx) => runRow(tx, brandId, runId));
+  const run = await withBrand(brandId, (tx) => runRow(tx, brandId, runId, true));
   if (run.state !== 'running') throw new RunStopped(`The import is ${run.state}`);
   return run;
 }
