@@ -4172,6 +4172,1500 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/brands/{brandId}/studio/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    /** @description The first day of a brand week. Default: the current week. Another day answers 400. */
+                    weekStart?: string;
+                };
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioOverview"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioTemplateList"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/drafts/estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StudioDraftCreate"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioEstimate"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StudioDraftCreate"];
+                };
+            };
+            responses: {
+                /** @description Started */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                402: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/drafts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioDraftView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StudioContentPatch"];
+                };
+            };
+            responses: {
+                /** @description The edit is the new current version */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioDraftView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/drafts/{id}/render": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Started. Costs NPR 0. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/drafts/{id}/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioDraftView"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/runs/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/studio/runs/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudioRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishSummary"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description By platform, then account name */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishChannel"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublishChannelCreate"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishChannel"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/channels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublishChannelPatch"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishChannel"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishCapability"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/schedulable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishSchedulable"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    /** @description ISO 8601 with an offset; default now. Jobs with scheduledAt at or after it. */
+                    from?: string;
+                    /** @description ISO 8601 with an offset; default from + 7 days. Jobs with scheduledAt before it. At most 62 days after from. */
+                    to?: string;
+                    /** @description scheduled: waiting for its time. publishing: a send is in flight. awaiting_manual: post it by hand now and confirm. published: sent, with its link. unknown: the send timed out; nothing is retried until it is resolved. blocked: the approval or the channel said no at send time, or it missed its time by over 24 hours. failed: sending failed (see retryable). cancelled: stopped by the owner. */
+                    state?: components["schemas"]["PublishJobState"];
+                };
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishJobList"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublishJobCreate"];
+                };
+            };
+            responses: {
+                /** @description Scheduled */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishJob"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/jobs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishJobDetail"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/jobs/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishJob"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/jobs/{id}/reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublishReschedule"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishJob"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/jobs/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Scheduled to send within a minute */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishJob"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/jobs/{id}/confirm-manual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublishConfirmManual"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishJob"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/jobs/{id}/resolve-unknown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublishResolveUnknown"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishJob"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/publish/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishSettings"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublishSettings"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PublishSettings"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5206,6 +6700,588 @@ export interface components {
         };
         PlanItemRemoved: {
             plan: components["schemas"]["PlanWeekPlan"];
+        };
+        StudioOverview: {
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            weekStart: string;
+            /** @description False when the week has no approved plan: items is then empty and the screen links to the Plan calendar. */
+            planApproved: boolean;
+            /** @description The approved plan items, by day then position. */
+            items: components["schemas"]["StudioOverviewItem"][];
+            ready: components["schemas"]["StudioReady"];
+            /** @description The newest generate run that touched one of these items, so a screen can resume RunProgress. */
+            latestRun: components["schemas"]["StudioRun"] | null;
+            monthCost: components["schemas"]["StudioMoney"] & unknown;
+        };
+        StudioOverviewItem: {
+            item: components["schemas"]["StudioPlanItem"];
+            /** @description null until drafted. */
+            draft: components["schemas"]["StudioDraftCard"] | null;
+        };
+        StudioPlanItem: {
+            id: string;
+            /**
+             * @description A calendar date, YYYY-MM-DD
+             * @example 2026-11-29
+             */
+            day: string;
+            /** @enum {string} */
+            channel: "facebook" | "instagram" | "tiktok" | "youtube" | "linkedin" | "x" | "whatsapp" | "email" | "website";
+            format: ("text" | "image" | "carousel" | "infographic" | "poll" | "story" | "short_video" | "long_video" | "live" | "gif" | "blog" | "email" | "landing_page" | "podcast" | "case_study") | null;
+            idea: string;
+            cta: string;
+            kind: components["schemas"]["StudioKind"];
+        };
+        /**
+         * @description The kind of draft this item gets.
+         * @enum {string}
+         */
+        StudioKind: "post" | "static" | "carousel" | "video";
+        StudioDraftCard: {
+            id: string;
+            kind: components["schemas"]["StudioKind"] & unknown;
+            status: components["schemas"]["StudioDraftStatus"];
+            currentVersion: number;
+            /** @description Blocking findings today; a draft with 0 can be marked ready. */
+            blockingCount: number;
+            /** @description First rendered image, or null before the first render. */
+            thumbnailUrl: string | null;
+        };
+        /** @enum {string} */
+        StudioDraftStatus: "draft" | "ready";
+        StudioReady: {
+            /** @description The brand has an approved fact. Drafting needs it. */
+            facts: boolean;
+        };
+        StudioRun: {
+            id: string;
+            /** @enum {string} */
+            kind: "generate" | "render";
+            /** @description Plan item ids (generate) or the draft id (render). */
+            targets: string[];
+            state: components["schemas"]["StudioRunState"];
+            /** @description On a failed run its reason. A completed render run can carry a plain note, such as the video engine being unavailable while the images were kept. */
+            error: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            startedAt: string | null;
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            finishedAt: string | null;
+            estimate: components["schemas"]["StudioMoney"] | null;
+            actual: components["schemas"]["StudioMoney"] | null;
+            counts: components["schemas"]["StudioRunCounts"];
+            /**
+             * @description ISO 8601 timestamp
+             * @example 2026-11-27T06:00:00.000Z
+             */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        StudioRunState: "running" | "awaiting_approval" | "completed" | "failed_retryable" | "failed_final" | "cancelled";
+        /** @description Decimal strings: usd to 4 places, npr to 2. */
+        StudioMoney: {
+            usd: string;
+            npr: string;
+        };
+        StudioRunCounts: {
+            drafted?: number;
+            failed?: number;
+            rendered?: number;
+            /** @description Items whose model call failed; retry redoes only these. */
+            failures?: {
+                planItemId: string;
+                message: string;
+            }[];
+            /** @description Brand languages the model returned no copy for; the draft is still stored. */
+            missingLanguages?: {
+                planItemId: string;
+                languages: string[];
+            }[];
+        };
+        StudioTemplateList: {
+            templates: {
+                name: components["schemas"]["StudioTemplate"];
+                label: string;
+                description: string;
+            }[];
+            ratios: {
+                ratio: components["schemas"]["StudioRatio"];
+                width: number;
+                height: number;
+                label: string;
+            }[];
+        };
+        /** @enum {string} */
+        StudioTemplate: "headline" | "offer" | "quote";
+        /** @enum {string} */
+        StudioRatio: "1:1" | "4:5" | "9:16" | "16:9";
+        /** @description The most the copy for these items can cost. Show it before starting. Rendering costs NPR 0. */
+        StudioEstimate: {
+            estimate: components["schemas"]["StudioMoney"];
+            remaining: components["schemas"]["StudioMoney"] & unknown;
+            count: number;
+        };
+        /** @description Items of this brand whose week is approved and that have no draft yet. Another brand, an unapproved week or an item that already has a draft is refused (404, 409). */
+        StudioDraftCreate: {
+            planItemIds: string[];
+        };
+        StudioDraftView: {
+            draft: {
+                id: string;
+                planItemId: string;
+                kind: components["schemas"]["StudioKind"] & unknown;
+                status: components["schemas"]["StudioDraftStatus"];
+                currentVersion: number;
+                readyVersion: number | null;
+                /**
+                 * @description ISO 8601 timestamp
+                 * @example 2026-11-27T06:00:00.000Z
+                 */
+                readyAt: string | null;
+                /**
+                 * @description ISO 8601 timestamp
+                 * @example 2026-11-27T06:00:00.000Z
+                 */
+                createdAt: string;
+            };
+            version: {
+                version: number;
+                /** @enum {string} */
+                origin: "model" | "owner";
+                /**
+                 * @description ISO 8601 timestamp
+                 * @example 2026-11-27T06:00:00.000Z
+                 */
+                createdAt: string;
+            };
+            /** @description Newest first. */
+            versions: {
+                version: number;
+                /** @enum {string} */
+                origin: "model" | "owner";
+                /**
+                 * @description ISO 8601 timestamp
+                 * @example 2026-11-27T06:00:00.000Z
+                 */
+                createdAt: string;
+            }[];
+            /** @description null when the plan item was deleted; the draft stays readable. */
+            planItem: components["schemas"]["StudioPlanItem"] | null;
+            /** @description False when the item was deleted or its week went back to draft: the draft is stale, readable, and cannot be regenerated. */
+            planApproved: boolean;
+            channel: string;
+            /** @description The brand languages. */
+            languages: string[];
+            /** @description Brand languages with no copy in this version. */
+            missingLanguages: string[];
+            content: components["schemas"]["StudioContent"];
+            /** @description Claims removed for lack of an approved fact. */
+            leftOut: components["schemas"]["StudioLeftOut"][];
+            facts: components["schemas"]["StudioFactRef"][];
+            /** @description Blocking first. Computed on every read against today's facts and rights. */
+            findings: components["schemas"]["StudioFinding"][];
+            blockingCount: number;
+            /** @description Of the current version only. */
+            renders: components["schemas"]["StudioRender"][];
+            canMarkReady: boolean;
+            cannotMarkReadyReason: string | null;
+            /** @description The newest run of this draft (its generate run or a render run). */
+            latestRun: components["schemas"]["StudioRun"] | null;
+        };
+        StudioContent: {
+            copies: components["schemas"]["StudioCopy"][];
+            /** @description static and carousel drafts. Empty for others. */
+            slides: components["schemas"]["StudioSlideText"][];
+            /** @description video drafts. Empty for others. */
+            scenes: components["schemas"]["StudioScene"][];
+            template: components["schemas"]["StudioTemplate"];
+            ratios: components["schemas"]["StudioRatio"][];
+        };
+        StudioCopy: {
+            /** @description One of the brand languages. */
+            language: string;
+            /** @description The caption is these joined with spaces. */
+            sentences: components["schemas"]["StudioSentence"][];
+            /**
+             * @description Without the leading #.
+             * @default []
+             */
+            hashtags: string[];
+            /** @default  */
+            cta: string;
+        };
+        StudioSentence: {
+            text: string;
+            /** @description A claim is kept only while it cites at least one approved fact. */
+            claim: boolean;
+            /** @default [] */
+            factIds: string[];
+        };
+        StudioSlideText: {
+            headline: string;
+            subline?: string;
+            badge?: string;
+            /** @description An asset of this brand with a licence recorded; any other id is refused with 404. */
+            photoAssetId?: string;
+        };
+        /** @description Each scene becomes one card of the video. There is no voice: voiceover is script text only. */
+        StudioScene: {
+            onScreenText: string;
+            voiceover: string;
+            shot: string;
+            seconds: number;
+        };
+        StudioLeftOut: {
+            language: string;
+            text: string;
+            /** @description "no approved fact" for a claim that cited nothing usable. */
+            reason: string;
+        };
+        /** @description An approved fact that the draft cites. A cited id missing from the list is not approved today. */
+        StudioFactRef: {
+            id: string;
+            section: string;
+            subjectName: string | null;
+            field: string;
+            value?: unknown;
+            unit: string | null;
+        };
+        StudioFinding: {
+            check: components["schemas"]["StudioCheck"];
+            blocking: boolean;
+            /** @example caption en */
+            where: string;
+            message: string;
+        };
+        /** @enum {string} */
+        StudioCheck: "unverified_number" | "prohibited_word" | "too_long" | "missing_cta" | "expired_fact" | "no_rights" | "text_overflow" | "not_rendered" | "low_contrast" | "many_hashtags";
+        StudioRender: {
+            ratio: components["schemas"]["StudioRatio"];
+            width: number;
+            height: number;
+            overflow: boolean;
+            /** @description The slide or scene number, from 0. A video is index 0. */
+            index: number;
+            /** @enum {string} */
+            type: "image" | "video";
+            /** @description Presigned download URL, valid for about 15 minutes. Images open inline; a video is an attachment. */
+            url: string;
+        };
+        /** @description Every change makes a new version (origin owner), clears the renders of the new version and sets a ready draft back to draft. Claims citing no approved fact move to leftOut. */
+        StudioContentPatch: {
+            /** @description Replaces the copy of each language listed; languages not listed are kept. */
+            copies?: components["schemas"]["StudioCopy"][];
+            slides?: components["schemas"]["StudioSlideText"][];
+            scenes?: components["schemas"]["StudioScene"][];
+            template?: components["schemas"]["StudioTemplate"];
+            ratios?: components["schemas"]["StudioRatio"][];
+            /** @description The version the editor started from; a different current version answers 409 so an edit never overwrites a newer one. */
+            baseVersion?: number;
+        };
+        PublishSummary: {
+            /**
+             * @description The brand's IANA timezone; every time on screen is shown in it and names it. UTC when the brand's timezone is not valid.
+             * @example Asia/Kathmandu
+             */
+            timezone: string;
+            /**
+             * @description ISO 8601 timestamp, UTC
+             * @example 2026-12-01T04:15:00.000Z
+             */
+            now: string;
+            hasChannels: boolean;
+            counts: components["schemas"]["PublishCounts"];
+            /** @description awaiting_manual: post these by hand now. Earliest first. */
+            manualNow: components["schemas"]["PublishJob"][];
+            /** @description blocked, unknown and failed, each with its error and actions. Earliest first, at most 50. */
+            attention: components["schemas"]["PublishJob"][];
+            /** @description scheduled or publishing in the next seven days. Earliest first. */
+            upcoming: components["schemas"]["PublishJob"][];
+            /** @description The last ten published, newest first. */
+            published: components["schemas"]["PublishJob"][];
+        };
+        PublishCounts: {
+            scheduled: number;
+            publishing: number;
+            awaiting_manual: number;
+            published: number;
+            unknown: number;
+            blocked: number;
+            failed: number;
+            cancelled: number;
+        };
+        PublishJob: {
+            id: string;
+            draftId: string;
+            draftVersion: number;
+            payloadHash: string;
+            channelId: string;
+            /** @description null when the channel was removed. */
+            channel: components["schemas"]["PublishJobChannel"] | null;
+            /** @description The draft's kind (post, static, carousel, video); null when Studio no longer has the draft. */
+            kind: string | null;
+            /** @description The start of the draft's first caption, up to 140 characters. */
+            excerpt: string | null;
+            /**
+             * @description ISO 8601 timestamp, UTC
+             * @example 2026-12-01T04:15:00.000Z
+             */
+            scheduledAt: string;
+            /**
+             * @description When it is next sent: the retry time after a rate limit or server error, else scheduledAt.
+             * @example 2026-12-01T04:15:00.000Z
+             */
+            dueAt: string;
+            state: components["schemas"]["PublishJobState"];
+            attempts: number;
+            /** @description Why it is blocked, failed or unknown, in plain words. */
+            error: string | null;
+            retryable: boolean;
+            externalId: string | null;
+            /** @description The post's link once published. */
+            externalUrl: string | null;
+            /**
+             * @description ISO 8601 timestamp, UTC
+             * @example 2026-12-01T04:15:00.000Z
+             */
+            publishedAt: string | null;
+            /** @description Posted by hand and confirmed by the owner. */
+            manual: boolean;
+            actions: components["schemas"]["PublishJobActions"];
+            /**
+             * @description ISO 8601 timestamp, UTC
+             * @example 2026-12-01T04:15:00.000Z
+             */
+            createdAt: string;
+        };
+        PublishJobChannel: {
+            id: string;
+            platform: components["schemas"]["PublishPlatform"];
+            accountName: string;
+            /** @enum {string} */
+            mode: "manual" | "api";
+            status: components["schemas"]["PublishChannelStatus"];
+        };
+        /** @enum {string} */
+        PublishPlatform: "facebook" | "instagram" | "tiktok" | "youtube" | "linkedin" | "x" | "whatsapp" | "email" | "website";
+        /** @enum {string} */
+        PublishChannelStatus: "connected" | "needs_reconnect" | "disabled";
+        /**
+         * @description scheduled: waiting for its time. publishing: a send is in flight. awaiting_manual: post it by hand now and confirm. published: sent, with its link. unknown: the send timed out; nothing is retried until it is resolved. blocked: the approval or the channel said no at send time, or it missed its time by over 24 hours. failed: sending failed (see retryable). cancelled: stopped by the owner.
+         * @enum {string}
+         */
+        PublishJobState: "scheduled" | "publishing" | "awaiting_manual" | "published" | "unknown" | "blocked" | "failed" | "cancelled";
+        /** @description What the job's state allows now. Show only these actions. */
+        PublishJobActions: {
+            cancel: boolean;
+            reschedule: boolean;
+            retry: boolean;
+            confirmManual: boolean;
+            resolveUnknown: boolean;
+        };
+        PublishChannel: {
+            id: string;
+            platform: components["schemas"]["PublishPlatform"];
+            /**
+             * @description manual: the owner posts by hand at the scheduled time. Every channel is manual this sprint.
+             * @enum {string}
+             */
+            mode: "manual" | "api";
+            /** @enum {string} */
+            connector: "manual" | "mock";
+            accountName: string;
+            accountUrl: string | null;
+            status: components["schemas"]["PublishChannelStatus"];
+            /**
+             * @description ISO 8601 timestamp, UTC
+             * @example 2026-12-01T04:15:00.000Z
+             */
+            lastVerifiedAt: string | null;
+            /**
+             * @description ISO 8601 timestamp, UTC
+             * @example 2026-12-01T04:15:00.000Z
+             */
+            createdAt: string;
+        };
+        /** @description Creates a manual channel. One per platform and account name (409). */
+        PublishChannelCreate: {
+            platform: components["schemas"]["PublishPlatform"];
+            accountName: string;
+            /**
+             * @description An http or https URL.
+             * @example https://www.instagram.com/brand
+             */
+            accountUrl?: string;
+        };
+        PublishChannelPatch: {
+            accountName?: string;
+            /**
+             * @description An http or https URL.
+             * @example https://www.instagram.com/brand
+             */
+            accountUrl?: string | null;
+            /**
+             * @description connected also reconnects a channel that needs it. Jobs of a channel that is not connected at send time are blocked.
+             * @enum {string}
+             */
+            status?: "connected" | "disabled";
+        };
+        PublishCapability: {
+            platform: components["schemas"]["PublishPlatform"];
+            /** @description Characters, counting the caption, call to action and hashtags; null for none. */
+            textLimit: number | null;
+            /** @description Accepted image shapes, preferred first. */
+            ratios: string[];
+            maxMedia: number;
+            lastVerified: string | null;
+            /** @description False until the values are checked against the platform. Show "not yet verified". */
+            verified: boolean;
+            manualFallback: boolean;
+        };
+        PublishSchedulable: {
+            /**
+             * @description The brand's IANA timezone; every time on screen is shown in it and names it. UTC when the brand's timezone is not valid.
+             * @example Asia/Kathmandu
+             */
+            timezone: string;
+            settings: components["schemas"]["PublishSettings"];
+            /** @description Ready drafts with a valid approval, by planned day. */
+            drafts: components["schemas"]["PublishSchedulableDraft"][];
+        };
+        /** @description A post may be scheduled from windowStart:00 up to, not including, windowEnd:00 in the brand's timezone. windowStart is before windowEnd. */
+        PublishSettings: {
+            windowStart: number;
+            windowEnd: number;
+            /** @description Sends tried on server errors and rate limits before the job fails. */
+            maxAttempts: number;
+        };
+        PublishSchedulableDraft: {
+            draftId: string;
+            version: number;
+            kind: string;
+            /** @description The planned day, YYYY-MM-DD. */
+            day: string;
+            plannedChannel: string;
+            excerpt: string;
+            /** @description Presigned URL of the first image, or null. */
+            thumbnailUrl: string | null;
+            /**
+             * @description ISO 8601 timestamp, UTC
+             * @example 2026-12-01T04:15:00.000Z
+             */
+            approvalExpiresAt: string | null;
+            /** @description Every channel of the brand. */
+            channels: components["schemas"]["PublishSchedulableChannel"][];
+        };
+        PublishSchedulableChannel: {
+            channelId: string;
+            platform: components["schemas"]["PublishPlatform"];
+            accountName: string;
+            status: components["schemas"]["PublishChannelStatus"];
+            fits: boolean;
+            /** @description Why this draft cannot go to this channel: not connected, too long, no image in an accepted shape, too many images, or already scheduled there. */
+            reason: string | null;
+        };
+        PublishJobList: {
+            /**
+             * @description The brand's IANA timezone; every time on screen is shown in it and names it. UTC when the brand's timezone is not valid.
+             * @example Asia/Kathmandu
+             */
+            timezone: string;
+            /** @description By scheduledAt, earliest first. */
+            jobs: components["schemas"]["PublishJob"][];
+        };
+        /** @description One job per channel: post once per channel to schedule a draft to several. Refused with 400 for a time with no offset, in the past or outside the publishing window; 409 when the draft has no valid approval or it expires before that time, the channel is not connected, the draft does not fit the platform, or the draft already has an active job on that channel. */
+        PublishJobCreate: {
+            draftId: string;
+            channelId: string;
+            /**
+             * @description ISO 8601 with an offset. A time with no offset is refused. A numeric offset must be the brand timezone's offset at that moment, which refuses a wall-clock time that does not exist (a daylight-saving gap); Z (UTC) is always accepted.
+             * @example 2026-12-01T10:00:00+05:45
+             */
+            scheduledAt: string;
+        };
+        PublishJobDetail: {
+            /**
+             * @description The brand's IANA timezone; every time on screen is shown in it and names it. UTC when the brand's timezone is not valid.
+             * @example Asia/Kathmandu
+             */
+            timezone: string;
+            job: components["schemas"]["PublishJob"];
+            /** @description Newest first. */
+            history: components["schemas"]["PublishHistoryEvent"][];
+            package: components["schemas"]["PublishPackage"];
+        };
+        PublishHistoryEvent: {
+            /**
+             * @description ISO 8601 timestamp, UTC
+             * @example 2026-12-01T04:15:00.000Z
+             */
+            at: string;
+            /** @example publish.job.blocked */
+            action: string;
+            /** @enum {string} */
+            result: "ok" | "denied" | "failed";
+            from: components["schemas"]["PublishJobState"] | null;
+            to: components["schemas"]["PublishJobState"] | null;
+            note: string | null;
+        };
+        PublishPackage: {
+            /** @description False when the approval no longer matches what was scheduled, or the draft is gone: then nothing is shown to post. */
+            available: boolean;
+            reason: string | null;
+            /** @description The shape the media are in, chosen for the channel's platform. */
+            ratio: string | null;
+            /** @description One per language. */
+            captions: components["schemas"]["PublishPackageCaption"][];
+            /** @description In posting order. */
+            media: components["schemas"]["PublishPackageMedia"][];
+        };
+        PublishPackageCaption: {
+            language: string;
+            /** @description The caption, without the call to action or hashtags. */
+            caption: string;
+            cta: string;
+            /** @description With the leading #. */
+            hashtags: string[];
+        };
+        PublishPackageMedia: {
+            index: number;
+            ratio: string;
+            /** @enum {string} */
+            kind: "image" | "video";
+            width: number;
+            height: number;
+            filename: string;
+            /** @description Presigned download URL, valid for about 15 minutes. */
+            url: string;
+        };
+        /** @description The same checks as scheduling, approval included. */
+        PublishReschedule: {
+            /**
+             * @description ISO 8601 with an offset. A time with no offset is refused. A numeric offset must be the brand timezone's offset at that moment, which refuses a wall-clock time that does not exist (a daylight-saving gap); Z (UTC) is always accepted.
+             * @example 2026-12-01T10:00:00+05:45
+             */
+            scheduledAt: string;
+        };
+        /** @description From awaiting_manual (or failed, posted by hand instead): sets published. A second confirmation is refused with 409 and changes nothing. */
+        PublishConfirmManual: {
+            /** @description The post's http or https link. */
+            url: string;
+        };
+        /** @description posted true: published with this link. posted false: sent again now, with the same idempotency key so the platform cannot post it twice. */
+        PublishResolveUnknown: {
+            posted: boolean;
+            /** @description Required when posted is true. */
+            url?: string;
         };
     };
     responses: never;
