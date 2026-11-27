@@ -34,7 +34,7 @@ const listItems = (tx: Tx, planId: string) =>
   tx.select().from(planItems).where(eq(planItems.weekPlanId, planId)).orderBy(asc(planItems.day), asc(planItems.position), asc(planItems.createdAt));
 
 /** Ideas of the approved plans of the four weeks before `weekStart`. */
-async function recentIdeas(tx: Tx, brandId: string, weekStart: string): Promise<string[]> {
+export async function recentIdeas(tx: Tx, brandId: string, weekStart: string): Promise<string[]> {
   const plans = await tx.select({ id: weekPlans.id }).from(weekPlans).where(
     and(eq(weekPlans.brandId, brandId), eq(weekPlans.status, 'approved'), gte(weekPlans.weekStart, addDays(weekStart, -28)), lt(weekPlans.weekStart, weekStart)),
   );

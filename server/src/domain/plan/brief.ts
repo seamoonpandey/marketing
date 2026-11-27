@@ -79,17 +79,17 @@ export async function estimateBrief(brandId: string, campaignId: string, facts: 
 }
 
 /** The model call and the new draft version. Run by the draft workflow; `runId` keys the cost row. */
-export async function draftBrief(brandId: string, runId: string, campaignId: string, facts: ApprovedFact[]): Promise<{ briefId: string }> {
+export async function draftBrief(brandId: string, runId: string, campaignId: string, facts: ApprovedFact[]): Promise<{ briefId: string; cost: Money }> {
   if (!facts.length) throw new ValidationError(NO_FACTS);
   const c = await context(brandId, campaignId);
-  const { object } = await extract({
+  const { object, cost } = await extract({
     brandId, runType: 'plan_brief', runId, system: SYSTEM, parts: prompt(c, facts), schema: Answer, maxOutputTokens: BRIEF_MAX_OUTPUT,
   });
   const { body, leftOut } = buildBrief({ draft: object as BriefBody, facts });
   return withBrand(brandId, async (tx) => {
     const row = await insertVersion(tx, brandId, campaignId, body, leftOut);
     await audit(tx, { brandId, actor: 'system', action: 'plan.brief.generate', objectType: 'campaign_brief', objectId: row.id, objectVersion: row.version, result: 'ok' });
-    return { briefId: row.id };
+    return { briefId: row.id, cost };
   });
 }
 
