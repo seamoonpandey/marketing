@@ -28,7 +28,7 @@ export type Captured = {
 export type Target = { id: string; competitorId: string; url: string; lastSourceId: string | null };
 
 export const runCapNpr = () => process.env.RESEARCH_RUN_CAP_NPR ?? '150';
-const RUN_TYPE = 'research';
+const RUN_TYPE = 'research_watch';
 const FAILS_BEFORE_PAUSE = 3;
 
 /** Targets not paused (a failing page is tried again each run) whose competitor still exists, and the run's trigger. */

@@ -65,7 +65,7 @@ export async function generateBattlecard(brandId: string, competitorId: string, 
     return { obs, entries: profile?.profile.entries ?? [] };
   });
   const { object } = await extract({
-    brandId, runType: 'research-battlecard', runId: competitorId, system: SYSTEM, schema: Answer,
+    brandId, runType: 'research_battlecard', runId: competitorId, system: SYSTEM, schema: Answer,
     parts: [{
       type: 'text',
       text:

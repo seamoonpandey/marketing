@@ -34,7 +34,7 @@ export async function generateOpportunities(brandId: string, runId: string, fact
   );
   if (!fresh.length) return [];
   const { object } = await extract({
-    brandId, runType: 'research', runId, system: SYSTEM, schema: Answer,
+    brandId, runType: 'research_opportunities', runId, system: SYSTEM, schema: Answer,
     parts: [
       {
         type: 'text',

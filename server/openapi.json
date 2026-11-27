@@ -760,30 +760,22 @@
             "description": "ISO 8601 timestamp"
           },
           "estimate": {
-            "allOf": [
+            "anyOf": [
               {
-                "$ref": "#/components/schemas/Money"
+                "$ref": "#/components/schemas/RunMoney"
               },
               {
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "description": "Set once the changed pages are known; a run in awaiting_approval waits for confirm."
+                "type": "null"
               }
             ]
           },
           "actual": {
-            "allOf": [
+            "anyOf": [
               {
-                "$ref": "#/components/schemas/Money"
+                "$ref": "#/components/schemas/RunMoney"
               },
               {
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "description": "Decimal strings, never floats."
+                "type": "null"
               }
             ]
           },
@@ -827,6 +819,22 @@
           "failed_final",
           "cancelled"
         ]
+      },
+      "RunMoney": {
+        "type": "object",
+        "properties": {
+          "usd": {
+            "type": "string"
+          },
+          "npr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "usd",
+          "npr"
+        ],
+        "description": "Decimal strings: usd to 4 places, npr to 2."
       },
       "WatchRunCounts": {
         "type": "object",
@@ -952,7 +960,14 @@
             "type": "string"
           },
           "before": {
-            "$ref": "#/components/schemas/ResearchEvidence"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "after": {
             "$ref": "#/components/schemas/ResearchEvidence"
@@ -996,10 +1011,7 @@
         ]
       },
       "ResearchEvidence": {
-        "type": [
-          "object",
-          "null"
-        ],
+        "type": "object",
         "properties": {
           "quote": {
             "type": "string"
@@ -1171,15 +1183,22 @@
         "type": "object",
         "properties": {
           "approved": {
-            "$ref": "#/components/schemas/Battlecard"
-          },
-          "draft": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/Battlecard"
               },
               {
-                "description": "The newest draft, if it is newer than the approved version."
+                "type": "null"
+              }
+            ]
+          },
+          "draft": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Battlecard"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -1190,10 +1209,7 @@
         ]
       },
       "Battlecard": {
-        "type": [
-          "object",
-          "null"
-        ],
+        "type": "object",
         "properties": {
           "id": {
             "type": "string"
