@@ -6003,6 +6003,8 @@ export interface components {
             planItem: components["schemas"]["StudioPlanItem"] | null;
             /** @description False when the item was deleted or its week went back to draft: the draft is stale, readable, and cannot be regenerated. */
             planApproved: boolean;
+            /** @description The first day of the plan item's week, so a screen can link back to it; null when the item was deleted. */
+            weekStart: string | null;
             channel: string;
             /** @description The brand languages. */
             languages: string[];

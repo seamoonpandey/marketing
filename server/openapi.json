@@ -4572,6 +4572,20 @@
             "type": "boolean",
             "description": "False when the item was deleted or its week went back to draft: the draft is stale, readable, and cannot be regenerated."
           },
+          "weekStart": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "example": "2026-11-29",
+                "description": "A calendar date, YYYY-MM-DD"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The first day of the plan item's week, so a screen can link back to it; null when the item was deleted."
+          },
           "channel": {
             "type": "string"
           },
@@ -4649,6 +4663,7 @@
           "versions",
           "planItem",
           "planApproved",
+          "weekStart",
           "channel",
           "languages",
           "missingLanguages",

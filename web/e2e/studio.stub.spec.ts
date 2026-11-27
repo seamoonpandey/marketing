@@ -35,7 +35,7 @@ const view = (o: Record<string, any> = {}) => ({
   version: { version: 1, origin: 'model', createdAt: NOW },
   versions: [{ version: 1, origin: 'model', createdAt: NOW }],
   planItem: planItem('pi-1', { kind: 'post', format: 'text', idea: 'Winter shawl post' }),
-  planApproved: true, channel: 'instagram', languages: ['en', 'ne'], missingLanguages: [],
+  planApproved: true, weekStart: WEEK, channel: 'instagram', languages: ['en', 'ne'], missingLanguages: [],
   content: {
     copies: [
       { language: 'en', sentences: [sentence('Hand-woven in Patan.'), sentence('Priced at NPR 4,500.', true, ['f-1'])], hashtags: ['pashmina'], cta: 'Visit the shop' },
@@ -64,10 +64,10 @@ const visualView = (o: Record<string, any> = {}) => {
 };
 const sized = () => [0, 1, 2].flatMap((i) => [render('1:1', 1080, 1080, i), render('9:16', 1080, 1920, i)]);
 
-type World = { calls: string[]; bodies: any[]; overview: any; draft: any; runs: any[] };
+type World = { calls: string[]; bodies: any[]; overview: any; draft: any; runs: any[]; assets: any[] };
 
 async function stub(page: Page, init: Partial<World> & { failOverview?: boolean; failDraft?: boolean } = {}) {
-  const w: World = { calls: [], bodies: [], overview: overview(), draft: view(), runs: [], ...init };
+  const w: World = { calls: [], bodies: [], overview: overview(), draft: view(), runs: [], assets: [], ...init };
   await page.route('https://img.test/**', (r) =>
     r.request().url().endsWith('.mp4') ? r.fulfill({ status: 200, contentType: 'video/mp4', body: Buffer.alloc(0) }) : r.fulfill({ status: 200, contentType: 'image/png', body: PNG }),
   );
@@ -84,6 +84,7 @@ async function stub(page: Page, init: Partial<World> & { failOverview?: boolean;
     let x: RegExpMatchArray | null;
     if (path === '/api/brands') return send([brand]);
     if (path === '/') return send(brand);
+    if (path === '/knowledge/assets') return send(w.assets);
     if (path === '/studio/overview') return init.failOverview ? fail(500, 'internal', 'The overview broke.') : send(w.overview);
     if (path === '/studio/templates') {
       return send({
@@ -348,4 +349,117 @@ test('errors show an error state with a way to retry', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
   await page.goto(`/app/b/${B}/studio/drafts/d-1`);
   await expect(page.getByRole('alert').filter({ hasText: 'The draft could not be loaded' })).toContainText('The draft broke.');
+});
+
+const asset = (id: string, filename: string, o: Record<string, any> = {}) => ({
+  id, sourceId: `s-${id}`, kind: 'photo', variant: null, rights: { licence: 'Own photo, all uses' }, licensed: true, createdAt: NOW,
+  source: { id: `s-${id}`, kind: 'upload', uri: `upload:${id}`, meta: { filename }, downloadUrl: IMG }, ...o,
+});
+const lastPatch = (w: World) => w.bodies.filter((b) => b.m === 'PATCH').at(-1)!.body;
+
+test('the back link opens the draft\'s own week, and the plain dashboard when the item is gone', async ({ page }) => {
+  await stub(page, { draft: view({ weekStart: '2026-11-22' }) });
+  await page.goto(`/app/b/${B}/studio/drafts/d-1`);
+  await expect(page.getByRole('link', { name: 'Back to Studio' })).toHaveAttribute('href', `/app/b/${B}/studio?week=2026-11-22`);
+  await page.getByRole('link', { name: 'Back to Studio' }).click();
+  await expect(page).toHaveURL(/\/studio\?week=2026-11-22$/);
+  await stub(page, { draft: view({ weekStart: null, planItem: null, planApproved: false }) });
+  await page.goto(`/app/b/${B}/studio/drafts/d-1`);
+  await expect(page.getByRole('link', { name: 'Back to Studio' })).toHaveAttribute('href', `/app/b/${B}/studio`);
+});
+
+test('a carousel keeps 2 to 10 slides: slides can be added and removed, and the limits disable the buttons', async ({ page }) => {
+  const w = await stub(page, { draft: visualView() });
+  await page.goto(`/app/b/${B}/studio/drafts/d-1`);
+  await page.getByRole('button', { name: 'Remove slide 3' }).click();
+  await expect(page.getByLabel('Headline, slide 3')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Remove slide 1' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Remove slide 2' })).toBeDisabled();
+  for (let i = 0; i < 8; i++) await page.getByRole('button', { name: /^Add slide/ }).click();
+  await expect(page.getByLabel('Headline, slide 10')).toHaveValue('New slide');
+  await expect(page.getByRole('button', { name: /^Add slide/ })).toBeDisabled();
+  await page.getByLabel('Headline, slide 10').fill('The last one');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Version 2, written by you')).toBeVisible();
+  const slides = lastPatch(w).slides;
+  expect(slides).toHaveLength(10);
+  expect(slides[0].headline).toBe('Winter warmth');
+  expect(slides[9].headline).toBe('The last one');
+});
+
+test('a single image has no add or remove slide', async ({ page }) => {
+  await stub(page, { draft: visualView({ draft: { ...visualView().draft, kind: 'static' }, content: { ...visualView().content, slides: [{ headline: 'One' }] } }) });
+  await page.goto(`/app/b/${B}/studio/drafts/d-1`);
+  await expect(page.getByRole('textbox', { name: 'Headline', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /slide/i })).toHaveCount(0);
+});
+
+test('scenes and caption sentences can be added and removed', async ({ page }) => {
+  const scenes = [
+    { onScreenText: 'Spun by hand', voiceover: 'v1', shot: 's1', seconds: 4 },
+    { onScreenText: 'Warm', voiceover: 'v2', shot: 's2', seconds: 5 },
+  ];
+  const w = await stub(page, { draft: view({ draft: { ...view().draft, kind: 'video' }, content: { ...view().content, scenes, ratios: ['9:16'] } }) });
+  await page.goto(`/app/b/${B}/studio/drafts/d-1`);
+  await page.getByRole('button', { name: 'Add scene' }).click();
+  await expect(page.getByLabel('On screen, scene 3')).toHaveValue('New scene');
+  await page.getByLabel('On screen, scene 3').fill('Shop now');
+  await page.getByRole('button', { name: 'Remove scene 1' }).click();
+  await expect(page.getByLabel('On screen, scene 2')).toHaveValue('Shop now');
+  await expect(page.getByLabel('On screen, scene 3')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Add a sentence in English' }).click();
+  await page.getByLabel('Sentence 3 in English').fill('Made to last.');
+  await page.getByRole('button', { name: 'Remove English sentence 1' }).click();
+  // The Nepali caption has one sentence and keeps it.
+  await expect(page.getByRole('button', { name: 'Remove नेपाली (Nepali) sentence 1' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Version 2, written by you')).toBeVisible();
+  const patch = lastPatch(w);
+  expect(patch.scenes.map((s: any) => s.onScreenText)).toEqual(['Warm', 'Shop now']);
+  expect(patch.copies.find((c: any) => c.language === 'en').sentences.map((s: any) => s.text)).toEqual(['Priced at NPR 4,500.', 'Made to last.']);
+});
+
+test('a slide photo is picked from the brand assets: unlicensed and expired ones are shown as unavailable with the reason', async ({ page }) => {
+  const assets = [
+    asset('a-ok', 'shawl.jpg'),
+    asset('a-none', 'untitled.jpg', { licensed: false, rights: {} }),
+    asset('a-old', 'old-campaign.jpg', { rights: { licence: 'Agency, one season', expiresAt: '2025-01-31' } }),
+    asset('a-logo', 'logo.png', { kind: 'logo' }),
+  ];
+  const w = await stub(page, { draft: visualView(), assets });
+  await page.goto(`/app/b/${B}/studio/drafts/d-1`);
+  await page.getByRole('button', { name: 'Choose a photo for slide 2' }).click();
+  const list = page.getByRole('group', { name: 'Photos for slide 2' });
+  await expect(list.getByText('logo.png')).toHaveCount(0);
+  await expect(list.getByRole('listitem').filter({ hasText: 'untitled.jpg' })).toContainText('Unavailable: No licence recorded.');
+  await expect(list.getByRole('listitem').filter({ hasText: 'old-campaign.jpg' })).toContainText('Unavailable: The licence expired on 2025-01-31.');
+  await expect(list.getByRole('button', { name: /untitled.jpg/ })).toBeDisabled();
+  await expect(list.getByRole('button', { name: /old-campaign.jpg/ })).toBeDisabled();
+  await list.getByRole('button', { name: /shawl.jpg/ }).click();
+  await expect(page.getByText('shawl.jpg')).toBeVisible();
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Version 2, written by you')).toBeVisible();
+  const slides = lastPatch(w).slides;
+  expect(slides[1].photoAssetId).toBe('a-ok');
+  expect(slides[0].photoAssetId).toBeUndefined();
+});
+
+test('a slide photo can be removed', async ({ page }) => {
+  const draft = visualView();
+  const w = await stub(page, { draft: { ...draft, content: { ...draft.content, slides: [{ headline: 'A', photoAssetId: 'a-ok' }, { headline: 'B' }, { headline: 'C' }] } }, assets: [asset('a-ok', 'shawl.jpg')] });
+  await page.goto(`/app/b/${B}/studio/drafts/d-1`);
+  await expect(page.getByText('shawl.jpg')).toBeVisible();
+  await page.getByRole('button', { name: 'Remove photo from slide 1' }).click();
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Version 2, written by you')).toBeVisible();
+  expect(lastPatch(w).slides[0].photoAssetId).toBeUndefined();
+});
+
+test('a brand without photos says where to add one', async ({ page }) => {
+  await stub(page, { draft: visualView(), assets: [asset('a-logo', 'logo.png', { kind: 'logo' })] });
+  await page.goto(`/app/b/${B}/studio/drafts/d-1`);
+  await page.getByRole('button', { name: 'Choose a photo for slide 3' }).click();
+  await expect(page.getByRole('group', { name: 'Photos for slide 3' })).toContainText('The brand has no photos yet');
+  await expect(page.getByRole('link', { name: 'Sources' })).toHaveAttribute('href', `/app/b/${B}/brand/sources`);
 });

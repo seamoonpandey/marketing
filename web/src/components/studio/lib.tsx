@@ -13,6 +13,7 @@ export type Content = Schemas['StudioContent'];
 export type Kind = Schemas['StudioKind'];
 export type Ratio = Schemas['StudioRatio'];
 export type Template = Schemas['StudioTemplate'];
+export type Asset = Schemas['Asset'];
 
 const root = (b: string) => ['studio', b] as const;
 const p = (brandId: string) => ({ path: { brandId } });
@@ -61,6 +62,16 @@ export const useDraft = (b: string, id: string) =>
 
 export const useTemplates = (b: string) =>
   useQuery({ queryKey: [...root(b), 'templates'], queryFn: () => unwrap(api.GET('/api/brands/{brandId}/studio/templates', { params: p(b) })), staleTime: 3_600_000 });
+
+export const useAssets = (b: string) =>
+  useQuery({ queryKey: [...root(b), 'assets'], queryFn: () => unwrap(api.GET('/api/brands/{brandId}/knowledge/assets', { params: p(b) })) });
+
+/** Why an asset cannot go on a slide (the server refuses a photo without a live licence), or null when it can. */
+export function whyUnavailable(a: Asset): string | null {
+  if (!a.licensed) return 'No licence recorded.';
+  const expires = a.rights.expiresAt ? Date.parse(a.rights.expiresAt) : NaN;
+  return !Number.isNaN(expires) && expires < Date.now() ? `The licence expired on ${a.rights.expiresAt!.slice(0, 10)}.` : null;
+}
 
 export const runKey = (b: string, id: string) => [...root(b), 'run', id] as const;
 export const fetchRun = (b: string, id: string) => unwrap(api.GET('/api/brands/{brandId}/studio/runs/{id}', { params: { path: { brandId: b, id } } }));

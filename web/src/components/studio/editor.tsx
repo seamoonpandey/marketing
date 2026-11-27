@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CircleAlert, CircleCheck, Film, Info, Save } from 'lucide-react';
+import { ArrowLeft, CircleAlert, CircleCheck, Film, ImageIcon, Info, Plus, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState, type MutableRefObject } from 'react';
@@ -9,11 +9,15 @@ import { MoneyText, PageHeader, RunProgress, StateBlock, StatusBadge, useBrandId
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { Preview } from './preview';
 import {
-  Async, CHANNEL_LABEL, CHECK_LABEL, KIND_LABEL, LANGUAGE_LABEL, MutationError, NO_COST, cancelRun, fetchRun, retryRun, runKey, useAct, useDraft, useTemplates,
-  type DraftView, type Ratio, type Template,
+  Async, CHANNEL_LABEL, CHECK_LABEL, KIND_LABEL, LANGUAGE_LABEL, MutationError, NO_COST, cancelRun, fetchRun, retryRun, runKey, useAct, useAssets, useDraft, useTemplates, whyUnavailable,
+  type Asset, type DraftView, type Ratio, type Template,
 } from './lib';
 
 type Sentence = Schemas['StudioSentence'];
+// The contract's bounds: a carousel has 2 to 10 slides, a video 1 to 10 scenes, a caption at most 30 sentences.
+const SLIDES = { min: 2, max: 10 };
+const SCENES = { min: 1, max: 10 };
+const SENTENCES = { min: 1, max: 30 };
 type Form = {
   copies: { language: string; sentences: Sentence[]; hashtags: string; cta: string }[];
   slides: Schemas['StudioSlideText'][];
@@ -72,7 +76,7 @@ function Screen({ brandId, v }: { brandId: string; v: DraftView }) {
 
   return (
     <>
-      <Link href={`/app/b/${brandId}/studio`} className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
+      <Link href={`/app/b/${brandId}/studio${v.weekStart ? `?week=${v.weekStart}` : ''}`} className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
         <ArrowLeft className="size-4" aria-hidden />Back to Studio
       </Link>
       <PageHeader
@@ -225,7 +229,12 @@ function EditForm({ brandId, v, onDirty, save }: { brandId: string; v: DraftView
           <p className="text-sm text-muted">Each scene becomes one card of the video. There is no voice: the voiceover is script text.</p>
           {f.scenes.map((s, i) => (
             <div key={i} className="grid gap-2 rounded-md border border-line p-3">
-              <h3 className="text-sm font-semibold">Scene {i + 1}</h3>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold">Scene {i + 1}</h3>
+                <button type="button" className="btn btn-quiet px-2" disabled={f.scenes.length <= SCENES.min} aria-label={`Remove scene ${i + 1}`} onClick={() => set('scenes', f.scenes.filter((_, j) => j !== i))}>
+                  <Trash2 className="size-4" aria-hidden />Remove
+                </button>
+              </div>
               <Area label={`On screen, scene ${i + 1}`} value={s.onScreenText} onChange={(t) => set('scenes', upd(f.scenes, i, { onScreenText: t }))} lang={v.languages[0]} />
               <Area label={`Voiceover, scene ${i + 1}`} value={s.voiceover} onChange={(t) => set('scenes', upd(f.scenes, i, { voiceover: t }))} lang={v.languages[0]} />
               <Area label={`Shot, scene ${i + 1}`} value={s.shot} onChange={(t) => set('scenes', upd(f.scenes, i, { shot: t }))} />
@@ -235,6 +244,9 @@ function EditForm({ brandId, v, onDirty, save }: { brandId: string; v: DraftView
               </div>
             </div>
           ))}
+          <button type="button" className="btn btn-secondary justify-self-start" disabled={f.scenes.length >= SCENES.max} onClick={() => set('scenes', [...f.scenes, { onScreenText: 'New scene', voiceover: '', shot: '', seconds: 3 }])}>
+            <Plus className="size-4" aria-hidden />Add scene{f.scenes.length >= SCENES.max ? ` (at most ${SCENES.max})` : ''}
+          </button>
         </fieldset>
       ) : null}
 
@@ -244,15 +256,28 @@ function EditForm({ brandId, v, onDirty, save }: { brandId: string; v: DraftView
           <h2 className="text-lg font-semibold" aria-hidden>{slideWord} text</h2>
           {f.slides.map((s, i) => (
             <div key={i} className="grid gap-2 rounded-md border border-line p-3">
-              {v.draft.kind === 'carousel' ? <h3 className="text-sm font-semibold">Slide {i + 1}</h3> : null}
+              {v.draft.kind === 'carousel' ? (
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold">Slide {i + 1}</h3>
+                  <button type="button" className="btn btn-quiet px-2" disabled={f.slides.length <= SLIDES.min} aria-label={`Remove slide ${i + 1}`} onClick={() => set('slides', f.slides.filter((_, j) => j !== i))}>
+                    <Trash2 className="size-4" aria-hidden />Remove
+                  </button>
+                </div>
+              ) : null}
               <Area label={f.slides.length > 1 ? `Headline, slide ${i + 1}` : 'Headline'} value={s.headline} onChange={(t) => set('slides', upd(f.slides, i, { headline: t }))} lang={v.languages[0]} />
               <Area label={f.slides.length > 1 ? `Subline, slide ${i + 1}` : 'Subline'} value={s.subline ?? ''} onChange={(t) => set('slides', upd(f.slides, i, { subline: t }))} lang={v.languages[0]} />
               <div className="field">
                 <label className="label" htmlFor={`badge-${i}`}>{f.slides.length > 1 ? `Badge, slide ${i + 1}` : 'Badge'}</label>
                 <input id={`badge-${i}`} className="input" lang={v.languages[0]} value={s.badge ?? ''} onChange={(e) => set('slides', upd(f.slides, i, { badge: e.target.value }))} />
               </div>
+              <PhotoPick brandId={brandId} label={f.slides.length > 1 ? `slide ${i + 1}` : 'the image'} value={s.photoAssetId} onChange={(photoAssetId) => set('slides', upd(f.slides, i, { photoAssetId }))} />
             </div>
           ))}
+          {v.draft.kind === 'carousel' ? (
+            <button type="button" className="btn btn-secondary justify-self-start" disabled={f.slides.length >= SLIDES.max} onClick={() => set('slides', [...f.slides, { headline: 'New slide' }])}>
+              <Plus className="size-4" aria-hidden />Add slide{f.slides.length >= SLIDES.max ? ` (at most ${SLIDES.max})` : ''}
+            </button>
+          ) : null}
         </fieldset>
       ) : null}
 
@@ -298,7 +323,12 @@ function EditForm({ brandId, v, onDirty, save }: { brandId: string; v: DraftView
               const cited = (s.factIds ?? []).map((id) => ({ id, fact: factFor(id) }));
               return (
                 <div key={si} className="grid gap-1.5">
-                  <Area label={`Sentence ${si + 1} in ${lang}`} value={s.text} lang={c.language} onChange={(t) => setCopy({ sentences: upd(c.sentences, si, { text: t }) })} />
+                  <div className="flex items-end gap-2">
+                    <div className="min-w-0 flex-1"><Area label={`Sentence ${si + 1} in ${lang}`} value={s.text} lang={c.language} onChange={(t) => setCopy({ sentences: upd(c.sentences, si, { text: t }) })} /></div>
+                    <button type="button" className="btn btn-quiet px-2" disabled={c.sentences.length <= SENTENCES.min} aria-label={`Remove ${lang} sentence ${si + 1}`} onClick={() => setCopy({ sentences: c.sentences.filter((_, j) => j !== si) })}>
+                      <Trash2 className="size-4" aria-hidden />
+                    </button>
+                  </div>
                   <ul aria-label={`Facts cited by sentence ${si + 1}`} className="flex flex-wrap gap-1.5 text-xs">
                     {s.claim ? null : <li className="rounded-full bg-[color-mix(in_oklab,var(--theme-ink)_7%,transparent)] px-2 py-0.5 text-muted">Not a claim</li>}
                     {s.claim && cited.length === 0 ? <li className="rounded-full bg-[color-mix(in_oklab,var(--theme-danger)_11%,transparent)] px-2 py-0.5 font-medium text-danger">A claim with no fact</li> : null}
@@ -311,6 +341,9 @@ function EditForm({ brandId, v, onDirty, save }: { brandId: string; v: DraftView
                 </div>
               );
             })}
+            <button type="button" className="btn btn-secondary justify-self-start" disabled={c.sentences.length >= SENTENCES.max} onClick={() => setCopy({ sentences: [...c.sentences, { text: '', claim: false, factIds: [] }] })}>
+              <Plus className="size-4" aria-hidden />Add a sentence in {lang}
+            </button>
             <div className="field">
               <label className="label" htmlFor={`cta-${ci}`}>Call to action in {lang}</label>
               <input id={`cta-${ci}`} className="input" lang={c.language} value={c.cta} onChange={(e) => setCopy({ cta: e.target.value })} />
@@ -340,6 +373,53 @@ function Area({ label, value, onChange, lang }: { label: string; value: string; 
       <label className="label" htmlFor={id}>{label}</label>
       {/* field-sizing grows the box with its text, so long Devanagari lines are never clipped */}
       <textarea id={id} lang={lang} rows={1} value={value} onChange={(e) => onChange(e.target.value)} className="input field-sizing-content h-auto min-h-10 resize-y py-2 leading-normal" />
+    </div>
+  );
+}
+
+/** A photo for one slide, from the brand's assets. Only an asset with a live licence can be picked; the others say why not. */
+function PhotoPick({ brandId, label, value, onChange }: { brandId: string; label: string; value: string | undefined; onChange: (id: string | undefined) => void }) {
+  const [open, setOpen] = useState(false);
+  const assets = useAssets(brandId);
+  const photos = (assets.data ?? []).filter((a) => a.kind === 'photo' || a.kind === 'other');
+  const chosen = (assets.data ?? []).find((a) => a.id === value);
+  const name = (a: Asset) => String(a.source.meta.filename ?? a.variant ?? a.source.uri);
+  const isImage = (a: Asset) => /\.(png|jpe?g|webp)$/i.test(name(a));
+  return (
+    <div className="grid gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="label">Photo for {label}</span>
+        {value ? <span className="text-sm break-all">{chosen ? name(chosen) : 'An asset of this brand'}</span> : <span className="text-sm text-muted">None</span>}
+        <button type="button" className="btn btn-secondary" aria-expanded={open} onClick={() => setOpen(!open)}><ImageIcon className="size-4" aria-hidden />{value ? 'Change photo' : 'Choose a photo'}<span className="sr-only"> for {label}</span></button>
+        {value ? <button type="button" className="btn btn-quiet" onClick={() => onChange(undefined)}>Remove photo<span className="sr-only"> from {label}</span></button> : null}
+      </div>
+      {open ? (
+        <div role="group" aria-label={`Photos for ${label}`} className="grid gap-2 rounded-md border border-line p-2">
+          {assets.isPending ? <p className="text-sm text-muted">Loading the brand’s assets…</p> : null}
+          {assets.isError ? <p role="alert" className="text-sm text-danger">The assets could not be loaded: {assets.error.message}</p> : null}
+          {assets.data && photos.length === 0 ? <p className="text-sm text-muted">The brand has no photos yet. Add one on the <Link className="underline" href={`/app/b/${brandId}/brand/sources`}>Sources</Link> screen, with its licence.</p> : null}
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {photos.map((a) => {
+              const why = whyUnavailable(a);
+              return (
+                <li key={a.id} className="flex items-center gap-2.5 rounded-md border border-line p-2">
+                  {isImage(a) ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- presigned storage URL
+                    <img src={a.source.downloadUrl} alt="" className="size-12 shrink-0 rounded object-cover" />
+                  ) : null}
+                  <div className="grid min-w-0 flex-1 gap-0.5 text-sm">
+                    <p className="font-medium break-all">{name(a)}</p>
+                    {why ? <p className="text-xs text-danger">Unavailable: {why}</p> : <p className="text-xs text-muted">Licence: {a.rights.licence}</p>}
+                  </div>
+                  <button type="button" className="btn btn-secondary" disabled={!!why || a.id === value} onClick={() => { onChange(a.id); setOpen(false); }}>
+                    {a.id === value ? 'In use' : 'Use'}<span className="sr-only"> {name(a)} for {label}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
