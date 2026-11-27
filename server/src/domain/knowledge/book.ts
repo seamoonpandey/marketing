@@ -16,9 +16,11 @@ export async function brandBook(tx: Tx, brandId: string): Promise<BrandBookOut> 
     if (!page.next) break;
     cursor = page.next;
   }
+  const palette = await getPalette(tx, brandId);
   return {
     sections: CATALOGUE.map((s) => ({ key: s.key, label: s.label, facts: approved.filter((f) => f.section === s.key) })),
-    palette: await getPalette(tx, brandId),
+    // A colour is approved when the owner gives it a role; extracted ones without a role stay out.
+    palette: { ...palette, colours: palette.colours.filter((c) => c.role !== null) },
     assets: await listAssets(tx, brandId),
     competitors: await listCompetitors(tx, brandId),
     readiness: await readiness(tx, brandId),

@@ -6,7 +6,7 @@ import { createCompetitor } from '../brands/index.ts';
 import { createAsset } from './assets.ts';
 import { brandBook } from './book.ts';
 import { enterFact, findOrCreateSubject, proposeFacts } from './facts/index.ts';
-import { setPalette } from './palette/index.ts';
+import { addColours, setPalette } from './palette/index.ts';
 import { readiness } from './readiness.ts';
 
 let t: TestDb;
@@ -96,6 +96,16 @@ describe('readiness', () => {
     expect(book.assets).toHaveLength(1);
     expect(book.competitors).toHaveLength(3);
     expect(book.readiness.score).toBe(70);
+  });
+
+  it('leaves out of the brand book a colour the owner has not given a role', async () => {
+    const brand = await t.makeBrand();
+    await withBrand(brand, async (tx) => {
+      await setPalette(tx, brand, [{ hex: '#0f5257', role: 'primary' }]);
+      await addColours(tx, brand, [{ hex: '#ff00ff', origin: 'site' }]);
+    });
+    const book = await withBrand(brand, (tx) => brandBook(tx, brand));
+    expect(book.palette.colours.map((c) => c.hex)).toEqual(['#0f5257']);
   });
 
   it('gates an unresolved price conflict and an unlicensed asset, with fix paths', async () => {
