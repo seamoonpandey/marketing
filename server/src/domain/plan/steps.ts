@@ -43,7 +43,7 @@ Rules:
 7. If the data is not enough, plan fewer items instead of guessing.`;
 
 // A `<` inside data could close a block early; JSON keeps it as an escape.
-const data = (tag: string, v: unknown) => `<${tag}>\n${JSON.stringify(v).replaceAll('<', '\\u003c')}\n</${tag}>`;
+export const data = (tag: string, v: unknown) => `<${tag}>\n${JSON.stringify(v).replaceAll('<', '\\u003c')}\n</${tag}>`;
 
 export async function weekContext(brandId: string, weekStart: string) {
   return withBrand(brandId, async (tx) => {

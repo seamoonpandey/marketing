@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { estimateTokens, extract } from '../../ai/index.ts';
 import { config } from '../../config.ts';
 import type { ApprovedFact, Money } from '../../contracts/common.ts';
-import { campaignBriefs } from '../../db/schema/plan.ts';
+import { campaignBriefs, campaigns } from '../../db/schema/plan.ts';
 import { withBrand, type Tx } from '../../db/tenant.ts';
 import { ConflictError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
@@ -11,6 +11,7 @@ import { estimateCost } from '../costs/index.ts';
 import { listOpportunities } from '../research/index.ts';
 import { getCampaign } from './campaigns.ts';
 import { briefSections } from './enums.ts';
+import { data } from './steps.ts';
 
 export type Statement = { text: string; factIds?: string[] };
 export type BriefBody = Record<(typeof briefSections)[number], Statement[]>;
@@ -63,10 +64,11 @@ function prompt(c: Awaited<ReturnType<typeof context>>, facts: ApprovedFact[]) {
   const { campaign: k, opp } = c;
   return [{
     type: 'text' as const,
-    text:
-      `<campaign>\n${JSON.stringify({ name: k.name, objective: k.objective, startsOn: k.startsOn, endsOn: k.endsOn, budgetNpr: k.budgetNpr })}\n</campaign>\n` +
-      `<opportunity>\n${JSON.stringify(opp ? { title: opp.title, hypothesis: opp.hypothesis, suggestedAction: opp.suggestedAction } : null)}\n</opportunity>\n` +
-      `<approved_facts>\n${JSON.stringify(facts.map((f) => ({ id: f.id, field: f.field, subject: f.subjectName, value: f.value, unit: f.unit })))}\n</approved_facts>`,
+    text: [
+      data('campaign', { name: k.name, objective: k.objective, startsOn: k.startsOn, endsOn: k.endsOn, budgetNpr: k.budgetNpr }),
+      data('opportunity', opp ? { title: opp.title, hypothesis: opp.hypothesis, suggestedAction: opp.suggestedAction } : null),
+      data('approved_facts', facts.map((f) => ({ id: f.id, field: f.field, subject: f.subjectName, value: f.value, unit: f.unit }))),
+    ].join('\n'),
   }];
 }
 
@@ -94,6 +96,12 @@ export async function draftBrief(brandId: string, runId: string, campaignId: str
 }
 
 // ---------- versions
+/** Brief edits, approvals and new versions of one campaign run one at a time: each locks the campaign first. */
+async function lockCampaign(tx: Tx, brandId: string, campaignId: string): Promise<void> {
+  await getCampaign(tx, brandId, campaignId); // 404 for a malformed or another brand's id
+  await tx.select({ id: campaigns.id }).from(campaigns).where(eq(campaigns.id, campaignId)).for('update');
+}
+
 async function insertVersion(tx: Tx, brandId: string, campaignId: string, body: BriefBody, leftOut: LeftOut[]): Promise<Brief> {
   const [last] = await tx.select({ v: campaignBriefs.version }).from(campaignBriefs)
     .where(and(eq(campaignBriefs.brandId, brandId), eq(campaignBriefs.campaignId, campaignId))).orderBy(desc(campaignBriefs.version)).limit(1);
@@ -116,6 +124,7 @@ export async function currentBrief(tx: Tx, brandId: string, campaignId: string):
  * retired (approval invalidated) and its edit stored as a new draft. Citations are checked as for the model.
  */
 export async function editBrief(tx: Tx, brandId: string, campaignId: string, edit: BriefBody, facts: ApprovedFact[]): Promise<Brief> {
+  await lockCampaign(tx, brandId, campaignId);
   const { approved, draft } = await currentBrief(tx, brandId, campaignId);
   const { body, leftOut } = buildBrief({ draft: edit, facts });
   if (draft) {
@@ -133,6 +142,7 @@ export async function editBrief(tx: Tx, brandId: string, campaignId: string, edi
 }
 
 export async function approveBrief(tx: Tx, brandId: string, campaignId: string): Promise<Brief> {
+  await lockCampaign(tx, brandId, campaignId);
   const { draft } = await currentBrief(tx, brandId, campaignId);
   if (!draft) throw new ConflictError('There is no draft to approve; generate or edit one first');
   await tx.update(campaignBriefs).set({ status: 'replaced' })
