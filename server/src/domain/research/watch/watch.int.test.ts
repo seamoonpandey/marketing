@@ -212,6 +212,36 @@ describe('watch run', () => {
     expect(await dueBrands(monday)).not.toContain(brand);
   });
 
+  it('drops a profile price that the entry quote does not show', async () => {
+    const { brand, rival } = await setup(['/pricing']);
+    mockAi.queue({
+      entries: [
+        { kind: 'product', text: 'Classic shawl', price: 'Rs 1,000', quote: 'Classic pashmina shawl Rs 5,000' },
+        { kind: 'product', text: 'Premium shawl', price: 'Rs 12,000', quote: 'Premium pashmina shawl Rs 12,000' },
+      ],
+    });
+    const { runId } = await startRun(brand, 'baseline');
+    await settle(brand, runId);
+    await confirmRun(brand, runId);
+    expect((await settle(brand, runId)).state).toBe('completed');
+    const [profile] = await t.adminQuery(`select profile from competitor_profiles where competitor_id = $1`, [rival.id]);
+    expect(profile.profile.entries.map((e: { price: string | null }) => e.price)).toEqual([null, 'Rs 12,000']);
+  });
+
+  it('goes on to the next page when the model refuses one, and marks the refused page', async () => {
+    const { brand } = await setup();
+    await baseline(brand);
+    pages['/home'] = fixture('home').replace('Free delivery', 'Free gift wrapping and delivery');
+    pages['/pricing'] = fixture('pricing-changed');
+    mockAi.queue(mockAi.refusal, priceAnswer('Classic pashmina shawl Rs 4,500'), { opportunities: [] });
+    const { runId } = await startRun(brand, 'manual');
+    const run = await settle(brand, runId);
+    expect(run.state).toBe('completed');
+    expect(await withBrand(brand, (tx) => listObservations(tx, brand))).toHaveLength(1);
+    const home = (await withBrand(brand, (tx) => listTargets(tx, brand))).find((x) => x.url.endsWith('/home'))!;
+    expect(home.lastError).toMatch(/declined/);
+  });
+
   it('skips a brand with an invalid timezone and still finds the others due', async () => {
     const bad = await t.makeBrand();
     const good = await t.makeBrand();

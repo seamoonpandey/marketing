@@ -13,7 +13,7 @@ import { BudgetError } from '../../../http/errors.ts';
 import { audit } from '../../audit/index.ts';
 import { listCompetitors } from '../../brands/index.ts';
 import { estimateCost, remainingMonthlyCap } from '../../costs/index.ts';
-import { getSource, savePageSource, verifyQuote, FetchError } from '../../sources/index.ts';
+import { getSource, normalizeQuote, savePageSource, verifyQuote, FetchError } from '../../sources/index.ts';
 import { diffText } from '../diff.ts';
 import { addMoney } from './money.ts';
 import {
@@ -125,8 +125,12 @@ export async function extractPage(brandId: string, runId: string, c: Captured): 
     if (c.first) profile = await ask(ProfileAnswer);
     else found = await ask(ObservationAnswer);
   } catch (e) {
-    if (e instanceof BudgetError || (e instanceof AiError && !e.retryable)) return { fatal: (e as Error).message };
-    throw e;
+    if (e instanceof BudgetError) return { fatal: e.message };
+    if (!(e instanceof AiError) || e.retryable) throw e;
+    // The page's own text made the model refuse or answer off-schema: mark this page and go on with the
+    // others. Its old snapshot stays "last", so the change is read again next run.
+    await withBrand(brandId, (tx) => tx.update(watchTargets).set({ lastError: e.message }).where(eq(watchTargets.id, c.targetId)));
+    return { observations: 0, discarded: 0, profileEntries: 0 };
   }
   return withBrand(brandId, async (tx) => {
     let discarded = 0;
@@ -134,7 +138,9 @@ export async function extractPage(brandId: string, runId: string, c: Captured): 
     if (c.first) {
       const entries: ProfileEntry[] = [];
       for (const e of profile!.entries) {
-        if (verifyQuote(text, e.quote)) entries.push({ kind: e.kind, text: e.text, price: e.price ?? null, quote: e.quote, url: c.url, sourceId: c.sourceId! });
+        // A price is kept only when the entry's verified quote shows it.
+        const price = e.price && normalizeQuote(e.quote).includes(normalizeQuote(e.price)) ? e.price : null;
+        if (verifyQuote(text, e.quote)) entries.push({ kind: e.kind, text: e.text, price, quote: e.quote, url: c.url, sourceId: c.sourceId! });
         else discarded++;
       }
       kept = entries.length;
