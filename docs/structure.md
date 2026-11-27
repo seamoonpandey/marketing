@@ -295,3 +295,24 @@ The module registers itself with one line each in `server/src/modules.ts`, `serv
 Studio reads other modules only through `domain/knowledge/index.ts` and `domain/plan/index.ts`.
 
 Ports: domain work uses web 4240 and API 4241; render work needs none; screens use 4340 and 4341; the full-flow test uses 4440 and 4441.
+
+## 10. Approve module (module 5)
+
+Branch `product/approve`, built from `product/studio`. Plan: `docs/superpowers/plans/2026-11-27-approve-module.md`. Design: `docs/superpowers/specs/2026-11-27-approve-design.md`.
+
+Paths tagged **approve**:
+
+| Path | Holds |
+|---|---|
+| `server/src/db/schema/approve.ts` | Approvals, views, settings |
+| `server/src/contracts/approve.ts` | Request and response schemas |
+| `server/src/domain/approve/` | The payload hash, risk and state rules, decisions, the queue, the Studio adapter, routes |
+| `web/src/app/(app)/app/b/[brandId]/approve/**` | Screens |
+| `web/src/components/approve/` | Components |
+| `web/e2e/approve*.spec.ts` | End-to-end tests |
+
+The module registers itself with one line each in `server/src/modules.ts`, `server/src/db/schema/index.ts`, `web/src/nav.ts` and `web/src/app/(app)/app.css`, and adds one grant in `server/src/db/setup.ts`. API paths start `/api/brands/{brandId}/approve/`.
+
+Approve reads Studio only through `domain/approve/studio.ts`. Any module that publishes must call `validApproval` from `domain/approve/index.ts`.
+
+Ports: server work uses web 4540 and API 4541; screens use 4640 and 4641; the full-flow test uses 4740 and 4741.
