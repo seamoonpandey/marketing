@@ -19,6 +19,17 @@
 }
 #apply .frame > .apply__mascot { position: absolute; right: var(--s-6); bottom: var(--s-5); z-index: 2; width: 240px; height: auto; }
 @media (max-width: 1023px) { #apply .frame > .apply__mascot { display: none; } }
+/* the statement (letters-assemble): the line large on the left, the mascot beside it */
+#statement .statement { align-items: start; }
+#statement .mo-la__type { font-size: clamp(48px, 8vw, 120px); max-width: none; }
+#statement .mo-la__sub { color: var(--ink); }
+#statement .statement__mascot { width: 100%; max-width: 520px; height: auto; justify-self: end; }
+/* 640 to 1023: stacked, the mascot's box runs the full row at a set height, the picture centred in it */
+@media (min-width: 640px) and (max-width: 1023px) {
+  #statement .statement__mascot { max-width: none; width: 100%; height: 440px; object-fit: contain; justify-self: stretch; }
+}
+
+@media (max-width: 639px) { #statement .statement__mascot { max-width: none; justify-self: stretch; } }
 /* the close's lockup: under half the wrap (a signature), the full column on a phone */
 .close__lockup > img { display: block; width: 49%; height: auto; }
 @media (max-width: 639px) { .close__lockup > img { width: 100%; } }

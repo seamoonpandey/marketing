@@ -10,7 +10,7 @@ import { Lockup, Mark, Mascot } from '@/components/brand';
          footer footer-statement, rhythm space (the moment's section is the one dark ground),
          buttons arrow, mark ring, ground sage, palette swap-pastels, pairing geist, radius soft
    effect: React Bits Aurora in the hero frame
-   moments: line-carries-colour on #channels */
+   moments: letters-assemble on #statement (line-carries-colour on #channels was re-dealt: it flickered) */
 
 const v = (o: Record<string, string | number>) => o as CSSProperties;
 
@@ -97,7 +97,7 @@ export default function Home() {
       <main id="top">
         <section className="hero hero--centred" data-enter="" aria-labelledby="hero-h">
           <div className="wrap"><div className="hero-text">
-            <Mascot className="hero__mascot" sizes="300px" />
+            <Mascot mood="happy" className="hero__mascot" sizes="300px" />
             <div className="hero__c">
               <a className="pill" href="#apply"><span>Pilot</span><span className="muted">Starts with one brand in Nepal</span></a>
               <h1 id="hero-h">AI marketing team for Nepali brands</h1>
@@ -254,7 +254,19 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="section ground-inverse" id="channels" data-moment="line-carries-colour" data-moment-opts='{"from": "base"}' aria-labelledby="channels-h">
+        <section className="section" id="statement" data-moment="letters-assemble" aria-labelledby="statement-h">
+          <div className="wrap">
+            <div className="grid statement">
+              <div className="span-7">
+                <h2 id="statement-h" className="mo-la__type">Make your brand heard</h2>
+                <p className="mo-la__sub">One brief in the morning becomes a week of posts, each priced before it runs and held for your approval.</p>
+              </div>
+              <Mascot mood="love" className="statement__mascot span-5 start-8" sizes="(max-width: 1023px) 320px, 520px" />
+            </div>
+          </div>
+        </section>
+
+        <section className="section ground-inverse" id="channels" aria-labelledby="channels-h">
           <div className="wrap">
             <div className="grid fill">
               <div className="span-5 stack-5">
@@ -268,7 +280,7 @@ export default function Home() {
                 <p><a className="link" href="#apply">See what the pilot covers</a></p>
               </div>
               <div className="frame frame--fill span-6 start-7" data-visual="">
-                <div className="dg" data-diagram={JSON.stringify(CHANNELS)} />
+                <div className="dg" data-dg-still="" data-diagram={JSON.stringify(CHANNELS)} />
               </div>
             </div>
           </div>
@@ -281,7 +293,7 @@ export default function Home() {
                 <h2 id="questions-h">Questions</h2>
                 <p>Approval, ads, results, data and models.</p>
                 <p><a className="link" href="mailto:hello@prachaar.example">Email us</a></p>
-                <Mascot className="faq__mascot" />
+                <Mascot mood="confused" className="faq__mascot" />
               </div>
               <div className="faq span-6 start-7">
                 {FAQ.map(([q, a]) => (
@@ -336,7 +348,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <Mascot className="apply__mascot" sizes="240px" />
+                <Mascot mood="wink" className="apply__mascot" sizes="240px" />
               </div>
             </div>
           </div>

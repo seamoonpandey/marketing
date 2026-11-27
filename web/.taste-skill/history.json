@@ -1,22 +1,27 @@
 {
-  "palettes": [
-    "swap-pastels",
-    "swap-pastels"
-  ],
-  "types": [
-    "geist",
-    "schibsted"
-  ],
-  "dealt": [
-    "geist",
-    "manrope",
-    "host"
-  ],
-  "moments": [
-    {
-      "id": "line-carries-colour",
-      "at": "2026-11-27T03:22:26.270Z",
-      "seed": "49163223"
-    }
-  ]
+ "palettes": [
+  "swap-pastels",
+  "swap-pastels"
+ ],
+ "types": [
+  "geist",
+  "schibsted"
+ ],
+ "dealt": [
+  "geist",
+  "manrope",
+  "host"
+ ],
+ "moments": [
+  {
+   "id": "line-carries-colour",
+   "at": "2026-11-27T03:22:26.270Z",
+   "seed": "49163223"
+  },
+  {
+   "id": "letters-assemble",
+   "at": "2026-11-27T06:58:41.900Z",
+   "seed": "338c8e85"
+  }
+ ]
 }

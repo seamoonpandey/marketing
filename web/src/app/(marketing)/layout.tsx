@@ -19,7 +19,14 @@ export const metadata: Metadata = {
     images: ['/share.jpg'],
   },
   twitter: { card: 'summary_large_image' },
-  icons: { icon: { url: '/favicon.svg', type: 'image/svg+xml' } },
+  // the mascot's head (public/brand: favicon-32, favicon-64, apple-touch-icon on the mist ground)
+  icons: {
+    icon: [
+      { url: '/brand/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/brand/favicon-64.png', sizes: '64x64', type: 'image/png' },
+    ],
+    apple: '/brand/apple-touch-icon.png',
+  },
   other: { 'site-kind': 'software', 'page-type': 'software' },
 };
 
@@ -76,7 +83,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         <script src="/assets/backgrounds/backgrounds.js" />
         <link rel="modulepreload" href="/assets/moments/moments.js" />
         <link rel="modulepreload" href="/assets/moments/lib.js" />
-        <link rel="modulepreload" href="/assets/moments/line-carries-colour/moment.js" />
+        <link rel="modulepreload" href="/assets/moments/letters-assemble/moment.js" />
       </head>
       <body>
         {children}
