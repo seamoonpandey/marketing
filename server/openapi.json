@@ -3429,6 +3429,19 @@
         ],
         "description": "The most the draft can cost. Show it before starting."
       },
+      "PlanApprove": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "description": "The version of the draft the owner is looking at. The server approves only when it is still the current draft, else 409."
+      },
       "PlanWeekView": {
         "type": "object",
         "properties": {
@@ -8924,6 +8937,16 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanApprove"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -8931,6 +8954,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlanBriefView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -9192,6 +9225,16 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanApprove"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",

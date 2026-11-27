@@ -60,7 +60,10 @@ async function checkRefs(tx: Tx, brandId: string, i: ItemInput) {
 }
 
 /** A change to an approved plan puts it back to draft and records that the approval ended. */
-async function invalidate(tx: Tx, brandId: string, plan: WeekPlan): Promise<void> {
+async function invalidate(tx: Tx, brandId: string, read: WeekPlan): Promise<void> {
+  // Re-read under a lock: an approval committed since `read` must be seen, and none may commit until this change does.
+  const [plan] = await tx.select().from(weekPlans).where(eq(weekPlans.id, read.id)).for('update');
+  if (!plan) throw new NotFoundError('week_plan', read.id);
   if (plan.status === 'replaced') throw new ConflictError('That plan was replaced by a newer version');
   if (plan.status !== 'approved') return;
   const { plan: current } = await currentPlans(tx, brandId, plan.weekStart);
@@ -131,8 +134,13 @@ export const approvalBlocker = (plan: WeekPlan | null, items: PlanItem[], violat
     : !items.length ? 'The plan has no items'
     : violations.find((v) => v.blocking)?.message ?? null;
 
-export async function approveWeek(tx: Tx, brandId: string, weekStart: string, facts: ApprovedFact[]): Promise<WeekPlan> {
+export async function approveWeek(tx: Tx, brandId: string, weekStart: string, facts: ApprovedFact[], version: number): Promise<WeekPlan> {
+  await assertWeekStart(tx, brandId, weekStart);
+  // Item changes lock their plan (invalidate), so the items checked below are the items approved.
+  await tx.select({ id: weekPlans.id }).from(weekPlans).where(and(eq(weekPlans.brandId, brandId), eq(weekPlans.weekStart, weekStart))).for('update');
   const { plan, items, violations } = await getWeek(tx, brandId, weekStart, facts);
+  // Same lock as the item edits: no draft can land between this check and the approval.
+  if (plan && plan.version !== version) throw new ConflictError('This plan changed since you opened it; look at it again before approving');
   if (plan?.status === 'approved') return plan;
   const blocker = approvalBlocker(plan, items, violations);
   if (blocker) throw new ConflictError(`Cannot approve: ${blocker}`);
