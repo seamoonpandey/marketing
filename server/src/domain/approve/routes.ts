@@ -51,7 +51,7 @@ export const routes = createRouter()
       const { brandId, draftId } = c.req.valid('param');
       const view = await withBrand(brandId, async (tx) => {
         const [f, s] = [await approvedFacts(tx, brandId), await routeStudio.reads()];
-        await approve(tx, brandId, { draftId, ...c.req.valid('json') }, f, s);
+        await approve(tx, brandId, { ...c.req.valid('json'), draftId }, f, s);
         return preview(tx, brandId, draftId, f, s, { record: false });
       });
       return c.json(view, 200);
@@ -63,7 +63,7 @@ export const routes = createRouter()
       const { brandId, draftId } = c.req.valid('param');
       const view = await withBrand(brandId, async (tx) => {
         const [f, s] = [await approvedFacts(tx, brandId), await routeStudio.reads()];
-        await reject(tx, brandId, { draftId, ...c.req.valid('json') }, f, s);
+        await reject(tx, brandId, { ...c.req.valid('json'), draftId }, f, s);
         return preview(tx, brandId, draftId, f, s, { record: false });
       });
       return c.json(view, 200);
