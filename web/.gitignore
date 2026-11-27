@@ -45,3 +45,7 @@ next-env.d.ts
 /shots/
 /.taste-skill/gate*
 /.taste-skill/build*.json
+
+# playwright
+/test-results/
+/playwright-report/

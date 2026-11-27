@@ -5,23 +5,29 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "api:types": "openapi-typescript ../server/openapi.json -o src/lib/api/schema.d.ts",
+    "e2e": "playwright test"
   },
   "dependencies": {
+    "@tanstack/react-query": "5.108.4",
     "animejs": "^4.5.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.80.0",
     "motion": "^14.14.0",
     "next": "16.4.6",
+    "openapi-fetch": "0.17.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "tailwind-merge": "^3.7.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.65.1",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "openapi-typescript": "7.13.0",
     "tailwindcss": "4.3.3",
     "typescript": "^5"
   },
