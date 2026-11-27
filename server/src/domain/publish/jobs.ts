@@ -5,6 +5,7 @@ import { publishChannels, publishJobs } from '../../db/schema/publish.ts';
 import type { Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
+import { safeLink } from './channels.ts';
 import { isUuid } from './reads.ts';
 import { nextState, type JobState, type Outcome } from './state.ts';
 
@@ -50,7 +51,7 @@ export async function applyOutcome(
     retryable: n.retryable ?? false,
     nextAttemptAt: n.retryInSeconds === undefined ? null : new Date(opts.now.getTime() + n.retryInSeconds * 1000),
   };
-  if (n.published) Object.assign(set, { externalId: n.published.externalId, externalUrl: n.published.url, manual: n.published.manual, publishedAt: opts.now });
+  if (n.published) Object.assign(set, { externalId: n.published.externalId, externalUrl: safeLink(n.published.url), manual: n.published.manual, publishedAt: opts.now });
   if (o.type === 'reschedule') set.scheduledAt = o.at;
   const where: SQL[] = [eq(publishJobs.id, job.id), eq(publishJobs.brandId, brandId), eq(publishJobs.state, job.state)];
   if (opts.claim) where.push(eq(publishJobs.workflowId, opts.claim));

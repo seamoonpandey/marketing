@@ -25,6 +25,14 @@ export function httpUrl(s: string, what = 'The link'): string {
   return u.toString();
 }
 
+/** The link if it is a plain http or https URL, else null. For links a connector answers. */
+export function safeLink(s: string): string | null {
+  try {
+    return httpUrl(s);
+  } catch {
+    return null;
+  }
+}
 
 export async function listChannels(tx: Tx, brandId: string): Promise<Channel[]> {
   return tx.select().from(publishChannels).where(eq(publishChannels.brandId, brandId)).orderBy(asc(publishChannels.platform), asc(publishChannels.accountName));

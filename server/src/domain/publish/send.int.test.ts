@@ -3,7 +3,7 @@ import { launchTestWorkflows, testDb, type TestDb } from '../../../test/helpers.
 import { withBrand } from '../../db/tenant.ts';
 import { startSend } from '../../workflows/publish-run.ts';
 import { createChannel, updateChannel } from './channels.ts';
-import { MockConnector, mockConnector } from './connectors/index.ts';
+import { ConnectorError, MockConnector, mockConnector, type Connector } from './connectors/index.ts';
 import { fakeReads } from './fake-reads.ts';
 import { getJob } from './jobs.ts';
 import { testReads, type DraftForPublish } from './reads.ts';
@@ -203,5 +203,21 @@ describe('the scheduler', () => {
     } finally {
       delete testReads.current;
     }
+  });
+});
+
+describe('the post link a connector answers', () => {
+  it('is stored only when it is a plain http or https URL, on a send and on a reconcile', async () => {
+    const bad: Connector = {
+      id: 'mock', validateCredentials: async () => true, healthCheck: async () => true, listCapabilities: mock.listCapabilities,
+      publish: async () => ({ status: 'published', externalId: 'x1', url: 'javascript:alert(1)' }),
+      reconcile: async () => ({ found: true, externalId: 'x2', url: 'javascript:alert(2)' }),
+    };
+    const a = await setup();
+    expect(await sendJob(a.brand, a.job.id, { reads: fake.reads, connector: bad, now: () => min(1) })).toMatchObject({ state: 'published', externalId: 'x1', externalUrl: null });
+    const b = await setup();
+    const timesOut: Connector = { ...bad, publish: async () => { throw new ConnectorError('timeout'); } };
+    expect(await sendJob(b.brand, b.job.id, { reads: fake.reads, connector: timesOut, now: () => min(1), sleep: async () => {} }))
+      .toMatchObject({ state: 'published', externalId: 'x2', externalUrl: null });
   });
 });
