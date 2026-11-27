@@ -12,8 +12,20 @@ One git repo of independent projects. Each top-level project has its own `packag
 ## Brand
 
 - Name: Prachaar (Nepali for publicity; the owner's choice). Buyer: brands in Nepal. Main action: "Join the pilot".
-- Mark: the ring (`web/public/favicon.svg`). Palette: ground `#c3d7e5`, surface `#d0e0eb`, ink `#141414`, muted `#4a5068`, accent `#0f5257`; dark band `#141414` with `#c3d7e5` ink. Type: Geist and Geist Mono. Radius soft. Never violet.
+- Positioning: a marketing team that runs on AI, sold on better marketing, saved time and control, not on the technology.
+- Mark: the ring (`web/public/favicon.svg`). Type: Geist and Geist Mono. Radius soft. Never violet.
 - Copy: plain, category first, no invented proof, prices only from the brief.
+
+## Colour and themes
+
+`web/public/theme.css` is the only place colours are defined: the palette (`--pal-*`), the themes (`--theme-*`, one `[data-theme]` block each) and the bridges to the kit (`--p-*`) and to Tailwind (`src/app/(marketing)/islands.css`: `bg-action`, `text-ink`, `from-highlight`; its zinc, red and other stock hues are mapped to the theme too). Components use `--theme-*` or those Tailwind names, never a hex. The contrast rules every theme keeps are written at the top of `theme.css`.
+
+- The site wears the theme named in `web/src/theme.ts` (`THEME`, default `pastel`); that one word switches the colours, the kit's lit ground and the browser theme-color.
+- `pastel` (default): mist `#c3d7e5` ground, `#d0e0eb` surface, ink `#141414`, slate `#4a5068` for labels, teal `#0f5257` for the brand, buttons and links, sky `#5f93cc` as decoration, the dark band `#141414` with mist ink and a mist action.
+- `heritage`: porcelain `#f5efe5` ground, espresso `#24201d` ink, terracotta `#b94e2f` brand, `#ab482b` for buttons and links, champagne `#c6a46a` as decoration and the dark band's action, olive for success, raspberry `#9f1239` for errors.
+- `vermilion`: ivory, charcoal, vermilion `#e85d27` brand, `#c24515` for buttons and links, marigold decoration.
+- Add a theme: one `[data-theme="<name>"]` block of every `--theme-*` token in `theme.css`, an entry in `web/src/theme.ts`, check its contrast pairs, and capture its hero still into `web/public/themes/<name>/hero.jpg` (the Aurora alone on the theme's ground, 1280x420).
+- Nepali text: none of the current faces carry Devanagari; add a Devanagari face (for example Noto Sans Devanagari) to the font stacks before the product shows Nepali copy.
 
 ## The landing page
 

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import KitBoot from '@/components/kit-boot';
+import { THEME, THEMES } from '@/theme';
 import './islands.css';
 
 /* The marketing root layout: the taste kit's system (public/assets) on a static page. The product app
@@ -26,7 +27,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#c3d7e5',
+  themeColor: THEMES[THEME].themeColor,
 };
 
 const KIT_CSS = [
@@ -47,19 +48,6 @@ const PAGE_CSS = [
   '/landing.css',
 ];
 
-// the palette and type exactly as start.mjs dealt them (swap-pastels, geist); keep after layout.css
-const ROOT = `:root {
-  --p-bg: #c3d7e5; --p-surface: #d0e0eb; --p-ink: #141414; --p-muted: #4a5068;
-  --p-accent: #0f5257; --p-accent-ink: #ffffff; --p-action: #0f5257; --p-action-ink: #ffffff;
-  --p-inv-bg: #141414; --p-inv-surface: #1e1f20; --p-inv-ink: #c3d7e5; --p-inv-muted: #808b94;
-  --p-inv-accent: #c3d7e5; --p-inv-accent-ink: #141414; --p-inv-action: #c3d7e5; --p-inv-action-ink: #141414;
-  --font-display: "Geist", system-ui, sans-serif;
-  --font-text: "Geist", system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  --display-weight: 500;
-  --display-tracking: -0.035em;
-  --display-tracking-xl: -0.045em;
-}`;
 
 // the hero's words wait for motion.js (700 ms fallback); the moments' guard (2.5 s fallback)
 const HEAD_JS = `document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700);document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500);`;
@@ -70,7 +58,8 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       lang="en"
       data-type="software"
       data-radius="soft"
-      data-ground="sage"
+      data-theme={THEME}
+      data-ground={THEMES[THEME].ground}
       data-buttons="arrow"
       data-motion=""
       suppressHydrationWarning
@@ -80,7 +69,8 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..500&display=swap" rel="stylesheet" />
         {KIT_CSS.map((href) => <link key={href} rel="stylesheet" href={href} />)}
-        <style dangerouslySetInnerHTML={{ __html: ROOT }} />
+        {/* colours and type: public/theme.css (palette, themes, the kit's --p-* bridge) */}
+        <link rel="stylesheet" href="/theme.css" />
         {PAGE_CSS.map((href) => <link key={href} rel="stylesheet" href={href} />)}
         <script dangerouslySetInnerHTML={{ __html: HEAD_JS }} />
         <script src="/assets/backgrounds/backgrounds.js" />

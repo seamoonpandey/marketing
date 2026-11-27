@@ -112,9 +112,9 @@ export default function Home() {
                 <div className="d-win__body">
                   <div className="inbox">
                     <div className="q">Search the queue</div>
-                    <div className="t is-on"><i style={{ background: '#c3d7e5' }}>CW</i><b>Copywriter</b><time>09:12</time><span>Dashain offer, three posts</span></div>
-                    <div className="t"><i style={{ background: '#9fd3b5' }}>CM</i><b>Community</b><time>09:05</time><span>12 comments to answer</span></div>
-                    <div className="t"><i style={{ background: '#f3c98b' }}>AN</i><b>Analyst</b><time>08:30</time><span>Weekly report sent</span></div>
+                    <div className="t is-on"><i style={{ background: 'var(--theme-bg)' }}>CW</i><b>Copywriter</b><time>09:12</time><span>Dashain offer, three posts</span></div>
+                    <div className="t"><i style={{ background: 'var(--theme-success-bg)' }}>CM</i><b>Community</b><time>09:05</time><span>12 comments to answer</span></div>
+                    <div className="t"><i style={{ background: 'var(--theme-highlight)' }}>AN</i><b>Analyst</b><time>08:30</time><span>Weekly report sent</span></div>
                   </div>
                   <div className="convo">
                     <div className="d-chat" data-ly-steps="900">
@@ -224,9 +224,9 @@ export default function Home() {
                     totalBudget={25000}
                     spentAmount={9240}
                     breakdown={[
-                      { label: 'Video', amount: 5600, color: '#0f5257' },
-                      { label: 'Images', amount: 2410, color: '#5f93cc' },
-                      { label: 'Copy', amount: 1230, color: '#9fb8c8' },
+                      { label: 'Video', amount: 5600, color: 'var(--theme-brand)' },
+                      { label: 'Images', amount: 2410, color: 'var(--theme-highlight)' },
+                      { label: 'Copy', amount: 1230, color: 'var(--theme-muted)' },
                     ]}
                   />
                 </div></div></div>

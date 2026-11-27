@@ -1,9 +1,11 @@
 {
   "palettes": [
+    "swap-pastels",
     "swap-pastels"
   ],
   "types": [
-    "geist"
+    "geist",
+    "schibsted"
   ],
   "dealt": [
     "geist",

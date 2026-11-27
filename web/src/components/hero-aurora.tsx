@@ -3,26 +3,39 @@
 import { useEffect, useState } from 'react';
 import Aurora from '@/components/Aurora';
 
-/* The hero frame's one effect (React Bits Aurora) in the palette's teal and sky. It moves for more than
-   5 s, so it carries the kit's pause disc (WCAG 2.2.2). On a phone it is drawn once and held, as the kit
-   holds every ground there; reduced motion is handled inside Aurora. */
+const STOPS = ['--theme-glow-1', '--theme-glow-2', '--theme-glow-3'];
+
+/* The hero frame's one effect (React Bits Aurora), in the active theme's glow colours (public/theme.css),
+   read again when <html data-theme> changes. It moves for more than 5 s, so it carries the kit's pause
+   disc (WCAG 2.2.2). On a phone it is drawn once and held, as the kit holds every ground there; reduced
+   motion is handled inside Aurora. */
 export default function HeroAurora() {
   const [paused, setPaused] = useState(false);
   const [phone, setPhone] = useState(false);
+  const [stops, setStops] = useState<string[] | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 639px)');
-    const on = () => setPhone(mq.matches);
-    on();
-    mq.addEventListener('change', on);
-    return () => mq.removeEventListener('change', on);
+    const onPhone = () => setPhone(mq.matches);
+    onPhone();
+    mq.addEventListener('change', onPhone);
+    const root = document.documentElement;
+    const read = () => {
+      const css = getComputedStyle(root);
+      setStops(STOPS.map((v) => css.getPropertyValue(v).trim()));
+    };
+    read();
+    const themeWatch = new MutationObserver(read);
+    themeWatch.observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => { mq.removeEventListener('change', onPhone); themeWatch.disconnect(); };
   }, []);
 
+  if (!stops) return null;
   return (
     <>
       <Aurora
         className="hero__aurora"
-        colorStops={['#0f5257', '#5f93cc', '#c3d7e5']}
+        colorStops={stops}
         amplitude={0.9}
         blend={0.55}
         speed={0.6}

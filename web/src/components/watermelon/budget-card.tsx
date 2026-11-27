@@ -47,7 +47,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ label, totalBudget, spen
                 initial={{ width: 0 }}
                 animate={{ width: `${spentPercentage}%` }}
                 transition={smoothTransition}
-                className="h-full bg-linear-to-r from-[#5f93cc] to-[#0f5257]"
+                className="h-full bg-linear-to-r from-highlight to-brand"
               />
             </div>
             <div className="flex items-end justify-between pt-1">

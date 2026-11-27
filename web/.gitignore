@@ -44,3 +44,4 @@ next-env.d.ts
 /.taste-skill/chrome-*
 /shots/
 /.taste-skill/gate*
+/.taste-skill/build*.json

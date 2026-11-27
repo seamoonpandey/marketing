@@ -1,0 +1,161 @@
+/* Prachaar themes. Loaded after the taste kit's stylesheets (they read --p-*), before landing.css.
+
+   Three layers, so a new colour theme is one block, never a hunt through components:
+   1. palette (--pal-*): every colour the brand owns, named by what it is. Nothing else reads these.
+   2. theme (--theme-*): what each colour does. A theme is one [data-theme="<name>"] block; the default
+      ("pastel") also sits on :root; "heritage" and "vermilion" are ready to switch on. Switch with <html data-theme="..."> or on any element for a themed region.
+      Also set per theme: <html data-ground> (the kit's lit ground: sand suits warm themes) and the
+      hero still (--theme-hero-still, made from the theme's own glow).
+   3. bridges: the kit reads --p-* (below); Tailwind reads --color-* (src/app/(marketing)/islands.css).
+
+   Every theme keeps these (WCAG 2.2 AA; the taste gate checks the page):
+   ink on bg 7:1 · muted on bg 4.5:1 · action-ink on action 4.5:1 · action on bg 4.5:1 (it colours links) ·
+   brand on bg 3:1 (the mark, the focus ring, large display) · inv-ink on inv-bg 7:1 ·
+   inv-action on inv-bg 4.5:1 · danger on bg 4.5:1 and a hue well away from the brand.
+   highlight is decoration only (fills, bars, the hero glow), never text. Status is never colour alone:
+   success and danger always come with a word or an icon. Proportions: bg about 60%, ink and neutrals
+   30%, brand and action under 10% (the kit holds the accent under 3% outside buttons), highlight a trace. */
+
+/* 1. palette */
+:root {
+  /* Pastel: the taste kit's dealt "swap-pastels" palette, the brand's default */
+  --pal-mist-200: #c3d7e5;      /* the cool putty ground */
+  --pal-mist-100: #d0e0eb;
+  --pal-teal-800: #0f5257;      /* the one accent: white 8.9:1 on it, 6.0:1 on the ground */
+  --pal-sky-500: #5f93cc;       /* decoration: bars and the hero glow */
+  --pal-ink-950: #141414;
+  --pal-slate-600: #4a5068;     /* labels and meta, 5.37:1 on the ground */
+  --pal-ink-900: #1e1f20;
+  --pal-slate-400: #808b94;
+  --pal-mint-200: #9fd3b5;
+  --pal-green-800: #1e5b3f;
+
+  /* Heritage: earthy and restrained (an optional theme) */
+  --pal-terracotta-500: #b94e2f; /* the signature colour */
+  --pal-terracotta-600: #ab482b; /* the same hue deepened for buttons and links: white 5.69:1, porcelain 4.97:1 */
+  --pal-champagne-400: #c6a46a;  /* craft and refinement: decoration, and the action on the dark band (6.86:1) */
+  --pal-porcelain-50: #f5efe5;
+  --pal-porcelain-100: #ede5d8;
+  --pal-espresso-900: #24201d;
+  --pal-espresso-800: #312c28;
+  --pal-taupe-600: #665e56;
+  --pal-taupe-400: #a39b92;
+  --pal-olive-500: #75816b;      /* growth: success icons and marks */
+  --pal-olive-700: #4f5a46;      /* success text, 6.37:1 */
+  --pal-olive-100: #e3e5dc;
+  --pal-raspberry-800: #9f1239;  /* errors: a hue far from terracotta, 7.01:1 */
+
+  /* Vermilion: brighter and warmer (an optional theme) */
+  --pal-vermilion-500: #e85d27;
+  --pal-vermilion-700: #c24515;  /* white 5.05:1, ivory 4.76:1 */
+  --pal-marigold-400: #f4b942;   /* sayapatri, the Tihar garland flower */
+  --pal-ivory-50: #fff7ed;
+  --pal-ivory-100: #f3ebe1;
+  --pal-charcoal-900: #24201e;
+  --pal-charcoal-800: #312c2a;
+  --pal-stone-600: #69635f;
+  --pal-stone-400: #a49e97;
+  --pal-sage-100: #d9e9df;
+  --pal-sage-700: #2e6b4f;
+
+  --pal-white: #ffffff;
+}
+
+/* 2. themes */
+:root, [data-theme="pastel"] {
+  --theme-bg: var(--pal-mist-200);
+  --theme-surface: var(--pal-mist-100);
+  --theme-ink: var(--pal-ink-950);
+  --theme-muted: var(--pal-slate-600);
+  --theme-brand: var(--pal-teal-800);
+  --theme-brand-ink: var(--pal-white);
+  --theme-action: var(--pal-teal-800);
+  --theme-action-ink: var(--pal-white);
+  --theme-highlight: var(--pal-sky-500);
+  --theme-success: var(--pal-green-800);
+  --theme-success-mark: var(--pal-green-800);
+  --theme-success-bg: var(--pal-mint-200);
+  --theme-danger: var(--pal-raspberry-800);
+  --theme-inv-bg: var(--pal-ink-950);
+  --theme-inv-surface: var(--pal-ink-900);
+  --theme-inv-ink: var(--pal-mist-200);
+  --theme-inv-muted: var(--pal-slate-400);
+  --theme-inv-action: var(--pal-mist-200);
+  --theme-inv-action-ink: var(--pal-ink-950);
+  --theme-glow-1: var(--pal-teal-800);
+  --theme-glow-2: var(--pal-sky-500);
+  --theme-glow-3: var(--pal-mist-200);
+  --theme-hero-still: url("/themes/pastel/hero.jpg");
+}
+
+[data-theme="heritage"] {
+  --theme-bg: var(--pal-porcelain-50);
+  --theme-surface: var(--pal-porcelain-100);
+  --theme-ink: var(--pal-espresso-900);
+  --theme-muted: var(--pal-taupe-600);
+  --theme-brand: var(--pal-terracotta-500);
+  --theme-brand-ink: var(--pal-white);
+  --theme-action: var(--pal-terracotta-600);
+  --theme-action-ink: var(--pal-white);
+  --theme-highlight: var(--pal-champagne-400);
+  --theme-success: var(--pal-olive-700);
+  --theme-success-mark: var(--pal-olive-500);
+  --theme-success-bg: var(--pal-olive-100);
+  --theme-danger: var(--pal-raspberry-800);
+  --theme-inv-bg: var(--pal-espresso-900);
+  --theme-inv-surface: var(--pal-espresso-800);
+  --theme-inv-ink: var(--pal-porcelain-50);
+  --theme-inv-muted: var(--pal-taupe-400);
+  --theme-inv-action: var(--pal-champagne-400);
+  --theme-inv-action-ink: var(--pal-espresso-900);
+  --theme-glow-1: var(--pal-terracotta-500);
+  --theme-glow-2: var(--pal-champagne-400);
+  --theme-glow-3: var(--pal-porcelain-50);
+  --theme-hero-still: url("/themes/heritage/hero.jpg");
+}
+
+[data-theme="vermilion"] {
+  --theme-bg: var(--pal-ivory-50);
+  --theme-surface: var(--pal-ivory-100);
+  --theme-ink: var(--pal-charcoal-900);
+  --theme-muted: var(--pal-stone-600);
+  --theme-brand: var(--pal-vermilion-500);
+  --theme-brand-ink: var(--pal-charcoal-900);
+  --theme-action: var(--pal-vermilion-700);
+  --theme-action-ink: var(--pal-white);
+  --theme-highlight: var(--pal-marigold-400);
+  --theme-success: var(--pal-sage-700);
+  --theme-success-mark: var(--pal-sage-700);
+  --theme-success-bg: var(--pal-sage-100);
+  --theme-danger: var(--pal-raspberry-800);
+  --theme-inv-bg: var(--pal-charcoal-900);
+  --theme-inv-surface: var(--pal-charcoal-800);
+  --theme-inv-ink: var(--pal-ivory-50);
+  --theme-inv-muted: var(--pal-stone-400);
+  --theme-inv-action: var(--pal-vermilion-500);
+  --theme-inv-action-ink: var(--pal-charcoal-900);
+  --theme-glow-1: var(--pal-vermilion-500);
+  --theme-glow-2: var(--pal-marigold-400);
+  --theme-glow-3: var(--pal-ivory-50);
+  --theme-hero-still: url("/themes/vermilion/hero.jpg");
+}
+
+/* 3. the kit's tokens, from the theme (keep after layout.css: it resets --ly-scale) */
+:root, [data-theme] {
+  --p-bg: var(--theme-bg); --p-surface: var(--theme-surface); --p-ink: var(--theme-ink); --p-muted: var(--theme-muted);
+  --p-accent: var(--theme-brand); --p-accent-ink: var(--theme-brand-ink);
+  --p-action: var(--theme-action); --p-action-ink: var(--theme-action-ink);
+  --p-inv-bg: var(--theme-inv-bg); --p-inv-surface: var(--theme-inv-surface); --p-inv-ink: var(--theme-inv-ink); --p-inv-muted: var(--theme-inv-muted);
+  --p-inv-accent: var(--theme-inv-action); --p-inv-accent-ink: var(--theme-inv-action-ink);
+  --p-inv-action: var(--theme-inv-action); --p-inv-action-ink: var(--theme-inv-action-ink);
+}
+
+/* type: the kit's "geist" pairing for software (start.mjs); a theme may override these */
+:root {
+  --font-display: "Geist", system-ui, sans-serif;
+  --font-text: "Geist", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 500;
+  --display-tracking: -0.035em;
+  --display-tracking-xl: -0.045em;
+}
