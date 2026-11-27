@@ -71,7 +71,8 @@ export async function buildView(tx: Tx, brandId: string, d: Draft, facts: Approv
   return {
     id: d.id, planItemId: d.planItemId, kind: d.kind, status: d.status, currentVersion: d.currentVersion, readyVersion: d.readyVersion, readyAt: d.readyAt, createdAt: d.createdAt,
     channel, day: item?.day ?? d.createdAt.toISOString().slice(0, 10), pillar: item?.pillar ?? null, campaignId: item?.campaignId ?? null,
-    content: v.content, leftOut: v.leftOut, findings, renders: v.renders, factIds: [...cited], assetIds: assetIdsOf(v.content),
+    content: v.content, leftOut: v.leftOut, findings, renders: v.renders, factIds: [...cited],
+    assetIds: [...new Set([...assetIdsOf(v.content), ...v.renders.flatMap((r) => (r.logoAssetId ? [r.logoAssetId] : []))])],
     version: { version: v.version, origin: v.origin, createdAt: v.createdAt }, versions: all,
     planItem: item && { id: item.id, day: item.day, channel: item.channel, format: item.format, idea: item.idea, cta: item.cta, kind: kindFor(item.format) },
     planApproved, languages: env.languages, missingLanguages: env.languages.filter((l) => !v.content.copies.some((c) => c.language === l)),

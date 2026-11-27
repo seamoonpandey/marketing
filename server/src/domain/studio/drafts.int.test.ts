@@ -1,8 +1,10 @@
+import { randomUUID } from 'node:crypto';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { fakeRenderer, studioBrand } from '../../../test/fixtures/studio/setup.ts';
 import { launchTestWorkflows, testDb, type TestDb } from '../../../test/helpers.ts';
 import { mockAi } from '../../ai/index.ts';
 import { withBrand } from '../../db/tenant.ts';
+import { objectKey, putObject } from '../../storage/index.ts';
 import { editItem } from '../plan/index.ts';
 import { editDraft, getDraft, listDrafts, markReady } from './drafts.ts';
 import { estimateDrafts, retryRun, startGenerate, startRender, getRun } from './runs.ts';
@@ -211,6 +213,34 @@ describe('render, ready and edit', () => {
     await expect(edit({ copies: [{ language: 'fr', sentences: [], hashtags: [], cta: 'x' }] })).rejects.toMatchObject({ status: 400 });
     await expect(edit({ scenes: [{ onScreenText: 'x', voiceover: '', shot: '', seconds: 2 }] })).rejects.toMatchObject({ status: 400 });
     expect((await read(s, id)).currentVersion).toBe(1);
+  });
+
+  const addAsset = async (brand: string, kind: 'logo' | 'photo', rights: Record<string, string>) => {
+    const key = objectKey(t.tenantId, brand, 'upload', randomUUID(), 'png');
+    await putObject(key, new Uint8Array([137, 80, 78, 71]), 'image/png');
+    const [src] = await t.adminQuery(`insert into sources (tenant_id, brand_id, kind, uri, mime, checksum, object_key, trust, meta)
+      values ($1, $2, 'upload', 'upload:x', 'image/png', 'x', $3, 'owner', '{"status":"ready"}') returning id`, [t.tenantId, brand, key]);
+    const [a] = await t.adminQuery(`insert into assets (tenant_id, brand_id, source_id, kind, rights) values ($1, $2, $3, $4, $5) returning id`, [t.tenantId, brand, src.id, kind, JSON.stringify(rights)]);
+    return a.id as string;
+  };
+
+  it('a logo drawn into the renders blocks ready (no_rights) once its licence is removed', async () => {
+    const { s, id } = await carousel();
+    const logo = await addAsset(s.brand, 'logo', { licence: 'Owned by the brand' });
+    await render(s, id);
+    expect((await read(s, id)).canMarkReady).toBe(true);
+    await t.adminQuery(`update assets set rights = '{}' where id = $1`, [logo]);
+    const v = await read(s, id);
+    expect(v.findings).toContainEqual(expect.objectContaining({ check: 'no_rights', blocking: true }));
+    expect(v.assetIds).toContain(logo);
+    expect(v.canMarkReady).toBe(false);
+  });
+
+  it('a photo whose licence expiry cannot be read counts as expired', async () => {
+    const { s, id } = await carousel();
+    const photo = await addAsset(s.brand, 'photo', { licence: 'Stock', expiresAt: '31/12/2020' });
+    await withBrand(s.brand, (tx) => editDraft(tx, s.brand, id, { slides: [{ headline: 'a', photoAssetId: photo }, { headline: 'b' }] }, s.facts));
+    expect((await read(s, id)).findings).toContainEqual(expect.objectContaining({ check: 'no_rights', blocking: true }));
   });
 
   it('a video draft records RenderUnavailable as a plain note and keeps the images', async () => {

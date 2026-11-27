@@ -29,7 +29,10 @@ export async function renderDraft(brandId: string, runId: string, draftId: strin
       const photo = photoAssetId ? await assetBytes(tx, brandId, env, photoAssetId) : undefined; // an asset without rights is left off, and the draft is blocked by no_rights
       slides.push({ template: v!.content.template, headline: c.headline, ...(c.subline ? { subline: c.subline } : {}), ...(c.badge ? { badge: c.badge } : {}), ...(photo ? { photo } : {}) });
     }
-    return { d, version: v!.version, kind: d.kind, ratios: v!.content.ratios, seconds: v!.content.scenes.map((s) => s.seconds), slides, kit: { ...env.kit, ...(logo ? { logo } : {}) }, tenantId: await tenantOf(tx) };
+    return {
+      d, version: v!.version, kind: d.kind, ratios: v!.content.ratios, seconds: v!.content.scenes.map((s) => s.seconds), slides,
+      kit: { ...env.kit, ...(logo ? { logo: logo.bytes } : {}) }, used: logo ? { logoAssetId: logo.assetId } : {}, tenantId: await tenantOf(tx),
+    };
   });
   if (!plan.slides.length) return { rendered: 0 };
 
@@ -40,7 +43,7 @@ export async function renderDraft(brandId: string, runId: string, draftId: strin
   const store = async (body: Uint8Array, ext: string, type: string) => {
     const key = objectKey(plan.tenantId, brandId, 'asset', randomUUID(), ext);
     await putObject(key, body, type);
-    return { key, sha256: sha256(body) };
+    return { key, sha256: sha256(body), ...plan.used };
   };
   for (const ratio of plan.ratios)
     for (const [index, slide] of plan.slides.entries()) {

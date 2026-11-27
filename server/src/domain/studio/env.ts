@@ -23,8 +23,8 @@ export async function loadEnv(tx: Tx, brandId: string, now = new Date()): Promis
   const accent = role('accent');
   const assets = await listAssets(tx, brandId);
   const live = (a: (typeof assets)[number]) => {
-    const exp = a.rights.expiresAt ? Date.parse(a.rights.expiresAt) : NaN;
-    return a.licensed && a.kind !== 'font' && !(!Number.isNaN(exp) && exp < now.getTime());
+    const exp = a.rights.expiresAt?.trim() ? Date.parse(a.rights.expiresAt) : Infinity; // an expiry that cannot be read (NaN) counts as passed
+    return a.licensed && a.kind !== 'font' && exp >= now.getTime();
   };
   return {
     languages: [...new Set(brand.languages.map(normLang))],
@@ -42,8 +42,8 @@ export async function assetBytes(tx: Tx, brandId: string, env: Env, assetId: str
 }
 
 /** The first usable logo, or undefined: a missing or unreadable logo leaves the render without one. */
-export async function loadLogo(tx: Tx, brandId: string, env: Env): Promise<Uint8Array | undefined> {
+export async function loadLogo(tx: Tx, brandId: string, env: Env): Promise<{ assetId: string; bytes: Uint8Array } | undefined> {
   for (const [id, a] of env.usable)
-    if (a.kind === 'logo') return assetBytes(tx, brandId, env, id).catch(() => undefined);
+    if (a.kind === 'logo') return assetBytes(tx, brandId, env, id).then((bytes) => bytes && { assetId: id, bytes }).catch(() => undefined);
   return undefined;
 }

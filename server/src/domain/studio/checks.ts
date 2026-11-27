@@ -120,6 +120,8 @@ export function checkDraft(i: {
   c.slides.forEach((s, n) => {
     if (s.photoAssetId && !i.assetsWithRights.has(s.photoAssetId)) add('no_rights', true, `slide ${n + 1}`, 'The photo has no licence recorded, or its licence has expired');
   });
+  for (const id of new Set(i.renders.flatMap((r) => (r.logoAssetId ? [r.logoAssetId] : []))))
+    if (!i.assetsWithRights.has(id)) add('no_rights', true, 'renders', 'The logo in the renders has no licence recorded, or its licence has expired');
 
   for (const r of i.renders)
     if (r.overflow) add('text_overflow', true, `${r.type === 'video' ? 'video' : `card ${r.index + 1}`} ${r.ratio}`, 'The text does not fit its template at this size');
