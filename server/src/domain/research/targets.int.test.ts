@@ -32,6 +32,19 @@ describe('watch list', () => {
     ).rejects.toThrow(/at most 10 competitors/);
   });
 
+  it('keeps both limits when the requests arrive at the same time', async () => {
+    const brand = await t.makeBrand();
+    const add = (competitorId: string, url: string) => withBrand(brand, (tx) => addTarget(tx, brand, { competitorId, url }));
+    const one = await rival(brand, 'R0');
+    await Promise.allSettled(Array.from({ length: 8 }, (_, i) => add(one.id, `https://r0.example/p${i}`)));
+    expect(await withBrand(brand, (tx) => listTargets(tx, brand, one.id))).toHaveLength(5);
+
+    const others = [];
+    for (let i = 1; i < 13; i++) others.push(await rival(brand, `R${i}`));
+    await Promise.allSettled(others.map((c, i) => add(c.id, `https://r${i + 1}.example/`)));
+    expect(new Set((await withBrand(brand, (tx) => listTargets(tx, brand))).map((x) => x.competitorId)).size).toBe(10);
+  });
+
   it('refuses the brand\'s own site and the same URL twice', async () => {
     const brand = await t.makeBrand();
     await t.adminQuery(`update brands set website = 'https://www.own.example' where id = $1`, [brand]);

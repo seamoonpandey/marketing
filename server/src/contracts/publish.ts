@@ -1,6 +1,6 @@
-// Owned by the publish branch (docs/structure.md). Request and response schemas of
-// /api/brands/{brandId}/publish/…
+// Request and response schemas of /api/brands/{brandId}/publish/…
 import { z } from '@hono/zod-openapi';
+import { orNull } from './common.ts';
 import { channelStatuses, jobStates } from '../db/schema/publish.ts';
 import { platforms } from '../domain/publish/capabilities.ts';
 
@@ -67,7 +67,7 @@ export const JobChannel = z
 export const Job = z
   .object({
     id: z.string(), draftId: z.string(), draftVersion: z.number().int(), payloadHash: z.string(),
-    channelId: z.string(), channel: z.union([JobChannel, z.null()]).openapi({ description: 'null when the channel was removed.' }),
+    channelId: z.string(), channel: orNull(JobChannel).openapi({ description: 'null when the channel was removed.' }),
     kind: z.string().nullable().openapi({ description: 'The draft\'s kind (post, static, carousel, video); null when Studio no longer has the draft.' }),
     excerpt: z.string().nullable().openapi({ description: 'The start of the draft\'s first caption, up to 140 characters.' }),
     scheduledAt: iso, dueAt: iso.openapi({ description: 'When it is next sent: the retry time after a rate limit or server error, else scheduledAt.' }),
@@ -101,7 +101,7 @@ export const ResolveUnknown = z
 export const HistoryEvent = z
   .object({
     at: iso, action: z.string().openapi({ example: 'publish.job.blocked' }), result: z.enum(['ok', 'denied', 'failed']),
-    from: z.union([JobState, z.null()]), to: z.union([JobState, z.null()]), note: z.string().nullable(),
+    from: orNull(JobState), to: orNull(JobState), note: z.string().nullable(),
   })
   .openapi('PublishHistoryEvent');
 export const PackageCaption = z

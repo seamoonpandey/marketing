@@ -3,7 +3,7 @@ import type { ApprovedFact } from '../../contracts/common.ts';
 import {
   studioDrafts, studioRuns, studioVersions, type DraftContent, type DraftKind, type LeftOut, type RenderRecord,
 } from '../../db/schema/studio.ts';
-import type { Tx } from '../../db/tenant.ts';
+import { isUuid, type Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { getItem, getPlan } from '../plan/index.ts';
@@ -13,7 +13,6 @@ import { loadEnv, normLang, type Env } from './env.ts';
 
 export type Draft = typeof studioDrafts.$inferSelect;
 export type StudioRunRow = typeof studioRuns.$inferSelect;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type DraftView = {
   id: string; planItemId: string; kind: DraftKind; status: 'draft' | 'ready'; currentVersion: number; readyVersion: number | null; readyAt: Date | null; createdAt: Date;
@@ -40,7 +39,7 @@ export type DraftView = {
 
 export async function getDraftRow(tx: Tx, brandId: string, draftId: string, lock = false): Promise<Draft> {
   const q = tx.select().from(studioDrafts).where(and(eq(studioDrafts.id, draftId), eq(studioDrafts.brandId, brandId)));
-  const [row] = UUID.test(draftId) ? await (lock ? q.for('update') : q) : [];
+  const [row] = isUuid(draftId) ? await (lock ? q.for('update') : q) : [];
   if (!row) throw new NotFoundError('studio_draft', draftId);
   return row;
 }
@@ -108,7 +107,7 @@ export async function invalidateReady(tx: Tx, brandId: string, d: Draft, reason:
   await audit(tx, { brandId, actor: 'operator', action: 'approval_invalidated', objectType: 'studio_draft', objectId: d.id, objectVersion: d.readyVersion ?? d.currentVersion, result: 'ok', reason });
 }
 
-export type Edit = Partial<Pick<DraftContent, 'copies' | 'slides' | 'scenes' | 'template' | 'ratios'>> & { baseVersion?: number };
+type Edit = Partial<Pick<DraftContent, 'copies' | 'slides' | 'scenes' | 'template' | 'ratios'>> & { baseVersion?: number };
 
 /** An owner edit: a new version with no renders. Copy goes through composeCopy, so an unknown fact id is stripped and an unbacked claim is left out. */
 export async function editDraft(tx: Tx, brandId: string, draftId: string, edit: Edit, facts: ApprovedFact[]): Promise<Draft> {

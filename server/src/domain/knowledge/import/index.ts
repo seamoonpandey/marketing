@@ -5,7 +5,7 @@ import { config } from '../../../config.ts';
 import type { Money } from '../../../contracts/common.ts';
 import type { ImportRunOut } from '../../../contracts/knowledge.ts';
 import { importRuns, type ImportCounts } from '../../../db/schema/knowledge.ts';
-import { withBrand, type Tx } from '../../../db/tenant.ts';
+import { isUuid, withBrand, type Tx } from '../../../db/tenant.ts';
 import { BudgetError, ConflictError, HttpError, NotFoundError, ValidationError } from '../../../http/errors.ts';
 import { logger } from '../../../log.ts';
 import { getObject } from '../../../storage/index.ts';
@@ -26,9 +26,9 @@ export const MAX_OUTPUT_TOKENS = 16_000;
 export const batching = { maxTokens: 150_000 };
 
 /** A failure whose message is for the owner as is. */
-export class ImportFailure extends Error {}
+class ImportFailure extends Error {}
 /** The run is no longer running (cancelled): the step stops and changes nothing. */
-export class RunStopped extends Error {}
+class RunStopped extends Error {}
 
 type RunRow = typeof importRuns.$inferSelect;
 type Counts = Required<ImportCounts>;
@@ -37,7 +37,6 @@ type ProposeCounts = Pick<Counts, 'unverified' | 'inferred' | 'conflicts' | 'unc
 const ZERO: Counts = {
   pages: 0, pagesFailed: 0, files: 0, batches: 0, unverified: 0, inferred: 0, conflicts: 0, unchanged: 0, dropped: 0, colours: 0,
 };
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const OPERATOR = 'operator';
 const iso = (d: Date | null) => (d ? d.toISOString() : null);
 
@@ -45,7 +44,7 @@ const iso = (d: Date | null) => (d ? d.toISOString() : null);
 
 async function runRow(tx: Tx, brandId: string, runId: string, lock = false): Promise<RunRow> {
   const q = tx.select().from(importRuns).where(and(eq(importRuns.id, runId), eq(importRuns.brandId, brandId)));
-  const [row] = UUID.test(runId) ? await (lock ? q.for('share') : q) : [];
+  const [row] = isUuid(runId) ? await (lock ? q.for('share') : q) : [];
   if (!row) throw new NotFoundError('import', runId);
   return row;
 }

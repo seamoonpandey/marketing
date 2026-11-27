@@ -63,6 +63,11 @@ describe('checkDraft', () => {
       expect([text, only(run({ content: sent(text), prohibited: ['guarantee'] }), 'prohibited_word').length]).toEqual([text, 1]);
     expect(containsWord('सस्ता', 'सस्तो')).toBe(false); // Devanagari vowel signs still tell words apart
   });
+  it('prohibited_word and unverified_number are not hidden by tricks fixed in Approve: look-alike letters, dashes, controls', () => {
+    for (const [text, word] of [['Results guаranteed', 'guaranteed'], ['A risk\u2011free trial', 'risk-free'], ['guar\u0001antee', 'guarantee']])
+      expect([text, only(run({ content: sent(text), prohibited: [word] }), 'prohibited_word').length]).toEqual([text, 1]);
+    expect(only(run({ content: sent('Now 9\u00070% off'), facts: [fact(F1, 'hours', 'Open 9:00 to 18:00')] }), 'unverified_number')).toHaveLength(1);
+  });
   it('prohibited_word finds a word or phrase run together inside a hashtag', () => {
     const tags = (hashtags: string[], prohibited: string[]) => only(run({ content: content({ hashtags }), prohibited }), 'prohibited_word');
     expect(tags(['PashminaGuaranteed'], ['guarantee'])).toMatchObject([{ where: 'hashtags en', blocking: true }]);

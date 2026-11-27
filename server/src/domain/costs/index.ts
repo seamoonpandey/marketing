@@ -48,7 +48,7 @@ function nprMoney(npr: string): Money {
   return { npr: format(units(npr, 2), 2, 2), usd: format(usd, 4, 4) };
 }
 
-export type CostRecord = {
+type CostRecord = {
   /** Set to rewrite the row written earlier with this id (ai.extract reserves, then settles). */
   id?: string;
   brandId: string;

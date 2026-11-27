@@ -1,4 +1,3 @@
-// Owned by the plan branch (docs/structure.md).
 import { sql } from 'drizzle-orm';
 import { date, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { campaignStatuses, channels, formats, funnels, intents, objectives, pillars } from '../../domain/plan/enums.ts';

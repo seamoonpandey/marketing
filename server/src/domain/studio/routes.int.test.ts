@@ -98,7 +98,12 @@ describe('studio API', () => {
     expect((await call('PATCH', `${base}/drafts/${id}`, { template: 'offer', baseVersion: 1 })).status).toBe(409);
   });
 
-  it('validates every body and query with a 400 in the base error shape', async () => {
+  it('answers 404, not a database error, for a run id that only looks like a UUID', async () => {
+    const s = await studioBrand(t);
+    expect((await call('GET', `/brands/${s.brand}/studio/runs/${'-'.repeat(36)}`)).status).toBe(404);
+  });
+
+  it('validates every body and query with a 400 in the shared error shape', async () => {
     const s = await studioBrand(t, { formats: ['carousel'] });
     const base = `/brands/${s.brand}/studio`;
     mockAi.queue(answer(s.price.id));

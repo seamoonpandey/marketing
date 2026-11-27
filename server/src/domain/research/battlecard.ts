@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { extract } from '../../ai/index.ts';
 import type { ApprovedFact } from '../../contracts/common.ts';
 import { battlecards, competitorProfiles, observations } from '../../db/schema/research.ts';
-import { withBrand, type Tx } from '../../db/tenant.ts';
+import { isUuid, withBrand, type Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { listCompetitors } from '../brands/index.ts';
@@ -54,7 +54,6 @@ Rules:
 3. Every objection must cite an observation id in observationIds, or a profileQuote copied exactly from the profile.
 4. Never invent prices, products, statistics or claims. If you cannot back a statement, leave it out.`;
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** A new draft version. The approved version stays in place until the draft is approved. */
 export async function generateBattlecard(brandId: string, competitorId: string, facts: ApprovedFact[]): Promise<Battlecard> {
@@ -89,7 +88,7 @@ export async function generateBattlecard(brandId: string, competitorId: string, 
 
 /** The approved version and the newest draft after it, for one competitor. */
 export async function getBattlecards(tx: Tx, brandId: string, competitorId: string): Promise<{ approved: Battlecard | null; draft: Battlecard | null }> {
-  if (!UUID.test(competitorId)) throw new NotFoundError('competitor', competitorId);
+  if (!isUuid(competitorId)) throw new NotFoundError('competitor', competitorId);
   const rows = await tx.select().from(battlecards)
     .where(and(eq(battlecards.brandId, brandId), eq(battlecards.competitorId, competitorId))).orderBy(desc(battlecards.version));
   if (!rows.length && !(await listCompetitors(tx, brandId)).some((c) => c.id === competitorId)) throw new NotFoundError('competitor', competitorId);

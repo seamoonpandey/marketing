@@ -11,7 +11,7 @@ import { editDraft, getDraft, markReady, type DraftView, type StudioRunRow } fro
 import { estimateDrafts } from './generate.ts';
 import { overview } from './overview.ts';
 import { latestRun, cancelRun, getRun, retryRun, startGenerate, startRender } from './runs.ts';
-import { SIZES } from './render-types.ts';
+import { SIZES } from '../../render/index.ts';
 
 const tags = ['studio'];
 const P = '/brands/{brandId}/studio';

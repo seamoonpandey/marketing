@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 // Local defaults that match docker-compose.dev.yml; the environment overrides them.
 const env = {
+  LOG_LEVEL: 'silent',
   AI_MODEL: 'mock',
   DATABASE_URL: 'postgres://marketing_app:marketing_app@127.0.0.1:5436/marketing',
   DATABASE_ADMIN_URL: 'postgres://marketing:marketing@127.0.0.1:5436/marketing',

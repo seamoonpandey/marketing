@@ -6,21 +6,21 @@ import { estimateTokens, extract } from '../../ai/index.ts';
 import { config } from '../../config.ts';
 import type { ApprovedFact, Money } from '../../contracts/common.ts';
 import { campaignBriefs, campaigns, planItems, planRuns, weekPlans, type PlanCounts } from '../../db/schema/plan.ts';
-import { withBrand } from '../../db/tenant.ts';
+import { isUuid, withBrand } from '../../db/tenant.ts';
 import { ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { estimateCost } from '../costs/index.ts';
 import { listOpportunities } from '../research/index.ts';
 import { channels, formats, funnels, intents, pillars } from './enums.ts';
-import { addDays, UUID } from './dates.ts';
+import { addDays } from './dates.ts';
 import { getSettings } from './settings.ts';
 import { assertWeekStart, nextVersion } from './weeks.ts';
 import { recentIdeas } from './weeks.ts';
 import type { BriefBody } from './brief.ts';
 
-export const WEEK_MAX_OUTPUT = 6144;
+const WEEK_MAX_OUTPUT = 6144;
 export const NO_FACTS = 'Approve brand facts first: a plan needs at least one approved fact';
-export const NO_CHANNELS = 'Choose channels in plan settings first';
+const NO_CHANNELS = 'Choose channels in plan settings first';
 
 const Answer = z.object({
   items: z.array(
@@ -45,7 +45,7 @@ Rules:
 // A `<` inside data could close a block early; JSON keeps it as an escape.
 export const data = (tag: string, v: unknown) => `<${tag}>\n${JSON.stringify(v).replaceAll('<', '\\u003c')}\n</${tag}>`;
 
-export async function weekContext(brandId: string, weekStart: string) {
+async function weekContext(brandId: string, weekStart: string) {
   return withBrand(brandId, async (tx) => {
     await assertWeekStart(tx, brandId, weekStart);
     const settings = await getSettings(tx, brandId);
@@ -65,7 +65,7 @@ export async function weekContext(brandId: string, weekStart: string) {
     return { settings, campaigns: withBrief, opportunities: opps, recent: await recentIdeas(tx, brandId, weekStart) };
   });
 }
-export type WeekContext = Awaited<ReturnType<typeof weekContext>>;
+type WeekContext = Awaited<ReturnType<typeof weekContext>>;
 
 function weekParts(weekStart: string, c: WeekContext, facts: ApprovedFact[]) {
   const text = [
@@ -110,7 +110,7 @@ const clean = (s: string, max: number) => s.replaceAll('\0', '').trim().slice(0,
  */
 export async function storeWeek(brandId: string, runId: string, weekStart: string, facts: ApprovedFact[], d: Awaited<ReturnType<typeof draftWeek>>): Promise<PlanCounts> {
   const { c } = d;
-  const known = new Set(facts.map((f) => f.id).filter((id) => UUID.test(id)));
+  const known = new Set(facts.map((f) => f.id).filter((id) => isUuid(id)));
   const campaignIds = new Set(c.campaigns.map((k) => k.id));
   const room = new Map(c.settings.channels.map((s) => [s.channel as string, s.postsPerWeek]));
   const kept: (typeof planItems.$inferInsert)[] = [];

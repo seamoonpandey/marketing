@@ -1,4 +1,5 @@
 import type { planItems } from '../../db/schema/plan.ts';
+import { foldText } from '../../text/normalise.ts';
 import type { PlanSettings } from './settings.ts';
 
 export type PlanItem = typeof planItems.$inferSelect;
@@ -10,12 +11,10 @@ export type Violation = {
 };
 
 /**
- * Compatibility forms folded (full-width letters), invisible characters (zero-width space, soft hyphen)
- * removed, lower-case, punctuation to spaces, whitespace collapsed. Letters and combining marks of every
- * script are kept, so two different Nepali ideas never normalise to the same (empty) string.
+ * The comparison form (foldText), with punctuation and symbols as spaces. Letters and each script's own
+ * marks are kept, so two different Nepali ideas never normalise to the same (empty) string.
  */
-export const normalizeIdea = (s: string): string =>
-  s.normalize('NFKC').replace(/\p{Default_Ignorable_Code_Point}/gu, '').toLowerCase().replace(/[\p{P}\p{S}]+/gu, ' ').replace(/\s+/g, ' ').trim();
+export const normalizeIdea = (s: string): string => foldText(s).replace(/[\p{P}\p{S}]+/gu, ' ').replace(/\s+/g, ' ').trim();
 
 const groupBy = <T>(xs: T[], key: (x: T) => string) => {
   const m = new Map<string, T[]>();

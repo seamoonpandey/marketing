@@ -1,13 +1,11 @@
-// Owned by the brand branch (docs/structure.md): request and response schemas of /api/brands/{brandId}/knowledge.
+// Request and response schemas of /api/brands/{brandId}/knowledge.
 import { z } from '@hono/zod-openapi';
 import { Competitor } from './brands.ts';
-import { Money } from './common.ts';
+import { Money, orNull } from './common.ts';
 
 const id = z.string();
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/).openapi({ example: '#0f5257' });
 const isoTime = z.iso.datetime({ offset: true }).openapi({ example: '2026-12-31T18:15:00Z' });
-// A referenced schema made nullable with .nullable() comes out of openapi-typescript as `T & (Record<string, never> | null)`.
-const orNull = <T extends z.ZodType>(s: T) => z.union([s, z.null()]);
 
 // ── Catalogue ──────────────────────────────────────────────────────────────
 

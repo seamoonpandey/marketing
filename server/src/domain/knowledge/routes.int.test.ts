@@ -93,7 +93,7 @@ describe('knowledge API', () => {
     expect(ok.body).toEqual([expect.objectContaining({ status: 'approved', value: 'Nepal', version: 2 })]);
   });
 
-  it('answers 400 with the base error body for every invalid request', async () => {
+  it('answers 400 with the shared error body for every invalid request', async () => {
     const brand = await t.makeBrand();
     const id = randomUUID();
     const P = `/brands/${brand}/knowledge`;

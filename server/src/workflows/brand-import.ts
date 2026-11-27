@@ -1,4 +1,4 @@
-// Owned by the brand branch (docs/structure.md). The brand import: two DBOS workflows joined by a
+// The brand import: two DBOS workflows joined by a
 // stored approval hold. brandImportFetch fetches and prices, then the run waits at awaiting_approval;
 // confirmImport enqueues brandImportExtract. Every stage and every batch is its own checkpointed step,
 // so a retry resumes at the failed step and a finished model call is never paid for twice.
@@ -12,7 +12,7 @@ export { getImport, listImports } from '../domain/knowledge/import/index.ts';
 const step = <T>(brandId: string, runId: string, name: string, fn: () => Promise<T>) =>
   DBOS.runStep(() => run.guarded(brandId, runId, fn), { name });
 
-export const brandImportFetch = DBOS.registerWorkflow(
+const brandImportFetch = DBOS.registerWorkflow(
   async (brandId: string, runId: string) => {
     await step(brandId, runId, 'fetch', () => run.fetchStage(brandId, runId));
     await step(brandId, runId, 'estimate', () => run.estimateStage(brandId, runId));
@@ -20,7 +20,7 @@ export const brandImportFetch = DBOS.registerWorkflow(
   { name: 'brandImportFetch' },
 );
 
-export const brandImportExtract = DBOS.registerWorkflow(
+const brandImportExtract = DBOS.registerWorkflow(
   async (brandId: string, runId: string) => {
     const batches = await step(brandId, runId, 'plan', () => run.planStage(brandId, runId));
     const answers = [];

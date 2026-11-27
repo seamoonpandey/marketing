@@ -1,3 +1,4 @@
+import { asciiDigits, foldText, stripInvisible } from '../../../text/normalise.ts';
 import type { FieldDef } from '../catalogue.ts';
 
 const PLAIN_NUMBER = /^-?\d+(\.\d+)?$/;
@@ -31,16 +32,18 @@ export function validValue(def: FieldDef, v: unknown): boolean {
   }
 }
 
-const foldText = (s: string) => s.normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
 const fold = (v: unknown): unknown => (typeof v === 'string' ? foldText(v) : Array.isArray(v) ? v.map(fold) : v);
-const foldUnit = (u: string | null | undefined) => (u ?? '').trim().toUpperCase();
+const foldUnit = (u: string | null | undefined) => foldText(u ?? '');
 
-/** Only a JS number or plain ASCII digits count as a number; anything else compares as text. */
-const asNumber = (v: unknown) =>
-  typeof v === 'number' ? v : typeof v === 'string' && PLAIN_NUMBER.test(v.trim()) ? Number(v) : null;
+/** Only a JS number or plain digits (of any script) count as a number; anything else compares as text. */
+const asNumber = (v: unknown) => {
+  const s = typeof v === 'string' ? asciiDigits(stripInvisible(v)).trim() : null;
+  return typeof v === 'number' ? v : s !== null && PLAIN_NUMBER.test(s) ? Number(s) : null;
+};
 
 /**
- * Equal for the conflict rule: text trimmed and case-folded; number and money numerically when both
+ * Equal for the conflict rule: text in its comparison form (foldText), so a value disguised by invisible
+ * characters, look-alike letters or other digits is not a new value; number and money numerically when both
  * are numbers in the same unit. A different unit is a different value.
  */
 export function sameValue(def: FieldDef, a: unknown, aUnit: string | null | undefined, b: unknown, bUnit: string | null | undefined): boolean {

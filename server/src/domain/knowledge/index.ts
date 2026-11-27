@@ -1,4 +1,4 @@
-// Module 1 (brand branch): facts, import, palette, readiness, brand book.
+// Module 1, Brand: facts, import, palette, readiness, brand book.
 
 /** Routes under /api/brands/{brandId}/knowledge/…, mounted by src/modules.ts. */
 export { routes } from './routes.ts';

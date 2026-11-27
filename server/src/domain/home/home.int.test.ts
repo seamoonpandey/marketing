@@ -14,7 +14,7 @@ import { briefSections } from '../plan/enums.ts';
 import { createChannel, cancelJob, confirmManual, resolveUnknown, scheduleJob } from '../publish/index.ts';
 import { fakeReads } from '../publish/fake-reads.ts';
 import { decideOpportunity, generateOpportunities } from '../research/index.ts';
-import { addDays, dayIn } from './collect.ts';
+import { addDays, todayIn as dayIn } from '../plan/index.ts';
 import { home, readers } from './index.ts';
 
 let t: TestDb;

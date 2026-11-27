@@ -1,5 +1,5 @@
 // The API for the web's Playwright tests: recreates database mkt_e2e_<PORT> with the current schema,
-// then starts src/main.ts on PORT. One database per port, so branches can run their e2e at once.
+// then starts src/main.ts on PORT. One database per port, so several worktrees can run their e2e at once.
 import { spawnSync } from 'node:child_process';
 
 // It drops and recreates a database, answers from the mock model and lets the fetcher reach 127.0.0.1.

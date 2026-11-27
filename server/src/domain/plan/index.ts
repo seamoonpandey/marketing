@@ -1,4 +1,4 @@
-// Module 3 (plan branch).
+// Module 3, Plan.
 export { routes } from './routes.ts';
 export { getSettings, setSettings, type PlanSettings } from './settings.ts';
 export { createCampaign, getCampaign, listCampaigns, updateCampaign } from './campaigns.ts';
@@ -9,3 +9,4 @@ export { cancelRun, estimateWeek, generateBrief, getRun, retryRun, startWeekDraf
 export { overview } from './overview.ts';
 export { currentPlans, getItem, getPlan, listItems } from './weeks.ts';
 export { latestRun } from './draft.ts';
+export { addDays, todayIn, weekStartOf } from './dates.ts';

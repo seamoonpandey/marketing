@@ -2,7 +2,7 @@ import mammoth from 'mammoth';
 import { extractText as pdfText, getDocumentProxy } from 'unpdf';
 import { ValidationError } from '../../http/errors.ts';
 
-export const MAX_PDF_PAGES = 600;
+const MAX_PDF_PAGES = 600;
 export const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const TEXT_TYPES = new Set(['text/plain', 'text/markdown', 'text/csv']);
 
@@ -10,7 +10,7 @@ const MAX_ZIP_UNCOMPRESSED = 100 * 1024 * 1024;
 const MAX_ZIP_ENTRIES = 2000;
 
 /** Reads the zip's central directory and refuses a zip bomb, Zip64, or a broken zip. */
-export function checkZip(b: Uint8Array): void {
+function checkZip(b: Uint8Array): void {
   const v = new DataView(b.buffer, b.byteOffset, b.byteLength);
   let e = b.length - 22;
   while (e >= 0 && e >= b.length - 22 - 0xffff && v.getUint32(e, true) !== 0x06054b50) e--;

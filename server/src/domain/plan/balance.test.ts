@@ -47,6 +47,11 @@ describe('checkBalance', () => {
     expect(rule(run([item({ cta: '​' })]), 'incomplete')).toHaveLength(1);
   });
 
+  it('duplicate_idea sees through tricks fixed in Approve and Studio: look-alike letters, accents, controls, other digits', () => {
+    for (const idea of ['Ѕhawl story', 'Shawl\u0301 story', 'Sha\u0007wl story', 'Shawl story ५'])
+      expect([idea, rule(run([item({ idea: idea.endsWith('५') ? 'Shawl story 5' : 'Shawl story' }), item({ idea, day: '2026-11-30' })]), 'duplicate_idea').length]).toEqual([idea, 1]);
+  });
+
   it('unknown_fact (blocking): a cited fact that is not approved; not an approved one', () => {
     expect(rule(run([item({ factIds: [F1, F2] })]), 'unknown_fact')).toEqual([expect.objectContaining({ blocking: true })]);
     expect(rule(run([item({ factIds: [F1] })]), 'unknown_fact')).toEqual([]);

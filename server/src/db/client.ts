@@ -12,6 +12,10 @@ let current: ReturnType<typeof connect> | undefined;
 
 export type Db = ReturnType<typeof connect>['db'];
 
+/** True for a unique-constraint violation (23505), thrown by pg or wrapped by Drizzle. */
+export const isUniqueViolation = (e: unknown): boolean =>
+  [e, (e as { cause?: unknown })?.cause].some((x) => (x as { code?: string })?.code === '23505');
+
 /** The app connection (role marketing_app). Code outside src/db reaches it through withTenant/withBrand only. */
 export function db(): Db {
   current ??= connect(config.DATABASE_URL);

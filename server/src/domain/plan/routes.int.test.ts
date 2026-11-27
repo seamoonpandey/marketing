@@ -78,7 +78,7 @@ describe('plan API', () => {
     expect((await call('GET', `/brands/${brand}/plan/overview`)).status).toBe(200);
   });
 
-  it('answers 400 with the base error shape for a bad body, a bad date and a misaligned week', async () => {
+  it('answers 400 with the shared error shape for a bad body, a bad date and a misaligned week', async () => {
     const brand = await t.makeBrand();
     const p = `/brands/${brand}/plan`;
     const bad = [
@@ -104,7 +104,7 @@ describe('plan API', () => {
     const p = `/brands/${brand}/plan`;
     expect((await call('PUT', `${p}/settings`, { channels: [{ channel: 'facebook', postsPerWeek: 1 }], pillars: [{ pillar: 'product', weight: 1 }], weekStarts: 0 })).status).toBe(200);
     expect((await call('GET', `${p}/settings`)).body.channels).toHaveLength(1);
-    // No approved fact on this branch: drafting is refused with 400, no model call.
+    // No approved fact yet: drafting is refused with 400, no model call.
     expect((await call('POST', `${p}/weeks/${SUN}/draft`)).status).toBe(400);
     expect((await call('POST', `${p}/weeks/${SUN}/estimate`)).status).toBe(400);
     expect(mockAi.calls).toEqual([]);

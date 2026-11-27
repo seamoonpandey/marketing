@@ -1,10 +1,11 @@
-// The one place Publish reads Approve and Studio (docs/structure.md section 11). Both are built on other
-// branches, so they are imported at call time; every caller takes a Reads argument that tests replace.
+// The one place Publish reads Approve and Studio. Every caller takes a Reads argument that tests replace.
 import type { ApprovedFact } from '../../contracts/common.ts';
-import type { Tx } from '../../db/tenant.ts';
+import { isUuid, type Tx } from '../../db/tenant.ts';
 import { NotFoundError } from '../../http/errors.ts';
+import { validApproval } from '../approve/index.ts';
+import { getDraft, listDrafts } from '../studio/index.ts';
 
-export type GateApproval = { id: string; objectId: string; objectVersion: number; payloadHash: string; expiresAt: Date | string };
+export type GateApproval = { id: string; objectId: string; objectVersion: number; payloadHash: string; expiresAt: Date };
 export type Render = { ratio: string; key: string; width: number; height: number; sha256: string; index?: number; type?: 'image' | 'video' };
 export type DraftForPublish = {
   id: string; kind: string; status: string; currentVersion: number; channel: string; day: string;
@@ -19,17 +20,19 @@ export type Reads = {
 /** Tests only: stands in for Approve and Studio for every caller, the routes and the workflow included. */
 export const testReads: { current?: Reads } = {};
 
+// A valid approval always has an expiry (approvalState reads none as expired); the approvals row type allows null.
+const gate: Reads['validApproval'] = async (...a) => {
+  const v = await validApproval(...a);
+  return v?.expiresAt ? { ...v, expiresAt: v.expiresAt } : null;
+};
+
+/** Approve's gate and Studio's drafts. */
+export const liveReads: Reads = { validApproval: gate, getDraft, listDrafts };
+
 export async function reads(): Promise<Reads> {
-  if (testReads.current) return testReads.current;
-  const approve = (await import('../approve/index.ts')) as unknown as Partial<Reads>;
-  const studio = (await import('../studio/index.ts')) as unknown as Partial<Reads>;
-  if (typeof approve.validApproval !== 'function') throw new Error('Approve does not export validApproval yet');
-  if (typeof studio.getDraft !== 'function' || typeof studio.listDrafts !== 'function') throw new Error('Studio does not export getDraft and listDrafts yet');
-  return { validApproval: approve.validApproval, getDraft: studio.getDraft, listDrafts: studio.listDrafts };
+  return testReads.current ?? liveReads;
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export const isUuid = (s: string) => UUID.test(s);
 
 /** The brand's draft by id, or null. Studio's getDraft may answer null or throw NotFoundError; a draft with another id is ignored. */
 export async function draftOf(r: Reads, tx: Tx, brandId: string, draftId: string, facts: ApprovedFact[]): Promise<DraftForPublish | null> {

@@ -1,9 +1,9 @@
-// The send workflow and the every-minute scheduler. Owned by the publish branch.
+// The send workflow and the every-minute scheduler.
 import { DBOS } from '@dbos-inc/dbos-sdk';
 import { dueJobs, reconcileJob, sendJob, sweepStalled, type DueJob, type Stalled } from '../domain/publish/send.ts';
 import { QUEUE } from './index.ts';
 
-export const publishWorkflow = DBOS.registerWorkflow(
+const publishWorkflow = DBOS.registerWorkflow(
   async (brandId: string, jobId: string): Promise<void> => {
     await sendJob(brandId, jobId);
   },
@@ -18,7 +18,7 @@ export async function startSend(j: DueJob) {
   return DBOS.startWorkflow(publishWorkflow, { queueName: QUEUE, workflowID: `publish:${j.idempotencyKey}:${j.attempts}:${j.dueAt}` })(j.brandId, j.jobId);
 }
 
-export const reconcileWorkflow = DBOS.registerWorkflow(
+const reconcileWorkflow = DBOS.registerWorkflow(
   async (brandId: string, jobId: string): Promise<void> => {
     await reconcileJob(brandId, jobId);
   },
@@ -26,7 +26,7 @@ export const reconcileWorkflow = DBOS.registerWorkflow(
 );
 
 /** Starts the reconcile of a job the sweep made unknown: one run per job and attempt. */
-export async function startReconcile(s: Stalled) {
+async function startReconcile(s: Stalled) {
   return DBOS.startWorkflow(reconcileWorkflow, { queueName: QUEUE, workflowID: `publish-reconcile:${s.idempotencyKey}:${s.attempts}` })(s.brandId, s.jobId);
 }
 

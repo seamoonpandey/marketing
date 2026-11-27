@@ -3,20 +3,20 @@ import { and, desc, eq, inArray } from 'drizzle-orm';
 import type { ApprovedFact } from '../../contracts/common.ts';
 import { approvals, approvalViews } from '../../db/schema/approve.ts';
 import { assets } from '../../db/schema/knowledge.ts';
-import { currentTenantId, type Tx } from '../../db/tenant.ts';
+import { isUuid, currentTenantId, type Tx } from '../../db/tenant.ts';
 import { ConflictError, HttpError, NotFoundError, ValidationError } from '../../http/errors.ts';
+import { brandPrefix, underPrefix } from '../../storage/index.ts';
 import { audit } from '../audit/index.ts';
-import { getSettings as getPlanSettings } from '../plan/index.ts';
+import { getSettings as getPlanSettings, weekStartOf } from '../plan/index.ts';
 import { payloadHash, payloadOf } from './hash.ts';
 import { plain, riskOf, textOf } from './risk.ts';
 import { getSettings, type ApproveSettings } from './settings.ts';
 import { approvalState, expiryOf, MIN_NOTE, noteLength, type Approval } from './state.ts';
-import { draftOf, isUuid, studioReads, type ReadyDraft, type StudioReads } from './studio.ts';
+import { draftOf, studioReads, type ReadyDraft, type StudioReads } from './studio.ts';
 
-export const CHANGED = 'changed since you opened it';
+const CHANGED = 'changed since you opened it';
 /** A 409; its code is `changed` when the payload changed since the screen showed it, so screens need not match the message. */
 const refused = (why: string, message = why) => (why === CHANGED ? new HttpError(409, 'changed', message) : new ConflictError(message));
-const DAY = 86_400_000;
 
 /** Everything the rules read besides the draft and its decisions, as of one instant. */
 export type RuleContext = {
@@ -46,7 +46,7 @@ export async function ruleContext(tx: Tx, brandId: string, facts: ApprovedFact[]
   return {
     now, settings: await getSettings(tx, brandId), facts: live, approvedFactIds: new Set(live.map((f) => f.id)),
     factExpiry: new Map(live.map((f) => [f.id, f.expiresAt ? new Date(f.expiresAt) : null])), rights, industry: industry || null,
-    keyPrefix: `tenant/${await currentTenantId()}/brand/${brandId}/`,
+    keyPrefix: brandPrefix(await currentTenantId(), brandId),
   };
 }
 
@@ -66,7 +66,7 @@ export const expiryFor = (ctx: RuleContext, d: ReadyDraft) =>
   });
 
 /** The draft's renders that are not stored under the brand's own prefix. */
-export const foreignRenders = (ctx: RuleContext, d: ReadyDraft) => d.renders.filter((r) => !r.key.startsWith(ctx.keyPrefix));
+export const foreignRenders = (ctx: RuleContext, d: ReadyDraft) => d.renders.filter((r) => !underPrefix(ctx.keyPrefix, r.key));
 
 /** Why a decision on this draft would be refused now, or null. Without sentHash the current payload is assumed (for the screens). */
 export function refusal(ctx: RuleContext, d: ReadyDraft, kind: 'approve' | 'reject', sentHash?: string): string | null {
@@ -158,13 +158,6 @@ export async function reject(
     brandId, objectType: 'studio_draft', objectId: d.id, objectVersion: d.currentVersion, seq: nextSeq(d, latest), payloadHash: i.payloadHash, decision: 'rejected',
     reason, risk: riskOfDraft(ctx, d).risk, decidedBy: 'operator', decidedAt: ctx.now, expiresAt: null, bulkId: null,
   });
-}
-
-/** The first day of the brand's plan week (weekStarts 0 Sunday … 6) holding day. */
-export function weekStartOf(day: string, weekStarts: number): string {
-  const t = Date.parse(`${day}T00:00:00Z`);
-  if (Number.isNaN(t)) return day;
-  return new Date(t - ((new Date(t).getUTCDay() - weekStarts + 7) % 7) * DAY).toISOString().slice(0, 10);
 }
 
 /**

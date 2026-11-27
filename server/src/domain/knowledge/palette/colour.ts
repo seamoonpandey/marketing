@@ -49,7 +49,7 @@ export async function extractPalette(image: Uint8Array): Promise<{ hex: string; 
 }
 
 /** A CSS colour as #rrggbb: hex (3, 4, 6 or 8 digits) or rgb()/rgba(). Mostly transparent or anything else: null. */
-export function cssHex(value: string): string | null {
+function cssHex(value: string): string | null {
   const v = value.trim().toLowerCase();
   const h = v.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/)?.[1];
   if (h) {

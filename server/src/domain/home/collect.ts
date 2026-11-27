@@ -3,7 +3,7 @@
 import type { Tx } from '../../db/tenant.ts';
 import { listCompetitors } from '../brands/index.ts';
 import { listFacts, listImports, approvedFacts, readiness } from '../knowledge/index.ts';
-import { currentBrief, getSettings as planSettings, latestRun as planLatestRun, listCampaigns, overview as planOverview } from '../plan/index.ts';
+import { addDays, currentBrief, getSettings as planSettings, latestRun as planLatestRun, listCampaigns, overview as planOverview } from '../plan/index.ts';
 import { listObservations, listOpportunities, listRuns } from '../research/index.ts';
 import { studioOverview } from '../studio/index.ts';
 import { queue } from '../approve/index.ts';
@@ -20,16 +20,8 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 const app = (c: Ctx, path: string) => `/app/b/${c.brandId}${path}`;
 const first = (isos: (string | null)[]) => isos.filter((s): s is string => !!s).sort()[0] ?? null;
 
-export const addDays = (s: string, n: number) => new Date(Date.parse(`${s}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10);
-export function dayIn(timezone: string, now: Date): string {
-  try {
-    return new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-  } catch {
-    return now.toISOString().slice(0, 10);
-  }
-}
 /** The instant a calendar day starts in a timezone (an invalid timezone reads as UTC). */
-export function startOfDay(day: string, timezone: string): string {
+function startOfDay(day: string, timezone: string): string {
   const utc = Date.parse(`${day}T00:00:00Z`);
   const offset = (t: number) => {
     try {

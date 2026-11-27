@@ -2,7 +2,7 @@ import { OpenAPIHono, z } from '@hono/zod-openapi';
 import { ErrorBody } from '../contracts/common.ts';
 import { errorBody } from './errors.ts';
 
-/** An OpenAPIHono router whose request validation failures answer with the base error body (400). */
+/** An OpenAPIHono router whose request validation failures answer with the shared error body (400). */
 export function createRouter() {
   return new OpenAPIHono({
     defaultHook: (result, c) => {

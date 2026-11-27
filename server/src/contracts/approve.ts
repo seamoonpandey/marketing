@@ -1,6 +1,6 @@
-// Owned by the approve branch (docs/structure.md). Request and response schemas of
-// /api/brands/{brandId}/approve/…
+// Request and response schemas of /api/brands/{brandId}/approve/…
 import { z } from '@hono/zod-openapi';
+import { orNull } from './common.ts';
 import { Content, Finding, Kind, LeftOut } from './studio.ts';
 
 const iso = z.string().openapi({ example: '2026-11-27T06:00:00.000Z', description: 'ISO 8601 timestamp' });
@@ -51,6 +51,7 @@ export const QueueDraft = z
     version: z.number().int().openapi({ description: 'The current version.' }), kind: Kind, status: z.enum(['draft', 'ready']),
     channel: z.string(), day: day.openapi({ description: 'The day it is planned to go out.' }),
     weekStart: day.openapi({ description: "The first day of the brand's plan week holding day. A bulk approval stays inside one." }),
+    pillar: z.string().nullable().openapi({ description: 'The plan item\'s content pillar; comparison and offer raise the risk.' }),
     excerpt: z.string().openapi({ description: 'The start of the first caption, at most 140 characters.' }),
     thumbnailUrl: z.string().nullable().openapi({ description: 'Presigned URL of the first rendered image; null when there is none.' }),
     risk: Risk, riskReasons: z.array(z.string()),
@@ -67,8 +68,8 @@ export const QueueDraft = z
 export const QueueItem = z
   .object({
     draftId: z.string(), state: State, stateReason: z.string().nullable(),
-    draft: z.union([QueueDraft, z.null()]).openapi({ description: 'null when Studio no longer has the draft: only its decisions remain.' }),
-    latest: z.union([Decision, z.null()]).openapi({ description: 'The newest decision, of any version.' }),
+    draft: orNull(QueueDraft).openapi({ description: 'null when Studio no longer has the draft: only its decisions remain.' }),
+    latest: orNull(Decision).openapi({ description: 'The newest decision, of any version.' }),
   })
   .openapi('ApproveQueueItem');
 export const QueueQuery = z.object({ state: State.optional() });
@@ -115,7 +116,7 @@ export const Preview = z
   .object({
     draftId: z.string(), state: State, stateReason: z.string().nullable(),
     paused: z.boolean().openapi({ description: 'The brand is paused: an approval given now is stored but not valid until resumed.' }),
-    draft: z.union([PreviewDraft, z.null()]).openapi({ description: 'null when Studio no longer has the draft: only its decisions remain.' }),
+    draft: orNull(PreviewDraft).openapi({ description: 'null when Studio no longer has the draft: only its decisions remain.' }),
     history: z.array(Decision).openapi({ description: 'Every decision on this draft, newest first.' }),
   })
   .openapi('ApprovePreview', { description: 'The exact version that would go out. Reading it records that this payload was viewed.' });

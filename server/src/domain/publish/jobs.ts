@@ -2,11 +2,10 @@
 // writes it, with a conditional update on the state that was read, and audits it.
 import { and, eq, type SQL } from 'drizzle-orm';
 import { publishChannels, publishJobs } from '../../db/schema/publish.ts';
-import type { Tx } from '../../db/tenant.ts';
+import { isUuid, type Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { safeLink } from './channels.ts';
-import { isUuid } from './reads.ts';
 import { nextState, type JobState, type Outcome } from './state.ts';
 
 export type Job = typeof publishJobs.$inferSelect;
@@ -14,7 +13,7 @@ export type Job = typeof publishJobs.$inferSelect;
 /** When the job is next due: the retry time if one is set, else its scheduled time. */
 export const dueAt = (j: Pick<Job, 'scheduledAt' | 'nextAttemptAt'>) => j.nextAttemptAt ?? j.scheduledAt;
 
-export async function findJob(tx: Tx, brandId: string, id: string): Promise<Job | null> {
+async function findJob(tx: Tx, brandId: string, id: string): Promise<Job | null> {
   if (!isUuid(id)) return null;
   const [j] = await tx.select().from(publishJobs).where(and(eq(publishJobs.id, id), eq(publishJobs.brandId, brandId)));
   return j ?? null;
@@ -34,7 +33,7 @@ export function auditJob(tx: Tx, brandId: string, job: Job, action: string, from
   });
 }
 
-export type Applied = { job: Job; changed: boolean; refused?: string };
+type Applied = { job: Job; changed: boolean; refused?: string };
 
 /**
  * Applies nextState's answer to the job as read. The update only lands while the job is still in the

@@ -1,4 +1,4 @@
-// Owned by the brand branch (docs/structure.md): facts, subjects, assets, palette, import runs.
+// Facts, subjects, assets, palette, import runs.
 import { sql } from 'drizzle-orm';
 import { boolean, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { brandColumns, brandPolicies, runColumns, sources } from './core.ts';

@@ -1,7 +1,7 @@
 import { and, asc, eq, like } from 'drizzle-orm';
 import type { BrandCreate, BrandUpdate, CompetitorCreate, CompetitorUpdate } from '../../contracts/brands.ts';
 import { brands, competitors } from '../../db/schema/core.ts';
-import type { Tx } from '../../db/tenant.ts';
+import { isUuid, type Tx } from '../../db/tenant.ts';
 import { NotFoundError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 
@@ -19,11 +19,11 @@ export type Competitor = {
   priority: number;
 };
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const operator = 'operator';
 
+// Not text/normalise.ts: a slug is a URL label, not a check, and already keeps only a-z and 0-9; folding would rename some brands.
 /** Latin letters and digits; a name with none (Devanagari, say) becomes "brand". */
-export function slugify(name: string): string {
+function slugify(name: string): string {
   const slug = name
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')
@@ -110,7 +110,7 @@ export async function createCompetitor(tx: Tx, brandId: string, input: Competito
 const competitorWhere = (brandId: string, id: string) => and(eq(competitors.id, id), eq(competitors.brandId, brandId));
 
 export async function updateCompetitor(tx: Tx, brandId: string, id: string, input: CompetitorUpdate): Promise<Competitor> {
-  const [row] = UUID.test(id)
+  const [row] = isUuid(id)
     ? await tx.update(competitors).set(input).where(competitorWhere(brandId, id)).returning(competitorColumns)
     : [];
   if (!row) throw new NotFoundError('competitor', id);
@@ -119,7 +119,7 @@ export async function updateCompetitor(tx: Tx, brandId: string, id: string, inpu
 }
 
 export async function deleteCompetitor(tx: Tx, brandId: string, id: string): Promise<void> {
-  const [row] = UUID.test(id)
+  const [row] = isUuid(id)
     ? await tx.delete(competitors).where(competitorWhere(brandId, id)).returning({ id: competitors.id })
     : [];
   if (!row) throw new NotFoundError('competitor', id);

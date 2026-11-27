@@ -1,10 +1,9 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { publishChannels } from '../../db/schema/publish.ts';
-import type { Tx } from '../../db/tenant.ts';
+import { isUuid, type Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { isPlatform, type Platform } from './capabilities.ts';
-import { isUuid } from './reads.ts';
 
 export type Channel = typeof publishChannels.$inferSelect;
 

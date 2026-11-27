@@ -1,4 +1,3 @@
-// Owned by the research branch (docs/structure.md).
 import { sql } from 'drizzle-orm';
 import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid, boolean } from 'drizzle-orm/pg-core';
 import { brandColumns, brandPolicies, runColumns } from './core.ts';

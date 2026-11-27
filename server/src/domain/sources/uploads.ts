@@ -22,7 +22,7 @@ const startsWith = (b: Uint8Array, sig: number[], at = 0) => sig.every((v, i) =>
 const ascii = (s: string) => [...s].map((c) => c.charCodeAt(0));
 
 /** The type the bytes really are, by magic bytes; 'text' for valid UTF-8 without NUL; null otherwise. */
-export function sniff(b: Uint8Array): string | null {
+function sniff(b: Uint8Array): string | null {
   if (startsWith(b, ascii('%PDF-'))) return 'application/pdf';
   if (startsWith(b, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return 'image/png';
   if (startsWith(b, [0xff, 0xd8, 0xff])) return 'image/jpeg';

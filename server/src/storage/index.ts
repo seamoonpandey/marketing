@@ -16,12 +16,21 @@ const Bucket = config.S3_BUCKET;
 const EXPIRES_IN = 15 * 60;
 const RASTER = new Set(['png', 'jpg', 'jpeg', 'webp', 'gif', 'avif']);
 
+/** Where every object of one brand is stored: tenant/<t>/brand/<b>/. */
+export const brandPrefix = (tenantId: string, brandId: string): string => `tenant/${tenantId}/brand/${brandId}/`;
+
 /** tenant/<t>/brand/<b>/<kind>/<id>.<ext>: IDs only, never a user's file name. */
 export function objectKey(
   tenantId: string, brandId: string, kind: 'upload' | 'snapshot' | 'asset', id: string, ext: string,
 ): string {
-  return `tenant/${tenantId}/brand/${brandId}/${kind}/${id}.${ext}`;
+  return `${brandPrefix(tenantId, brandId)}${kind}/${id}.${ext}`;
 }
+
+/**
+ * True when a key is under the brand's prefix with no . or .. segment, which a URL would resolve out of it. Check every
+ * key another module hands over before presigning it, so a draft can never hand out another brand's file.
+ */
+export const underPrefix = (prefix: string, key: string): boolean => key.startsWith(prefix) && !key.split('/').some((p) => p === '.' || p === '..');
 
 export async function putObject(key: string, body: Uint8Array, contentType: string): Promise<void> {
   await client.send(new PutObjectCommand({ Bucket, Key: key, Body: body, ContentType: contentType }));

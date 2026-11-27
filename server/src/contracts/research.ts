@@ -1,6 +1,6 @@
-// Owned by the research branch (docs/structure.md). Request and response schemas of
-// /api/brands/{brandId}/research/…
+// Request and response schemas of /api/brands/{brandId}/research/…
 import { z } from '@hono/zod-openapi';
+import { namedMoney, orNull } from './common.ts';
 
 const iso = z.string().openapi({ example: '2026-11-27T06:00:00.000Z', description: 'ISO 8601 timestamp' });
 const Confidence = z.enum(['low', 'medium', 'high']).openapi('ResearchConfidence');
@@ -27,8 +27,7 @@ export const SuggestResponse = z
   .openapi('WatchTargetSuggestions', { description: 'Pages of the competitor site worth watching, at most 5.' });
 
 export const RunTrigger = z.enum(['baseline', 'weekly', 'manual']).openapi('WatchRunTrigger');
-// Money, restated here: the base Money schema carries a description that openapi-typescript turns into `Money & unknown`.
-const RunMoney = z.object({ usd: z.string(), npr: z.string() }).openapi('RunMoney', { description: 'Decimal strings: usd to 4 places, npr to 2.' });
+const RunMoney = namedMoney('RunMoney');
 export const RunState = z
   .enum(['running', 'awaiting_approval', 'completed', 'failed_retryable', 'failed_final', 'cancelled'])
   .openapi('WatchRunState');
@@ -46,8 +45,8 @@ export const WatchRun = z
   .object({
     id: z.string(), trigger: RunTrigger, state: RunState, error: z.string().nullable(),
     startedAt: iso.nullable(), finishedAt: iso.nullable(),
-    estimate: z.union([RunMoney, z.null()]), // set once the changed pages are known
-    actual: z.union([RunMoney, z.null()]), counts: RunCounts, createdAt: iso,
+    estimate: orNull(RunMoney), // set once the changed pages are known
+    actual: orNull(RunMoney), counts: RunCounts, createdAt: iso,
   })
   .openapi('WatchRun');
 export const RunCreate = z
@@ -73,7 +72,7 @@ export const Observation = z
     id: z.string(), competitorId: z.string(),
     competitorName: z.string().nullable().openapi({ description: 'null when the competitor was deleted; the observation stays.' }),
     runId: z.string(), type: ObservationType, summary: z.string(),
-    before: z.union([Evidence, z.null()]), after: Evidence, url: z.string(), observedAt: iso, confidence: Confidence,
+    before: orNull(Evidence), after: Evidence, url: z.string(), observedAt: iso, confidence: Confidence,
   })
   .openapi('Observation');
 export const ObservationsQuery = z.object({
@@ -119,5 +118,5 @@ export const Battlecard = z
   })
   .openapi('Battlecard');
 export const BattlecardPair = z
-  .object({ approved: z.union([Battlecard, z.null()]), draft: z.union([Battlecard, z.null()]) })
+  .object({ approved: orNull(Battlecard), draft: orNull(Battlecard) })
   .openapi('BattlecardPair');

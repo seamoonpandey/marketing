@@ -1,12 +1,12 @@
 // Request and response schemas of GET /api/brands/{brandId}/home.
 import { z } from '@hono/zod-openapi';
+import { namedMoney } from './common.ts';
 
 export const modules = ['publish', 'approve', 'studio', 'plan', 'research', 'brand'] as const;
 export const urgencies = ['now', 'today', 'soon', 'later'] as const;
 
 const iso = z.string().openapi({ example: '2026-11-27T06:00:00.000Z', description: 'ISO 8601 timestamp' });
-// Money, restated here: the base Money schema carries a description that openapi-typescript turns into `Money & unknown`.
-const HomeMoney = z.object({ usd: z.string(), npr: z.string() }).openapi('HomeMoney', { description: 'Decimal strings: usd to 4 places, npr to 2.' });
+const HomeMoney = namedMoney('HomeMoney');
 
 export const Module = z.enum(modules).openapi('HomeModule', { description: 'The module that owns the item. `brand` is the knowledge module.' });
 export const Urgency = z.enum(urgencies).openapi('HomeUrgency');

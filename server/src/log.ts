@@ -1,3 +1,4 @@
 import pino from 'pino';
+import { config } from './config.ts';
 
-export const logger = pino({ level: process.env.LOG_LEVEL ?? (process.env.VITEST ? 'silent' : 'info') });
+export const logger = pino({ level: config.LOG_LEVEL });

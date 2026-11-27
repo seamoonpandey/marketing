@@ -3,7 +3,7 @@ import type { ApprovedFact } from '../../../contracts/common.ts';
 import type { FactOut, FactSourceOut } from '../../../contracts/knowledge.ts';
 import { sources } from '../../../db/schema/core.ts';
 import { facts, subjects } from '../../../db/schema/knowledge.ts';
-import type { Tx } from '../../../db/tenant.ts';
+import { isUuid, type Tx } from '../../../db/tenant.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../../http/errors.ts';
 import { presignDownload } from '../../../storage/index.ts';
 import { audit } from '../../audit/index.ts';
@@ -24,9 +24,8 @@ export type ProposeCounts = { unverified: number; inferred: number; conflicts: n
 type Row = typeof facts.$inferSelect;
 type Key = { brandId: string; section: string; subjectId: string | null; field: string };
 
-export const QUOTE_NOT_FOUND = 'quote not found in source';
+const QUOTE_NOT_FOUND = 'quote not found in source';
 const OPERATOR = 'operator';
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ── Reading ────────────────────────────────────────────────────────────────
 
@@ -107,8 +106,8 @@ export async function listFacts(
   tx: Tx, brandId: string,
   f: { section?: string; status?: FactStatus; subjectId?: string; cursor?: string; limit?: number } = {},
 ): Promise<{ items: Fact[]; next: string | null }> {
-  if (f.cursor !== undefined && !UUID.test(f.cursor)) throw new ValidationError('Not a valid cursor');
-  if (f.subjectId !== undefined && !UUID.test(f.subjectId)) return { items: [], next: null };
+  if (f.cursor !== undefined && !isUuid(f.cursor)) throw new ValidationError('Not a valid cursor');
+  if (f.subjectId !== undefined && !isUuid(f.subjectId)) return { items: [], next: null };
   const limit = f.limit ?? 100;
   const items = await selectFacts(
     tx,
@@ -130,7 +129,7 @@ export async function listFacts(
 
 /** Every version of a fact, oldest first, from any one of its versions. */
 export async function factHistory(tx: Tx, brandId: string, factId: string): Promise<Fact[]> {
-  if (!UUID.test(factId)) throw new NotFoundError('fact', factId);
+  if (!isUuid(factId)) throw new NotFoundError('fact', factId);
   const { rows } = await tx.execute<{ id: string }>(sql`
     with recursive back(id, supersedes_id) as (
       select id, supersedes_id from facts where id = ${factId} and brand_id = ${brandId}
@@ -218,7 +217,7 @@ async function addVersion(tx: Tx, prev: Row, change: Partial<typeof facts.$infer
 
 /** The current version of a fact of this brand; 404 if there is none, 409 if this version is not current. */
 async function getCurrent(tx: Tx, brandId: string, factId: string): Promise<Row> {
-  const [row] = UUID.test(factId)
+  const [row] = isUuid(factId)
     ? await tx.select().from(facts).where(and(eq(facts.id, factId), eq(facts.brandId, brandId)))
     : [];
   if (!row) throw new NotFoundError('fact', factId);
@@ -259,7 +258,7 @@ async function ownerKey(
     if (subjectId) throw new ValidationError(`${section.label} facts are about the brand and take no subject`);
   } else {
     if (!subjectId) throw new ValidationError(`${section.label} facts need a ${section.subject}`);
-    const [s] = UUID.test(subjectId)
+    const [s] = isUuid(subjectId)
       ? await tx.select({ id: subjects.id }).from(subjects)
         .where(and(eq(subjects.id, subjectId), eq(subjects.brandId, brandId), eq(subjects.type, section.subject)))
       : [];
@@ -281,7 +280,7 @@ export async function proposeFacts(
   const counts: ProposeCounts = { unverified: 0, inferred: 0, conflicts: 0, unchanged: 0, dropped: 0 };
   const texts = new Map<string, string | null>();
   const sourceText = async (id: string) => {
-    if (!UUID.test(id) || !sourceIds.includes(id)) return null;
+    if (!isUuid(id) || !sourceIds.includes(id)) return null;
     if (!texts.has(id)) {
       const [s] = await tx.select({ text: sources.text }).from(sources).where(and(eq(sources.id, id), eq(sources.brandId, brandId)));
       texts.set(id, s?.text ?? null);
