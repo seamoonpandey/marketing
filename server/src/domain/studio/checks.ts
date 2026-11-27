@@ -11,23 +11,34 @@ export type Finding = {
 /** Caption limits in characters by channel; email and website have none. */
 export const CAPTION_LIMITS: Record<string, number> = { x: 280, whatsapp: 1024, facebook: 2000, instagram: 2200, tiktok: 2200, linkedin: 3000, youtube: 5000 };
 
-const ZERO_WIDTH = /[­​-‍⁠﻿]/g;
-const tidy = (s: string) => s.normalize('NFKC').replace(ZERO_WIDTH, '');
+// Invisible characters (zero-width, bidi marks, joiners, variation selectors …) and the generic combining
+// accents and enclosing marks (keycaps), none of which a reader sees as splitting a word or a number.
+const HIDDEN = /[\p{Default_Ignorable_Code_Point}̀-ͯ᪰-᫿᷀-᷿⃐-⃿︠-︯]/gu;
+const tidy = (s: string) => s.normalize('NFKD').replace(HIDDEN, '').normalize('NFC');
 
 /** ASCII digits for every Unicode decimal digit (Devanagari, Arabic-Indic, fullwidth …). */
 export function asciiDigits(s: string): string {
   return tidy(s).replace(/\p{Nd}/gu, (c) => {
     let cp = c.codePointAt(0)!;
     const at = cp;
-    // Runs of ten decimal digits are contiguous, so the offset from the run's first code point mod 10 is the digit.
-    while (cp > 0 && /\p{Nd}/u.test(String.fromCodePoint(cp - 1)) && at - cp < 9) cp--;
+    // Digit sets are runs of ten in order, some of them adjacent, so the offset from the run's start mod 10 is the digit.
+    while (cp > 0 && /\p{Nd}/u.test(String.fromCodePoint(cp - 1))) cp--;
     return String((at - cp) % 10);
   });
 }
 
-/** Number tokens: digit runs with optional , or . separators, as canonical strings ("1,500.50" is "1500.5"). */
+/** "1,500.50" is "1500.5"; compared as text, so no two numbers share a form (Number() makes NaN, Infinity, rounding). */
+function canonical(n: string): string {
+  const parts = n.replace(/[, ]/g, '').split('.');
+  if (parts.length > 2) return parts.join('.'); // a date or version such as 24.10.2026, compared as written
+  const int = parts[0]!.replace(/^0+(?=\d)/, '');
+  const frac = (parts[1] ?? '').replace(/0+$/, '');
+  return frac ? `${int}.${frac}` : int;
+}
+
+/** Number tokens: digit runs with optional , or . separators, or a space before a group of three ("18 000"). */
 export function numbersIn(s: string): string[] {
-  return (asciiDigits(s).match(/\d+(?:[,.]\d+)*/g) ?? []).map((n) => String(Number(n.replace(/,/g, ''))));
+  return (asciiDigits(s).match(/\d+(?:[,.]\d+| \d{3}(?!\d))*/g) ?? []).map(canonical);
 }
 
 const flat = (v: unknown): string => (typeof v === 'string' ? v : JSON.stringify(v) ?? '');
@@ -90,8 +101,12 @@ export function checkDraft(i: {
     for (const n of new Set(numbersIn(text)))
       if (!allowed.has(n)) add('unverified_number', true, where, `${n} is not in any approved fact this draft cites`);
 
+  // A hashtag runs words together ("PashminaGuaranteed"), so there the word is looked for anywhere in it.
+  const runTogether = (s: string) => strip(s).replace(/[\s_]+/g, '');
+  const inTags = (tags: string, w: string) => !!runTogether(w) && tags.split(' ').some((t) => runTogether(t).includes(runTogether(w)));
   for (const [where, text] of texts)
-    for (const w of i.prohibited) if (containsWord(text, w)) add('prohibited_word', true, where, `Uses "${w}", which the brand prohibits`);
+    for (const w of i.prohibited)
+      if (where.startsWith('hashtags') ? inTags(text, w) : containsWord(text, w)) add('prohibited_word', true, where, `Uses "${w}", which the brand prohibits`);
 
   const limit = CAPTION_LIMITS[i.channel];
   for (const x of c.copies) {

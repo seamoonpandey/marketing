@@ -28,6 +28,23 @@ describe('checkDraft', () => {
     expect(only(run({ content: sent('१५% छुट') }), 'unverified_number')).toEqual([]);
     expect(only(run({ content: sent('९०% छुट') }), 'unverified_number')).toHaveLength(1);
   });
+  it('does not let two different numbers share one canonical form (NaN, Infinity, float precision)', () => {
+    const facts = (v: string) => [fact(F1, 'offer', v)];
+    expect(only(run({ content: sent('Win NPR 1.500.000'), facts: facts('Valid until 24.10.2026') }), 'unverified_number')).toHaveLength(1);
+    expect(only(run({ content: sent(`Save ${'9'.repeat(400)}`), facts: facts(`Code ${'1'.repeat(400)}`) }), 'unverified_number')).toHaveLength(1);
+    expect(only(run({ content: sent('Save 12345678901234568'), facts: facts('Reg 12345678901234567') }), 'unverified_number')).toHaveLength(1);
+    expect(only(run({ content: sent('Valid until 24.10.2026, NPR 1,500.50'), facts: facts('24.10.2026 and 1500.5') }), 'unverified_number')).toEqual([]);
+  });
+  it('reads a number split by a space thousands separator, an invisible character or a keycap as one number', () => {
+    const hours = [fact(F1, 'hours', 'Open 9:00 to 18:00')]; // allows 9, 0 and 18 on their own
+    for (const text of ['Now NPR 18 000', 'Now NPR 18\u202f000', 'Now 9\u200e0% off', 'Now 9\u20630% off', 'Now 9\u034f0% off', 'Now 9\ufe0f\u20e30\ufe0f\u20e3% off'])
+      expect([text, only(run({ content: sent(text), facts: hours }), 'unverified_number').length]).toEqual([text, 1]);
+    expect(only(run({ content: sent('Open 9 to 18'), facts: hours }), 'unverified_number')).toEqual([]);
+    expect(only(run({ content: sent('NPR 18 000'), facts: [fact(F1, 'price', 'NPR 18,000')] }), 'unverified_number')).toEqual([]);
+  });
+  it('maps every Unicode decimal digit to its value, including adjacent digit sets', () => {
+    expect(numbersIn(String.fromCodePoint(0x116da, 0x116db))).toEqual(['1']); // Myanmar Extended-C second set: 0 then 1
+  });
   it('a number on a slide or in a scene is checked too', () => {
     const slide = content({}, { slides: [{ headline: 'Only 77 left' }] });
     expect(only(run({ content: slide }), 'unverified_number')).toMatchObject([{ where: 'slide 1' }]);
@@ -40,6 +57,17 @@ describe('checkDraft', () => {
     expect(only(run({ content: sent('ｇｕａｒａｎｔｅｅ it'), prohibited: ['guarantee'] }), 'prohibited_word')).toHaveLength(1);
     expect(only(run({ content: sent('guaranteed'), prohibited: ['guarantee'] }), 'prohibited_word')).toEqual([]);
     expect(containsWord('best  price', 'Best Price')).toBe(true);
+  });
+  it('prohibited_word is not hidden by bidi marks, invisible operators, joiners or combining accents', () => {
+    for (const text of ['guar\u200eantee', 'guar\u2063antee', 'guar\u034fantee', 'guarante\u0301e', 'gu\u0300arantee'])
+      expect([text, only(run({ content: sent(text), prohibited: ['guarantee'] }), 'prohibited_word').length]).toEqual([text, 1]);
+    expect(containsWord('सस्ता', 'सस्तो')).toBe(false); // Devanagari vowel signs still tell words apart
+  });
+  it('prohibited_word finds a word or phrase run together inside a hashtag', () => {
+    const tags = (hashtags: string[], prohibited: string[]) => only(run({ content: content({ hashtags }), prohibited }), 'prohibited_word');
+    expect(tags(['PashminaGuaranteed'], ['guarantee'])).toMatchObject([{ where: 'hashtags en', blocking: true }]);
+    expect(tags(['lowest_price_in_town'], ['lowest price'])).toHaveLength(1);
+    expect(tags(['pashmina', 'kathmandu'], ['guarantee'])).toEqual([]);
   });
   it('too_long (blocking): x allows 280 characters, not 281; email has no limit', () => {
     const s = (n: number) => content({ sentences: [{ text: 'a'.repeat(n), claim: false, factIds: [] }] });
