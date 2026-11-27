@@ -48,7 +48,7 @@ describe('approve schema and settings', () => {
 
   it('refuses setPaused without a reason, and audits a pause and a resume with one', async () => {
     const a = await t.makeBrand();
-    for (const reason of ['', '   ', undefined as unknown as string]) {
+    for (const reason of ['', '   ', '\u200b\u00ad', undefined as unknown as string]) {
       await expect(withBrand(a, (tx) => setPaused(tx, a, true, reason))).rejects.toThrow(/reason/);
       await expect(withBrand(a, (tx) => setPaused(tx, a, false, reason))).rejects.toThrow(/reason/);
     }

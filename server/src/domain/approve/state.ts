@@ -24,6 +24,8 @@ export function approvalState(i: {
   if (!draft) return { state: 'invalid', reason: 'Studio no longer has this draft' };
   if (!payload) return { state: 'invalid', reason: 'The draft changed or is no longer ready' };
   if (payloadHash(payload) !== latest.payloadHash) return { state: 'invalid', reason: 'The draft changed after it was approved' };
+  // Studio works its checks out against today's facts and rules, so a draft can become blocked without changing.
+  if (draft.findings.some((f) => f.blocking)) return { state: 'invalid', reason: 'A blocking issue was found since it was approved' };
   if (draft.factIds.some((id) => !i.approvedFactIds.has(id))) return { state: 'invalid', reason: 'A cited fact is no longer approved' };
   if (draft.assetIds.some((id) => !i.assetsWithRights.has(id))) return { state: 'invalid', reason: 'A used asset has no rights' };
   if (!latest.expiresAt || latest.expiresAt.getTime() <= i.now.getTime()) return { state: 'expired', reason: 'The approval expired' };

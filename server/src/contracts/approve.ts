@@ -10,7 +10,7 @@ const hash = z.string().regex(/^[0-9a-f]{64}$/).openapi({ description: 'The payl
 export const State = z.enum(['waiting', 'approved', 'rejected', 'invalid', 'expired', 'paused']).openapi('ApproveState', {
   description:
     'Worked out on every read, never stored. waiting: ready, no decision for its current version. approved: valid now. rejected: rejected for its current version. ' +
-    'invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved or a used asset lost its rights. ' +
+    'invalid: approved, but the payload changed, the draft is no longer ready or gone, a cited fact is no longer approved, a used asset lost its rights, or Studio now reports a blocking issue. ' +
     'expired: approved, past its expiry. paused: approved and otherwise valid while the brand is paused.',
 });
 export const Risk = z.enum(['low', 'medium', 'high']).openapi('ApproveRisk', {

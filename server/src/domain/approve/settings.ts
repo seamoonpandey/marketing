@@ -3,6 +3,7 @@ import { approveSettings } from '../../db/schema/approve.ts';
 import type { Tx } from '../../db/tenant.ts';
 import { ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
+import { plain } from './risk.ts';
 
 export type ApproveSettings = { maxAgeDays: number; approvers: string[]; paused: boolean; pausedReason: string | null; pausedAt: Date | null };
 
@@ -26,7 +27,7 @@ export async function setSettings(tx: Tx, brandId: string, s: { maxAgeDays: numb
 /** The emergency pause. Nothing is deleted; while paused no approval is valid. Both directions need a reason and are audited. */
 export async function setPaused(tx: Tx, brandId: string, paused: boolean, reason: string): Promise<ApproveSettings> {
   const why = (reason ?? '').trim();
-  if (!why) throw new ValidationError(`${paused ? 'Pausing' : 'Resuming'} needs a reason`);
+  if (!plain(why)) throw new ValidationError(`${paused ? 'Pausing' : 'Resuming'} needs a reason`);
   const v = { paused, pausedReason: paused ? why : null, pausedAt: paused ? new Date() : null };
   await tx.insert(approveSettings).values({ brandId, ...v }).onConflictDoUpdate({ target: approveSettings.brandId, set: v });
   await audit(tx, { brandId, actor: 'operator', action: paused ? 'approve.pause' : 'approve.resume', objectType: 'approve_settings', objectId: brandId, result: 'ok', reason: why });

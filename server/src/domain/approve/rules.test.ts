@@ -131,6 +131,8 @@ describe('approvalState', () => {
     expect(state({ draft: draft({ status: 'draft', currentVersion: 4, readyVersion: null }) }).state).toBe('invalid');
     expect(state({ approvedFactIds: new Set() }).state).toBe('invalid');
     expect(state({ assetsWithRights: new Set() }).state).toBe('invalid');
+    expect(state({ draft: draft({ findings: [{ check: 'prohibited_word', blocking: true, where: 'caption en', message: 'Uses "miracle"' }] }) }).state).toBe('invalid');
+    expect(state({ draft: draft({ findings: [{ check: 'many_hashtags', blocking: false, where: 'caption en', message: 'Many hashtags' }] }) }).state).toBe('approved');
     // invalid wins over expired and paused
     expect(state({ draft: null, paused: true, now: new Date(NOW.getTime() + 30 * DAY) }).state).toBe('invalid');
   });
