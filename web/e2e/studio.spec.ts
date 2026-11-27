@@ -43,7 +43,8 @@ test.describe('studio, real API and mock model', () => {
     const day = (n: number) => new Date(Date.parse(`${weekStart}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
     for (const [n, format, idea] of [[0, 'text', 'Dashain greeting'], [1, 'image', 'Shawl of the week'], [2, 'carousel', 'Winter shawls']] as const)
       await api('post', `${b}/plan/weeks/${weekStart}/items`, { day: day(n), channel: 'instagram', format, pillar: 'product', funnel: 'product_aware', intent: 'persuade', idea, cta: 'Visit the shop', factIds: [price.id, offer.id] });
-    await api('post', `${b}/plan/weeks/${weekStart}/approve`);
+    const { plan } = (await (await request.get(`${b}/plan/weeks/${weekStart}`)).json()) as { plan: { version: number } };
+    await api('post', `${b}/plan/weeks/${weekStart}/approve`, { version: plan.version });
 
     // The mock model answers in item order: text, image, carousel. The carousel has a claim citing nothing and a number no cited fact holds.
     const cite = (...ids: string[]) => ids;
