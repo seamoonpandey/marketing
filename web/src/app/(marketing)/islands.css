@@ -1,0 +1,68 @@
+/* Tailwind for the React islands only (Kokonut UI, Watermelon UI, React Bits). No global preflight:
+   the page's system is the kit's (public/assets). Utilities are scanned from src/components only, so
+   kit class names such as start-7 never turn into Tailwind utilities. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "../../components";
+
+/* dark: only under an explicit .dark class, never from the OS setting (the page is light) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* the islands read the active theme (public/theme.css): bg-action, text-ink, from-highlight, ... */
+@theme inline {
+  --font-sans: var(--font-text);
+  --font-mono: var(--font-mono);
+  --color-bg: var(--theme-bg);
+  --color-surface: var(--theme-surface);
+  --color-ink: var(--theme-ink);
+  --color-muted: var(--theme-muted);
+  --color-brand: var(--theme-brand);
+  --color-brand-ink: var(--theme-brand-ink);
+  --color-action: var(--theme-action);
+  --color-action-ink: var(--theme-action-ink);
+  --color-highlight: var(--theme-highlight);
+  --color-success: var(--theme-success);
+  --color-success-bg: var(--theme-success-bg);
+  --color-danger: var(--theme-danger);
+  /* the third-party islands are written in Tailwind's zinc greys: those greys are the theme's ink
+     mixed into white (their cards are white), so a warm theme gets warm greys and the steps keep
+     zinc's contrast (zinc-600 and darker pass 4.5:1 on white) */
+  --color-zinc-50: color-mix(in oklab, var(--theme-ink) 2%, white);
+  --color-zinc-100: color-mix(in oklab, var(--theme-ink) 5%, white);
+  --color-zinc-200: color-mix(in oklab, var(--theme-ink) 11%, white);
+  --color-zinc-300: color-mix(in oklab, var(--theme-ink) 20%, white);
+  --color-zinc-400: color-mix(in oklab, var(--theme-ink) 40%, white);
+  --color-zinc-500: color-mix(in oklab, var(--theme-ink) 56%, white);
+  --color-zinc-600: color-mix(in oklab, var(--theme-ink) 70%, white);
+  --color-zinc-700: color-mix(in oklab, var(--theme-ink) 80%, white);
+  --color-zinc-800: color-mix(in oklab, var(--theme-ink) 90%, white);
+  --color-zinc-900: color-mix(in oklab, var(--theme-ink) 96%, white);
+  --color-zinc-950: var(--theme-ink);
+  /* the islands' tool tints and ticks: theme colours, never the stock hues (no violet, ever) */
+  --color-blue-600: var(--theme-action);
+  --color-sky-600: var(--theme-brand);
+  --color-violet-600: var(--theme-ink);
+  --color-emerald-600: var(--theme-success);
+  --color-gray-100: color-mix(in oklab, var(--theme-ink) 5%, white);
+  /* the islands' destructive red is the theme's danger */
+  --color-red-50: color-mix(in oklab, var(--theme-danger) 6%, white);
+  --color-red-500: var(--theme-danger);
+  --color-red-600: var(--theme-danger);
+  --color-red-700: var(--theme-danger);
+}
+
+/* preflight, scoped to the islands */
+@layer base {
+  .tw *, .tw ::before, .tw ::after { box-sizing: border-box; border: 0 solid; margin: 0; padding: 0; }
+  .tw button, .tw input { font: inherit; color: inherit; letter-spacing: inherit; background: transparent; }
+  .tw button { cursor: pointer; }
+  .tw :is(h1, h2, h3, h4, h5, h6, p) { font-size: inherit; font-weight: inherit; line-height: inherit; }
+  .tw :is(ul, ol) { list-style: none; }
+  .tw :is(img, svg, canvas) { display: block; }
+  .tw code { font-family: var(--font-mono); }
+}
+
+/* the kit's unlayered element rules (button, p, .card p, :where(.ui) button) would beat every layered
+   utility: hand each island element back to the layers, svg excepted (its attributes draw the icons) */
+.tw.tw.tw :not(svg, svg *), .tw.tw.tw :not(svg, svg *)::before, .tw.tw.tw :not(svg, svg *)::after { all: revert-layer; }

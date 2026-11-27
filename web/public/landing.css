@@ -1,0 +1,183 @@
+/* Prachaar landing page: page CSS only (inside visuals, --p-h per card group, the brand mark).
+   Loaded after the kit (assets/system.css ... icons/icon.css) and the :root palette block. */
+
+/* the logo (src/components/brand.tsx): the lockup in the bar, and large in the close */
+.nav__logo .logo { display: block; height: 48px; width: auto; }
+@media (max-width: 639px) { .nav__logo .logo { height: 36px; } }
+/* under 400px the bar keeps the P mark alone (the small version), so the menu button stays on screen */
+.nav__logo .logo--small { display: none; }
+@media (max-width: 399px) { .nav__logo .logo--full { display: none; } .nav__logo .logo--small { display: block; } }
+/* the mascot: beside the hero's headline on wide screens, by the questions, waving at the pilot form */
+.hero--centred .hero-text { position: relative; }
+.hero__mascot { position: absolute; right: 0; top: var(--s-5); width: 300px; height: auto; display: none; }
+@media (min-width: 1280px) { .hero__mascot { display: block; } }
+#questions .faq__mascot { display: block; width: 280px; height: auto; margin-top: var(--s-7); }
+#questions .faq__mascot > img { display: block; width: 100%; height: auto; }
+@media (max-width: 1023px) {
+  #questions .span-5 { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-5); align-items: start; }
+  #questions .span-5 > :not(.faq__mascot) { grid-column: 1; }
+  #questions .faq__mascot { grid-column: 2; grid-row: 1 / span 3; width: 120px; margin: 0; }
+}
+#apply .frame > .apply__mascot { position: absolute; right: var(--s-6); bottom: var(--s-5); z-index: 2; width: 240px; height: auto; }
+@media (max-width: 1023px) { #apply .frame > .apply__mascot { display: none; } }
+/* the statement (letters-assemble): the line large on the left, the mascot beside it */
+#statement .statement { align-items: start; }
+#statement .mo-la__type { font-size: clamp(48px, 7.2vw, 104px); max-width: none; }
+#statement .mo-la__sub { color: var(--ink); }
+#statement .statement__mascot { width: 100%; max-width: 520px; height: auto; justify-self: start; }
+/* from 1024 the mascot stands on the left, the line on the right (the owner's layout) */
+@media (min-width: 1024px) {
+  #statement .statement > .span-7 { grid-column: 7 / span 6; grid-row: 1; }
+  #statement .statement > .statement__mascot { grid-column: 1 / span 6; grid-row: 1; }
+}
+/* 640 to 1023: stacked, the mascot's box runs the full row at a set height, the picture centred in it */
+@media (min-width: 640px) and (max-width: 1023px) {
+  #statement .statement__mascot { max-width: none; width: 100%; height: 440px; object-fit: contain; justify-self: stretch; }
+}
+
+@media (max-width: 639px) { #statement .statement__mascot { max-width: none; justify-self: stretch; } }
+/* the lockup at the right end of the bottom bar, across from the copyright lines */
+.footer__legal { align-items: center; }
+.footer__fine { display: grid; gap: var(--s-4); }
+.footer__logo { display: block; height: 56px; width: auto; margin-left: auto; }
+
+/* ---------------------------------------------------------------- hero window (centred hero) */
+/* the frame's ground, and the still behind the window when WebGL is off or the shader has not linked:
+   each theme's own captured glow (--theme-hero-still) */
+.hero__window { background: var(--theme-bg); }
+.hero__window > .hero__aurora { position: absolute; inset: 0; z-index: 0; }
+.hero__window > .hero__aurora:not([data-gl="live"]) { background: var(--theme-hero-still) center top / cover no-repeat; }
+.hero__window > .loop-pause { top: 12px; bottom: auto; }
+
+/* the product window in the hero: the theme's dark band colours (--theme-inv-*) */
+.d-win { --w-line: color-mix(in oklab, var(--theme-inv-ink) 8%, transparent); --w-fill: color-mix(in oklab, var(--theme-inv-ink) 6%, transparent);
+  border-radius: 12px; overflow: hidden; font: 400 14px/1.4 var(--font-text); text-align: left;
+  background: var(--theme-inv-bg); color: var(--theme-inv-ink);
+  box-shadow: 0 0 0 1px var(--w-line), 0 30px 70px -30px rgb(0 0 0 / .6); }
+.d-win__bar { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; border-bottom: 1px solid var(--w-line); font-size: 13px; color: var(--theme-inv-muted); }
+.d-win__bar b { color: var(--theme-inv-ink); font-weight: 500; }
+.d-win__bar .sp { flex: 1; }
+.d-win__dots { display: flex; gap: 6px; } .d-win__dots i { width: 10px; height: 10px; border-radius: 50%; background: color-mix(in oklab, var(--theme-inv-ink) 22%, var(--theme-inv-bg)); }
+.d-win__body { display: grid; grid-template-columns: 250px 1fr; min-height: 420px; }
+.inbox { border-right: 1px solid var(--w-line); padding: 10px; display: grid; align-content: start; gap: 2px; }
+.inbox .q { height: 34px; margin-bottom: 6px; border-radius: 9px; background: var(--w-fill); display: flex; align-items: center; padding: 0 10px; color: var(--theme-inv-muted); font-size: 13px; }
+.inbox .t { display: grid; grid-template-columns: 30px 1fr auto; gap: 1px 10px; padding: 9px 8px; border-radius: 9px; font-size: 13px; }
+.inbox .t.is-on { background: var(--w-fill); }
+.inbox .t i { grid-row: 1 / span 2; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 500 12px/1 var(--font-text); font-style: normal; color: var(--theme-ink); }
+.inbox .t b { font-weight: 500; color: var(--theme-inv-ink); } .inbox .t time { color: var(--theme-inv-muted); font-size: 13px; }
+.inbox .t span { grid-column: 2 / -1; color: var(--theme-inv-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.convo { display: grid; min-width: 0; align-content: start; }
+.d-chat { display: grid; gap: 8px; align-content: start; padding: 14px 18px; font-size: 14px; }
+.d-msg { max-width: 78%; padding: 10px 14px; border-radius: 16px; line-height: 1.45; }
+.d-msg--me { justify-self: end; background: var(--theme-bg); color: var(--theme-ink); border-bottom-right-radius: 6px; }
+.d-msg--bot { max-width: 86%; background: var(--theme-inv-surface); color: var(--theme-inv-ink); border-bottom-left-radius: 6px; }
+.d-msg small { display: inline; margin: 0 0 0 8px; font-size: 13px; opacity: .7; white-space: nowrap; }
+.d-msg--me small { display: none; }
+.d-tool { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--theme-inv-muted); }
+.d-tool::before { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; }
+.acts { display: flex; gap: 8px; }
+.acts span { height: 30px; padding: 0 12px; border-radius: 99px; display: inline-flex; align-items: center; font-size: 13px; font-weight: 500; background: var(--theme-inv-action); color: var(--theme-inv-action-ink); }
+.acts span + span { background: var(--w-fill); color: var(--theme-inv-ink); }
+/* under 1024 the window is the conversation alone (no list column), and the tool line goes */
+@media (max-width: 1279px) { .d-tool { display: none; } }
+@media (max-width: 1023px) { .d-win__body { grid-template-columns: 1fr; } .inbox { display: none; } }
+@media (max-width: 639px) {
+  .d-win__bar .sp ~ span { display: none; }
+  .d-chat { font-size: 13px; padding: 12px 14px; }
+  .d-msg--bot small, .d-tool { display: none; }
+}
+
+/* ---------------------------------------------------------------- the queue (app-frame recipe) */
+.app.ui { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); margin-top: var(--s-7); background: var(--u-bg); border: 1px solid var(--u-border); border-radius: var(--u-r); box-shadow: var(--u-shadow); }
+.app > .app__pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.app > .app__pane + .app__pane { border-left: 1px solid var(--u-line); }
+.app > .app__pane > .ui-panel { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+.app > .app__pane::after { content: ""; position: absolute; inset: auto 0 0 0; height: 64px; background: linear-gradient(transparent, var(--u-bg)); pointer-events: none; }
+.app > .app__pane--open > .ui-doc { width: 100%; padding: 28px 248px 28px 32px; }
+.app > .app__pane--open > .ui-doc > .ui-doc__note { top: 28px; right: 32px; }
+@media (min-width: 1024px) and (max-width: 1279px) { .app.ui { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); } }
+@media (max-width: 1023px) {
+  .app.ui { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .app > .app__pane--list { max-height: 252px; }
+  .app > .app__pane--list::after { display: none; }
+  .app .ui-win__side { display: none; }
+  .app .ui-win__body { grid-template-columns: minmax(0, 1fr); }
+  .app > .app__pane + .app__pane { border-left: 0; border-top: 1px solid var(--u-line); }
+}
+@media (max-width: 639px) {
+  .app.ui { grid-template-rows: minmax(0, 1fr); }
+  .app > .app__pane--list { display: none; }
+  .app > .app__pane + .app__pane { border-top: 0; }
+  .app > .app__pane--open > .ui-doc { padding: 16px 32px 16px 16px; }
+  .app > .app__pane--open > .ui-doc > .ui-doc__note { top: auto; bottom: 24px; right: 16px; }
+}
+
+/* ---------------------------------------------------------------- the four checks (features-2x2) */
+#features .panel { --p-h: 336px; }
+#features .panel { overflow: clip; }
+/* a React island sits in its stage like a fragment: its own width, cut by the panel's bottom */
+.island { position: absolute; left: max(24px, 50% - var(--iw, 200px)); bottom: var(--ib, 32px); width: min(calc(var(--iw, 200px) * 2), calc(100% - 48px)); }
+.island--top { top: 32px; bottom: auto; }
+@media (max-width: 639px) { .island { left: 16px; bottom: auto; top: 20px; width: calc(100% - 32px); } }
+
+/* one brief becomes seven formats (anime.js loop) */
+.fan { display: grid; grid-template-columns: 172px 1fr; gap: 20px; align-items: start; color: var(--u-ink); }
+.fan__brief { background: var(--u-bg); border: 1px solid var(--u-border); border-radius: 12px; padding: 14px; box-shadow: var(--u-shadow); font-size: 13px; line-height: 1.4; }
+.fan__brief b { display: block; font-weight: 500; margin: 6px 0 4px; }
+.fan__brief span { color: var(--u-muted); }
+.fan__ok { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 99px; background: var(--u-tint); color: var(--u-accent-text); font-weight: 500; }
+.fan__list { display: grid; gap: 6px; }
+.fan__chip { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 12px; border-radius: 10px; background: var(--u-bg); border: 1px solid var(--u-border); font-size: 13px; }
+.fan__chip svg { width: 16px; height: 16px; color: var(--u-muted); }
+.fan__chip em { margin-left: auto; font-style: normal; color: var(--u-muted); font-size: 12px; }
+@media (max-width: 639px) { .fan { grid-template-columns: 1fr; } .fan__brief { display: none; } }
+
+/* channels, questions and the pilot run their frame or list to the screen's foot, so no air piles up under them;
+   a screen too short for them grows the section (as the kit's sections do) rather than let them spill out (.fill would) */
+:is(#channels, #questions, #apply) .wrap > .grid { flex: 1 0 auto; }
+
+/* ---------------------------------------------------------------- channels (split on the dark ground) */
+#channels .facts { display: grid; gap: var(--s-3); }
+
+/* ---------------------------------------------------------------- questions: the rows share the screen */
+#questions .faq { align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; }
+@media (max-width: 1023px) {
+  #questions .wrap > .grid { grid-template-rows: auto 1fr; }
+  /* stacked under the heading: each row takes an equal share as air above its question; the rule stays under the answer */
+  #questions .faq > .faq__item { flex-grow: 1; align-content: end; }
+}
+/* 1024 to 1279: the narrow column wraps the questions, so four of them hold the screen */
+@media (min-width: 1024px) and (max-width: 1279px) { #questions .faq__item:nth-child(n + 5) { display: none; } }
+
+/* ---------------------------------------------------------------- the pilot form beside week one */
+#apply .stack-5 > .form { margin-top: var(--s-6); }
+#apply .form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4) var(--s-5); }
+#apply .form .field--wide, #apply .form .btn-row, #apply .form .form__status, #apply .form .t-small { grid-column: 1 / -1; }
+@media (max-width: 639px) { #apply .form { grid-template-columns: 1fr; } }
+
+
+/* reading text at 7:1: the centred hero's lead in ink */
+.hero--centred .hero__lead { color: var(--ink); }
+
+/* 640 to 1023 (the judges' tablet, upright): every section stays one screen, or two for the features */
+@media (min-width: 640px) and (max-width: 1023px) {
+  /* the card panels take what each screen leaves under the words, so neither screen has a hole */
+  #features .panel { --p-h: calc(100svh - 520px); }
+  .fan { grid-template-columns: 1fr; } .fan__brief { display: none; }
+}
+/* a phone: each section holds one screen (the features two): the phone copy is cut, never squeezed */
+@media (max-width: 639px) {
+  #features .panel { --p-h: 180px; }
+  #channels .facts { display: none; }
+  #questions .faq__item:nth-child(n + 4) { display: none; }
+  /* week one takes the lead's and the reply line's place, so the form and its picture hold one screen
+     (24px steps, still 40px from the button to the picture) */
+  #apply :is(.t-lead, .t-small) { display: none; }
+  #apply .stack-5 > .form { margin-top: var(--s-5); }
+  #apply .grid.fill { gap: var(--s-5); }
+}
+
+/* the kit's pause disc inside the dark window: a ring that shows on the dark ground */
+.d-win .loop-pause:focus-visible { outline-color: var(--theme-inv-action); }
+/* the centred hero's notice pill sits off the phone's lines; the h1 says the same */
+@media (max-width: 639px) { .hero--centred .pill { display: none; } }
