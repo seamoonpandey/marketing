@@ -16,7 +16,11 @@ export type Reads = {
   listDrafts(tx: Tx, brandId: string, facts: ApprovedFact[], filter?: { status?: 'ready' }): Promise<DraftForPublish[]>;
 };
 
+/** Tests only: stands in for Approve and Studio for every caller, the routes and the workflow included. */
+export const testReads: { current?: Reads } = {};
+
 export async function reads(): Promise<Reads> {
+  if (testReads.current) return testReads.current;
   const approve = (await import('../approve/index.ts')) as unknown as Partial<Reads>;
   const studio = (await import('../studio/index.ts')) as unknown as Partial<Reads>;
   if (typeof approve.validApproval !== 'function') throw new Error('Approve does not export validApproval yet');

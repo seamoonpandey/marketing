@@ -39,12 +39,8 @@ export function describeAt(at: Date, timezone: string): string {
   return `${local.slice(0, 10)} ${local.slice(11, 16)} ${tz}`;
 }
 
-/**
- * Parses a time that must carry an offset. A numeric offset must be the brand timezone's offset at that
- * instant, so a wall-clock time inside a daylight-saving gap (or a wrong offset) is refused; Z is a plain
- * UTC instant and always accepted.
- */
-export function parseAt(s: string, timezone: string): Date {
+/** An instant from an ISO 8601 time that carries an offset (any offset); offset is null for Z. */
+export function parseInstant(s: string): { at: Date; offset: number | null } {
   const m = AT.exec(s.trim());
   if (!m) throw new ValidationError(`"${s}" needs a date, a time and an offset, such as 2026-12-01T10:00:00+05:45`);
   const [, y, mo, d, h, mi, sec = '0', ms = '0', , sign, oh, om] = m;
@@ -54,7 +50,16 @@ export function parseAt(s: string, timezone: string): Date {
     throw new ValidationError(`"${s}" is not a real date and time`);
   const offset = sign ? (sign === '-' ? -1 : 1) * (+oh! * 60 + +om!) : null;
   if (offset !== null && (+oh! > 14 || +om! > 59)) throw new ValidationError(`"${s}" has an impossible offset`);
-  const at = new Date(wall - (offset ?? 0) * 60_000);
+  return { at: new Date(wall - (offset ?? 0) * 60_000), offset };
+}
+
+/**
+ * Parses a time that must carry an offset. A numeric offset must be the brand timezone's offset at that
+ * instant, so a wall-clock time inside a daylight-saving gap (or a wrong offset) is refused; Z is a plain
+ * UTC instant and always accepted.
+ */
+export function parseAt(s: string, timezone: string): Date {
+  const { at, offset } = parseInstant(s);
   const tzOffset = offsetAt(timezone, at);
   if (tzOffset === null) throw new ValidationError(`The brand's timezone "${timezone}" is not valid: fix it in the brand settings first`);
   if (offset !== null && offset !== tzOffset)

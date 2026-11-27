@@ -18,9 +18,6 @@ import { isMissed, MISSED, type Outcome } from './state.ts';
 
 export type SendDeps = { reads?: Reads; connector?: Connector; now?: () => Date; sleep?: (seconds: number) => Promise<void> };
 
-/** Defaults for every send, including those the workflow starts. Tests set reads here; nothing else should. */
-export const sendDefaults: SendDeps = {};
-
 const RECONCILE_AFTER = [60, 300, 900];
 const due = sql`coalesce(${publishJobs.nextAttemptAt}, ${publishJobs.scheduledAt})`;
 
@@ -108,9 +105,8 @@ const current = (brandId: string, jobId: string) => withBrand(brandId, (tx) => g
 
 /** Sends one job: claim, missed-time check, gate, channel, send, then reconcile an unknown result. */
 export async function sendJob(brandId: string, jobId: string, deps: SendDeps = {}): Promise<Job> {
-  const d = { ...sendDefaults, ...deps };
-  const now = d.now ?? (() => new Date());
-  const sleep = d.sleep ?? ((s: number) => DBOS.sleep(s * 1000));
+  const now = deps.now ?? (() => new Date());
+  const sleep = deps.sleep ?? ((s: number) => DBOS.sleep(s * 1000));
   const token = DBOS.workflowID ?? randomUUID();
   const step = <T>(name: string, fn: () => Promise<T>) => DBOS.runStep(fn, { name });
   const done = async (o: Outcome) => {
@@ -129,7 +125,7 @@ export async function sendJob(brandId: string, jobId: string, deps: SendDeps = {
 
     // 3. The gate.
     const gated = await step('gate', async () => {
-      const r = d.reads ?? (await reads());
+      const r = deps.reads ?? (await reads());
       return withBrand(brandId, async (tx) => gate(tx, brandId, await getJob(tx, brandId, jobId), r));
     });
     if (!gated.ok) return await done({ type: 'gate_refused', reason: gated.reason });
@@ -147,7 +143,7 @@ export async function sendJob(brandId: string, jobId: string, deps: SendDeps = {
       return await done({ type: 'channel_unavailable', reason: channel.status === 'disabled' ? 'The channel is disabled' : 'The channel needs reconnecting' });
 
     // 5. Send, with the job's one idempotency key. Never throws: every answer becomes an outcome.
-    const connector = connectorFor(channel, d.connector);
+    const connector = connectorFor(channel, deps.connector);
     sending = true;
     const outcome = await step('send', async (): Promise<Outcome> => {
       try {

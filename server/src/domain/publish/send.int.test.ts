@@ -6,9 +6,9 @@ import { createChannel, updateChannel } from './channels.ts';
 import { MockConnector, mockConnector } from './connectors/index.ts';
 import { fakeReads } from './fake-reads.ts';
 import { getJob } from './jobs.ts';
-import type { DraftForPublish } from './reads.ts';
+import { testReads, type DraftForPublish } from './reads.ts';
 import { scheduleJob } from './schedule.ts';
-import { dueJobs, sendDefaults, sendJob } from './send.ts';
+import { dueJobs, sendJob } from './send.ts';
 
 let t: TestDb;
 let stop: () => Promise<void>;
@@ -184,7 +184,7 @@ describe('sending a job', () => {
 
 describe('the scheduler', () => {
   it('starts each due job once through the workflow, whatever the brand\'s timezone', async () => {
-    sendDefaults.reads = fake.reads;
+    testReads.current = fake.reads;
     try {
       mockConnector.reset();
       const a = await setup();
@@ -201,7 +201,7 @@ describe('the scheduler', () => {
       expect(mockConnector.calls).toHaveLength(2);
       expect((await dueJobs(new Date())).filter((d) => d.jobId === a.job.id)).toEqual([]);
     } finally {
-      delete sendDefaults.reads;
+      delete testReads.current;
     }
   });
 });
