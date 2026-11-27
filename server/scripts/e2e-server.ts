@@ -24,3 +24,8 @@ Object.assign(process.env, {
   DBOS_SYSTEM_DATABASE_URL: inDb(admin),
 });
 await import('../src/main.ts');
+
+// Fixture pages and AI controls on PORT + 1000, and the fetcher allowed to reach them.
+const { allowFixtureHost, startControlServer } = await import('./e2e-control.ts');
+allowFixtureHost();
+await startControlServer(Number(port) + 1000);
