@@ -2,14 +2,14 @@ import { DBOS } from '@dbos-inc/dbos-sdk';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { launchTestWorkflows, testDb, type TestDb } from '../../../test/helpers.ts';
 import { withBrand } from '../../db/tenant.ts';
-import { startSend } from '../../workflows/publish-run.ts';
+import { publishTick, startSend } from '../../workflows/publish-run.ts';
 import { createChannel, updateChannel } from './channels.ts';
 import { ConnectorError, MockConnector, mockConnector, type Connector } from './connectors/index.ts';
 import { fakeReads } from './fake-reads.ts';
 import { getJob } from './jobs.ts';
 import { testReads, type DraftForPublish } from './reads.ts';
 import { scheduleJob } from './schedule.ts';
-import { dueJobs, sendJob } from './send.ts';
+import { dueJobs, reconcileJob, sendJob, sweepStalled } from './send.ts';
 
 let t: TestDb;
 let stop: () => Promise<void>;
@@ -236,6 +236,65 @@ describe('a retry outside the publishing hours', () => {
   });
 });
 
+describe('a send that never finished', () => {
+  /** A job claimed `minutes` ago by a send workflow that then died. */
+  async function stuck(minutes: number) {
+    const s = await setup();
+    await t.adminQuery(`update publish_jobs set state = 'publishing', attempts = 1, workflow_id = 'dead', claimed_at = now() - make_interval(mins => $2) where id = $1`, [s.job.id, minutes]);
+    return s;
+  }
+  const reconcile = (brand: string, id: string) => reconcileJob(brand, id, { connector: mock, now: () => min(20), sleep: async (s) => void slept.push(s) });
+
+  it('becomes unknown after 15 minutes publishing, is never sent from there, and a younger one is left alone', async () => {
+    const old = await stuck(16);
+    const young = await stuck(10);
+    const swept = (await sweepStalled(new Date())).map((s) => s.jobId);
+    expect(swept).toContain(old.job.id);
+    expect(swept).not.toContain(young.job.id);
+    expect(await read(old.brand, old.job.id)).toMatchObject({ state: 'unknown', error: 'the send did not finish', attempts: 1 });
+    expect(await read(young.brand, young.job.id)).toMatchObject({ state: 'publishing' });
+    expect(await send(old.brand, old.job.id)).toMatchObject({ state: 'unknown' });
+    expect(mock.calls).toEqual([]);
+  });
+
+  it('then goes through reconcile: found is published with no send; not found is sent once more with the same key', async () => {
+    const found = await stuck(16);
+    const lost = await stuck(16);
+    await mock.publish({ platform: 'facebook', accountName: '@facebook', caption: '', hashtags: [], media: [] }, found.key); // the dead send did post
+    mock.calls.length = 0;
+    await sweepStalled(new Date());
+    expect(await reconcile(found.brand, found.job.id)).toMatchObject({ state: 'published', externalUrl: 'https://mock.example/post/1' });
+    expect(await reconcile(lost.brand, lost.job.id)).toMatchObject({ state: 'scheduled', attempts: 1 });
+    expect(slept).toEqual([60, 60]);
+    expect(await send(lost.brand, lost.job.id, 21)).toMatchObject({ state: 'published', attempts: 2 });
+    expect(mock.calls.map((c) => c.idempotencyKey)).toEqual([lost.key]);
+  });
+
+  it('a send whose workflow fails after the connector answered is left publishing, then swept and reconciled, never sent twice', async () => {
+    const { brand, job } = await setup();
+    let reads = 0; // the clock is read by the claim, the missed check, then the apply after the send: that one fails
+    const now = () => {
+      if (++reads === 3) throw new Error('database gone');
+      return min(1);
+    };
+    await expect(sendJob(brand, job.id, { reads: fake.reads, connector: mock, now })).rejects.toThrow('database gone');
+    expect(await read(brand, job.id)).toMatchObject({ state: 'publishing' });
+    expect((await sweepStalled(min(17))).map((s) => s.jobId)).toContain(job.id);
+    expect(await reconcile(brand, job.id)).toMatchObject({ state: 'published', externalUrl: 'https://mock.example/post/1' });
+    expect(mock.calls).toHaveLength(1);
+  });
+
+  it('the every-minute check sweeps it and starts its reconcile, once', async () => {
+    const { brand, job, key } = await stuck(16);
+    await publishTick();
+    await publishTick();
+    expect(await read(brand, job.id)).toMatchObject({ state: 'unknown' });
+    const runs = await DBOS.listWorkflows({ workflowIDs: [`publish-reconcile:${key}:1`] });
+    expect(runs).toHaveLength(1);
+    await DBOS.cancelWorkflow(runs[0]!.workflowID);
+  });
+});
+
 describe('a send held up between its checks and the connector', () => {
   /** Holds every read of the channels table, which a send makes after claiming the job, until release (or the test ends). */
   let held = false;
@@ -328,6 +387,24 @@ describe('a send held up between its checks and the connector', () => {
     }
   });
 
+  it('never reaches the connector once the sweep has made the job unknown', async () => {
+    testReads.current = fake.reads;
+    mockConnector.reset();
+    try {
+      const a = await dueNow();
+      const release = await holdChannels();
+      const h = await startSend(a.due);
+      await waitingOnLock(1);
+      expect((await sweepStalled(new Date(Date.now() + 16 * 60_000))).map((s) => s.jobId)).toContain(a.job.id); // 16 minutes on
+      await release();
+      await h.getResult();
+      expect(await read(a.brand, a.job.id)).toMatchObject({ state: 'unknown' });
+      expect(mockConnector.calls).toEqual([]);
+    } finally {
+      await release();
+      delete testReads.current;
+    }
+  });
 });
 
 describe('the post link a connector answers', () => {

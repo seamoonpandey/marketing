@@ -20,6 +20,8 @@ import { isMissed, MISSED, type Outcome } from './state.ts';
 export type SendDeps = { reads?: Reads; connector?: Connector; now?: () => Date; sleep?: (seconds: number) => Promise<void> };
 
 const RECONCILE_AFTER = [60, 300, 900];
+/** Longer than a send can take: a job publishing this long may or may not have been posted. */
+export const STALL_AFTER_MS = 15 * 60_000;
 const step = <T>(name: string, fn: () => Promise<T>) => DBOS.runStep(fn, { name });
 const due = sql`coalesce(${publishJobs.nextAttemptAt}, ${publishJobs.scheduledAt})`;
 
@@ -53,7 +55,7 @@ async function claim(tx: Tx, brandId: string, jobId: string, token: string, now:
   if (await deferRetry(tx, brandId, jobId, now)) return null;
   const [row] = await tx
     .update(publishJobs)
-    .set({ state: 'publishing', workflowId: token, attempts: sql`${publishJobs.attempts} + 1` })
+    .set({ state: 'publishing', workflowId: token, claimedAt: now, attempts: sql`${publishJobs.attempts} + 1` })
     .where(and(eq(publishJobs.id, jobId), eq(publishJobs.brandId, brandId), eq(publishJobs.state, 'scheduled'), lte(due, now)))
     .returning();
   if (row) {
@@ -134,7 +136,7 @@ export async function sendJob(brandId: string, jobId: string, deps: SendDeps = {
   };
 
   // 1. Claim. Only a run that made the claim itself may send: a resumed run gets the claim from the stored step while
-  // its first run may still be sending, so it leaves the job publishing rather than send beside it.
+  // its first run may still be sending, so it leaves the job to the sweep, which makes it unknown and reconciles it.
   let claimedHere = false;
   const claimed = await step('claim', () =>
     withBrand(brandId, async (tx) => {
@@ -195,19 +197,62 @@ export async function sendJob(brandId: string, jobId: string, deps: SendDeps = {
       }
     });
     if (!outcome) return current(brandId, jobId);
-    let state = await step('apply', async () => apply(brandId, jobId, token, outcome, now()));
-
-    // After a timeout, look for the post before anything is sent again; stop at the first clear answer.
-    for (const [i, wait] of RECONCILE_AFTER.entries()) {
-      if (state !== 'unknown') break;
-      await sleep(wait);
-      const found = await step(`reconcile:${i}`, () => connector.reconcile(channel.key).catch(() => ({ found: 'unknown' as const })));
-      state = await step(`apply:reconcile:${i}`, async () => apply(brandId, jobId, token, { type: 'reconciled', result: found }, now()));
-    }
+    const state = await step('apply', async () => apply(brandId, jobId, token, outcome, now()));
+    if (state === 'unknown') await reconcileLoop(brandId, jobId, token, channel.key, connector, now, sleep);
     return current(brandId, jobId);
   } catch (e) {
-    // Before the send nothing went out, so it is retried like a server error; after it, nobody knows.
-    await step('fail', async () => apply(brandId, jobId, token, { type: 'error', kind: sending ? 'timeout' : 'server' }, now())).catch(() => {});
+    // Before the send nothing went out, so it is retried like a server error. After it nobody knows: the job stays
+    // publishing, and the sweep makes it unknown and reconciles it.
+    if (!sending) await step('fail', async () => apply(brandId, jobId, token, { type: 'error', kind: 'server' }, now())).catch(() => {});
     throw e;
   }
+}
+
+/** After a timeout, looks for the post before anything is sent again, after 60, 300 and 900 seconds; stops at the first clear answer. */
+async function reconcileLoop(brandId: string, jobId: string, token: string, key: string, connector: Connector, now: () => Date, sleep: (s: number) => Promise<void>) {
+  let state = 'unknown';
+  for (const [i, wait] of RECONCILE_AFTER.entries()) {
+    if (state !== 'unknown') break;
+    await sleep(wait);
+    const found = await step(`reconcile:${i}`, () => connector.reconcile(key).catch(() => ({ found: 'unknown' as const })));
+    state = await step(`apply:reconcile:${i}`, async () => apply(brandId, jobId, token, { type: 'reconciled', result: found }, now()));
+  }
+}
+
+/** The reconcile path for a job the sweep made unknown, under the claim of the send that never finished. */
+export async function reconcileJob(brandId: string, jobId: string, deps: SendDeps = {}): Promise<Job> {
+  const now = deps.now ?? (() => new Date());
+  const sleep = deps.sleep ?? ((s: number) => DBOS.sleep(s * 1000));
+  const job = await step('job', () =>
+    withBrand(brandId, async (tx) => {
+      const j = await getJob(tx, brandId, jobId);
+      const c = await findChannel(tx, brandId, j.channelId);
+      return j.state === 'unknown' && j.workflowId ? { token: j.workflowId, key: j.idempotencyKey, mode: c?.mode ?? 'manual', connector: c?.connector ?? 'manual' } : null;
+    }),
+  );
+  if (job) await reconcileLoop(brandId, jobId, job.token, job.key, connectorFor(job, deps.connector), now, sleep);
+  return current(brandId, jobId);
+}
+
+export type Stalled = { brandId: string; jobId: string; idempotencyKey: string; attempts: number };
+
+/** Every brand's jobs publishing for longer than a send can take become unknown. One brand failing never stops the others. */
+export async function sweepStalled(now: Date): Promise<Stalled[]> {
+  const out: Stalled[] = [];
+  for (const b of await withTenant(listBrands)) {
+    try {
+      const swept = await withBrand(b.id, async (tx) => {
+        const jobs = await tx.select().from(publishJobs)
+          .where(and(eq(publishJobs.brandId, b.id), eq(publishJobs.state, 'publishing'), lte(publishJobs.claimedAt, new Date(now.getTime() - STALL_AFTER_MS))));
+        const { maxAttempts } = await getSettings(tx, b.id);
+        const changed: Job[] = [];
+        for (const j of jobs) if ((await applyOutcome(tx, b.id, j, { type: 'stalled' }, { maxAttempts, now, actor: 'system' })).changed) changed.push(j);
+        return changed;
+      });
+      out.push(...swept.map((j) => ({ brandId: b.id, jobId: j.id, idempotencyKey: j.idempotencyKey, attempts: j.attempts })));
+    } catch (err) {
+      logger.error({ err, brandId: b.id }, 'publish: sweeping stalled jobs failed for one brand');
+    }
+  }
+  return out;
 }

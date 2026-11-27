@@ -1,6 +1,6 @@
 // The send workflow and the every-minute scheduler. Owned by the publish branch.
 import { DBOS } from '@dbos-inc/dbos-sdk';
-import { dueJobs, sendJob, type DueJob } from '../domain/publish/send.ts';
+import { dueJobs, reconcileJob, sendJob, sweepStalled, type DueJob, type Stalled } from '../domain/publish/send.ts';
 import { QUEUE } from './index.ts';
 
 export const publishWorkflow = DBOS.registerWorkflow(
@@ -18,12 +18,33 @@ export async function startSend(j: DueJob) {
   return DBOS.startWorkflow(publishWorkflow, { queueName: QUEUE, workflowID: `publish:${j.idempotencyKey}:${j.attempts}:${j.dueAt}` })(j.brandId, j.jobId);
 }
 
+export const reconcileWorkflow = DBOS.registerWorkflow(
+  async (brandId: string, jobId: string): Promise<void> => {
+    await reconcileJob(brandId, jobId);
+  },
+  { name: 'publishReconcile' },
+);
+
+/** Starts the reconcile of a job the sweep made unknown: one run per job and attempt. */
+export async function startReconcile(s: Stalled) {
+  return DBOS.startWorkflow(reconcileWorkflow, { queueName: QUEUE, workflowID: `publish-reconcile:${s.idempotencyKey}:${s.attempts}` })(s.brandId, s.jobId);
+}
+
+/** One check: sends that never finished become unknown and are reconciled, then every due job is started. */
+export async function publishTick(): Promise<void> {
+  // The real time decides, so a late or replayed tick sends nothing early.
+  for (const s of await DBOS.runStep(() => sweepStalled(new Date()), { name: 'sweep' })) {
+    await DBOS.runStep(async () => void (await startReconcile(s)), { name: `reconcile:${s.jobId}` });
+  }
+  for (const j of await DBOS.runStep(() => dueJobs(new Date()), { name: 'due' })) {
+    await DBOS.runStep(async () => void (await startSend(j)), { name: `start:${j.jobId}` });
+  }
+}
+
 const everyMinute = DBOS.registerWorkflow(
   async (scheduledAt: Date): Promise<void> => {
-    void scheduledAt; // the real time decides what is due, so a late or replayed tick sends nothing early
-    for (const j of await DBOS.runStep(() => dueJobs(new Date()), { name: 'due' })) {
-      await DBOS.runStep(async () => void (await startSend(j)), { name: `start:${j.jobId}` });
-    }
+    void scheduledAt;
+    await publishTick();
   },
   { name: 'publishEveryMinute' },
 );

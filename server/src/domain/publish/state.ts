@@ -12,6 +12,8 @@ export type Outcome =
   | { type: 'sent'; externalId: string; url: string }
   | { type: 'error'; kind: ConnectorErrorKind; retryAfterSeconds?: number }
   | { type: 'reconciled'; result: Reconciled }
+  /** The send never finished: publishing for longer than a send can take. */
+  | { type: 'stalled' }
   // The owner's actions.
   | { type: 'cancel' }
   | { type: 'reschedule'; at: Date }
@@ -33,6 +35,7 @@ export type Next = {
 
 export const MISSED_AFTER_MS = 24 * 3_600_000;
 export const MISSED = 'missed its time';
+export const STALLED = 'the send did not finish';
 /** A job due more than 24 hours ago is not sent. */
 export const isMissed = (dueAt: Date, now: Date) => now.getTime() - dueAt.getTime() > MISSED_AFTER_MS;
 
@@ -88,6 +91,9 @@ export function nextState(job: { state: JobState; attempts: number; retryable?: 
         ? { state: 'scheduled', retryInSeconds: 0, error: 'The platform has no such post; sending again' }
         : { state: 'failed', retryable: true, error: `Not posted after ${job.attempts} attempts` };
     }
+    case 'stalled':
+      // It may or may not have been posted: nothing is sent again until reconcile or the owner says it was not.
+      return from('publishing') ? { state: 'unknown', error: STALLED } : refuse(`Only a publishing job can stall; this one is ${s}`);
     case 'cancel':
       return from('scheduled', 'awaiting_manual', 'blocked', 'failed') ? { state: 'cancelled' } : refuse(`A ${s} job cannot be cancelled`);
     case 'reschedule':
