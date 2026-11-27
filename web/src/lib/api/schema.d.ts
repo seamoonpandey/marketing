@@ -693,6 +693,1293 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/brands/{brandId}/knowledge/catalogue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SectionDef"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The 20 newest runs, newest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ImportRun"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ImportCreate"];
+                };
+            };
+            responses: {
+                /** @description Created: the run fetches, estimates, then waits at awaiting_approval */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ImportRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/imports/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    runId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ImportRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/imports/{runId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Starts the paid extraction. 402 when the estimate exceeds what is left of the monthly cap; 409 unless awaiting approval. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    runId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ImportRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                402: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/imports/{runId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    runId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ImportRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/imports/{runId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Resumes a failed_retryable run from the step that failed; finished model calls are not repeated. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    runId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ImportRun"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/facts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Current versions only, oldest first. */
+        get: {
+            parameters: {
+                query?: {
+                    section?: components["schemas"]["SectionKey"];
+                    /** @description `expired` is computed: approved, with expiresAt in the past. */
+                    status?: components["schemas"]["FactStatus"];
+                    subjectId?: string;
+                    cursor?: string;
+                    /** @description Default 100. */
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FactList"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** @description For a single-valued field that already has a current fact, this edits it (a new version); 409 while it is conflicting. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["FactCreate"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Fact"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/facts/approve-batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ApproveBatch"];
+                };
+            };
+            responses: {
+                /** @description The approved versions, in the order given */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Fact"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/facts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["FactPatch"];
+                };
+            };
+            responses: {
+                /** @description The new, approved version */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Fact"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/facts/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description 409 for a conflicting fact (resolve it) or an older version. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The new, approved version */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Fact"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/facts/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description 409 for a conflicting fact (resolve it) or an older version. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["FactReject"];
+                };
+            };
+            responses: {
+                /** @description The new, rejected version */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Fact"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/facts/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Every version of the fact, oldest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Fact"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/conflicts/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ConflictResolve"];
+                };
+            };
+            responses: {
+                /** @description The approved fact */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Fact"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/subjects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    type?: "product" | "segment";
+                };
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Subject"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SubjectCreate"];
+                };
+            };
+            responses: {
+                /** @description Created, or the existing subject of that type and name */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Subject"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Asset"][];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AssetCreate"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Asset"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/assets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AssetUpdate"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Asset"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/palette": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Palette"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PaletteUpdate"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Palette"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Readiness"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/brands/{brandId}/knowledge/book": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BrandBook"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -840,6 +2127,332 @@ export interface components {
             result: "ok" | "denied" | "failed";
             reason: string | null;
             createdAt: string;
+        };
+        SectionDef: {
+            key: components["schemas"]["SectionKey"];
+            label: string;
+            subject: components["schemas"]["SubjectType"];
+            fields: components["schemas"]["FieldDef"][];
+        };
+        /** @enum {string} */
+        SectionKey: "identity" | "business_model" | "products" | "audience" | "positioning" | "voice" | "visual" | "legal" | "goals";
+        /** @enum {string} */
+        SubjectType: "brand" | "product" | "segment";
+        FieldDef: {
+            key: string;
+            label: string;
+            /** @enum {string} */
+            type: "text" | "longtext" | "number" | "money" | "enum" | "list" | "url" | "date";
+            /** @description Several facts may hold this field for one subject; they never conflict. */
+            multi: boolean;
+            /** @description Ask the owner for an expiry date (prices, offers). */
+            asksExpiry?: boolean;
+            /** @description The allowed values of an enum field. */
+            options?: string[];
+        };
+        ImportRun: {
+            id: string;
+            websiteUrl: string | null;
+            /** @description Every source the run reads: the pages fetched, then the uploads. */
+            sourceIds: string[];
+            stage: components["schemas"]["ImportStage"];
+            /** @enum {string} */
+            state: "running" | "awaiting_approval" | "completed" | "failed_retryable" | "failed_final" | "cancelled";
+            /** @example could not read the website */
+            error: string | null;
+            /** @description Set while awaiting approval when the estimate exceeds what is left of the monthly cap; confirm then answers 402. */
+            blocked: string | null;
+            /** @description The most the extraction can cost; set when the run reaches awaiting_approval. */
+            estimate: (components["schemas"]["Money"] & unknown) | null;
+            /** @description What the model calls cost, failed calls included. */
+            actual: (components["schemas"]["Money"] & unknown) | null;
+            remaining: components["schemas"]["Money"] & unknown;
+            counts: components["schemas"]["ImportCounts"];
+            startedAt: string | null;
+            finishedAt: string | null;
+            createdAt: string;
+        };
+        /** @enum {string} */
+        ImportStage: "fetch" | "estimate" | "extract" | "verify" | "done";
+        ImportCounts: {
+            /** @description Website pages read. */
+            pages: number;
+            pagesFailed: number;
+            /** @description Uploaded files in the run. */
+            files: number;
+            /** @description Model calls planned. */
+            batches: number;
+            /** @description Facts whose quote was found in the source. */
+            unverified: number;
+            inferred: number;
+            conflicts: number;
+            unchanged: number;
+            /** @description Answers for fields not in the catalogue, or with an invalid value. */
+            dropped: number;
+            /** @description Palette colours added. */
+            colours: number;
+        };
+        /** @description A website, uploads, or both. The run fetches, estimates, then waits for confirm. */
+        ImportCreate: {
+            /** Format: uri */
+            websiteUrl?: string | null;
+            /** @description Completed uploads to read. */
+            sourceIds?: string[];
+        };
+        FactList: {
+            items: components["schemas"]["Fact"][];
+            /** @description Pass as `cursor` for the next page. */
+            next: string | null;
+        };
+        Fact: {
+            /** @description This version. Approve, edit, reject and resolve each add a version with a new id. */
+            id: string;
+            section: components["schemas"]["SectionKey"];
+            subjectType: components["schemas"]["SubjectType"];
+            subjectId: string | null;
+            subjectName: string | null;
+            field: string;
+            fieldLabel: string;
+            value: components["schemas"]["FactValue"];
+            /** @description The currency of a money value, the unit of a number. */
+            unit: string | null;
+            language: string;
+            status: components["schemas"]["FactStatus"];
+            /**
+             * @description `owner`: typed or edited by the owner.
+             * @enum {string}
+             */
+            origin: "stated" | "inferred" | "owner";
+            /** @description The model's confidence, 0 to 1; null for the owner's input. */
+            confidence: number | null;
+            /** @description Set only when `quote` was found in this source's text. Null for inferred facts and owner input. */
+            source: components["schemas"]["FactSource"] | null;
+            /** @description Verbatim from `source`, checked by the server. */
+            quote: string | null;
+            /** @description The page of an uploaded PDF the quote is on, as the model gave it. */
+            page: number | null;
+            /** @example quote not found in source */
+            warning: string | null;
+            version: number;
+            supersedesId: string | null;
+            /** @description False for an older version; acting on it answers 409. */
+            isCurrent: boolean;
+            verifiedBy: string | null;
+            verifiedAt: string | null;
+            expiresAt: string | null;
+            importRunId: string | null;
+            createdAt: string;
+        };
+        /** @description text, longtext, url, date (YYYY-MM-DD) and enum fields hold a string; list fields an array of strings; number and money fields a number, or the source's own text (such as "रु ४,५००"), which is never parsed. */
+        FactValue: string | number | string[];
+        /**
+         * @description `expired` is computed: approved, with expiresAt in the past.
+         * @enum {string}
+         */
+        FactStatus: "approved" | "unverified" | "inferred" | "conflicting" | "expired" | "rejected";
+        FactSource: {
+            id: string;
+            /** @enum {string} */
+            kind: "page" | "upload";
+            uri: string;
+            /** @description A page has `title`; an upload has `filename` and `pages`. */
+            meta: {
+                [key: string]: unknown;
+            };
+            /** @description Short-lived. Anything but a raster image downloads as an attachment. */
+            downloadUrl: string;
+        };
+        /** @description The owner's own value: stored approved, origin owner. */
+        FactCreate: {
+            section: components["schemas"]["SectionKey"];
+            /** @description Required for products and audience (a subject of that type); absent for the brand's own sections. */
+            subjectId?: string | null;
+            field: string;
+            value: components["schemas"]["FactValue"];
+            unit?: string | null;
+            language: string;
+            /**
+             * Format: date-time
+             * @example 2026-12-31T18:15:00Z
+             */
+            expiresAt?: string | null;
+        };
+        /** @description Approves quote-checked (`unverified`) facts only. Any other status, or an older version, refuses the whole batch (409). */
+        ApproveBatch: {
+            ids: string[];
+        };
+        /** @description Adds an approved version. Omitted unit or expiresAt keep theirs; null clears them. */
+        FactPatch: {
+            value: components["schemas"]["FactValue"];
+            unit?: string | null;
+            /**
+             * Format: date-time
+             * @example 2026-12-31T18:15:00Z
+             */
+            expiresAt?: string | null;
+        };
+        FactReject: {
+            reason?: string;
+        };
+        /** @description Keep one fact, or type the right value. Every other current fact on that subject and field is rejected. */
+        ConflictResolve: components["schemas"]["ConflictKeep"] | components["schemas"]["ConflictTypeValue"];
+        ConflictKeep: {
+            keepFactId: string;
+        };
+        ConflictTypeValue: {
+            section: components["schemas"]["SectionKey"];
+            /** @description Required for products and audience (a subject of that type); absent for the brand's own sections. */
+            subjectId?: string | null;
+            field: string;
+            value: components["schemas"]["FactValue"];
+            unit?: string | null;
+            language: string;
+            /**
+             * Format: date-time
+             * @example 2026-12-31T18:15:00Z
+             */
+            expiresAt?: string | null;
+        };
+        Subject: {
+            id: string;
+            /** @enum {string} */
+            type: "product" | "segment";
+            name: string;
+            createdAt: string;
+        };
+        SubjectCreate: {
+            /** @enum {string} */
+            type: "product" | "segment";
+            name: string;
+        };
+        Asset: {
+            id: string;
+            sourceId: string;
+            kind: components["schemas"]["AssetKind"];
+            /** @example white on transparent */
+            variant: string | null;
+            rights: components["schemas"]["AssetRights"];
+            /** @description True when rights.licence is filled in. */
+            licensed: boolean;
+            source: components["schemas"]["FactSource"];
+            createdAt: string;
+        };
+        /** @enum {string} */
+        AssetKind: "logo" | "font" | "photo" | "other";
+        AssetRights: {
+            /** @description Creator or owner. */
+            owner?: string;
+            /** @description Readiness needs this on every asset. */
+            licence?: string;
+            territory?: string;
+            channels?: string[];
+            commercialUse?: boolean;
+            paidUse?: boolean;
+            term?: string;
+            expiresAt?: string;
+            attribution?: string;
+            modelRelease?: boolean;
+        };
+        /** @description Registers a completed upload as an asset. */
+        AssetCreate: {
+            sourceId: string;
+            kind: components["schemas"]["AssetKind"];
+            variant?: string | null;
+            rights?: components["schemas"]["AssetRights"];
+        };
+        /** @description `rights` replaces the stored rights. */
+        AssetUpdate: {
+            kind?: components["schemas"]["AssetKind"];
+            variant?: string | null;
+            rights?: components["schemas"]["AssetRights"];
+        };
+        Palette: {
+            colours: components["schemas"]["PaletteColour"][];
+            /** @description Every colour with role text against every colour with role background. */
+            contrasts: components["schemas"]["Contrast"][];
+        };
+        PaletteColour: {
+            id: string;
+            /** @example #0f5257 */
+            hex: string;
+            role: components["schemas"]["PaletteRole"] | null;
+            /** @enum {string} */
+            origin: "logo" | "site" | "guide" | "owner";
+            /** @description Share of the logo's opaque pixels, 0 to 1; null for site and owner colours. */
+            share: number | null;
+            rgb: {
+                r: number;
+                g: number;
+                b: number;
+            };
+            /** @description Percentages from a naive conversion: approximate, label it so. */
+            cmyk: {
+                c: number;
+                m: number;
+                y: number;
+                k: number;
+            };
+        };
+        /** @enum {string} */
+        PaletteRole: "primary" | "secondary" | "accent" | "text" | "background";
+        Contrast: {
+            text: string;
+            background: string;
+            /** @description WCAG 2 contrast ratio, 2 decimals. */
+            ratio: number;
+            /** @description At least 4.5: body text passes AA. */
+            aa: boolean;
+            /** @description At least 3: large text passes AA. */
+            aaLarge: boolean;
+        };
+        /** @description The whole palette: listed colours keep their origin and share and take the given role; new ones are the owner's; unlisted ones are removed. */
+        PaletteUpdate: {
+            colours: {
+                /** @example #0f5257 */
+                hex: string;
+                role: components["schemas"]["PaletteRole"] | null;
+            }[];
+        };
+        Readiness: {
+            /** @description 0 to 100. Not rescaled: 70 is the most this sprint can reach. */
+            score: number;
+            /**
+             * @description Any gate makes it blocked.
+             * @enum {string}
+             */
+            band: "blocked" | "draft_only" | "limited_pilot" | "automation";
+            /** @description Mandatory blockers; shown above the score. */
+            gates: {
+                label: string;
+                /** @description App path that fixes it, e.g. /app/b/{brandId}/brand/review?section=products */
+                fixPath: string;
+            }[];
+            dimensions: {
+                key: string;
+                label: string;
+                weight: number;
+                earned: number;
+                /** @example Set up with Publish */
+                note?: string;
+                criteria: {
+                    label: string;
+                    pass: boolean;
+                    /** @description App path that fixes it, e.g. /app/b/{brandId}/brand/review?section=products */
+                    fixPath: string;
+                }[];
+            }[];
+        };
+        BrandBook: {
+            /** @description Every catalogue section, in catalogue order, with its current approved, unexpired facts. */
+            sections: {
+                key: components["schemas"]["SectionKey"];
+                label: string;
+                facts: components["schemas"]["Fact"][];
+            }[];
+            palette: components["schemas"]["Palette"];
+            assets: components["schemas"]["Asset"][];
+            competitors: components["schemas"]["Competitor"][];
+            readiness: components["schemas"]["Readiness"];
         };
     };
     responses: never;
