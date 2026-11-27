@@ -2,17 +2,18 @@
 // an unfinished send runs again with the same idempotency key, which the platform treats as the same post.
 import { randomUUID } from 'node:crypto';
 import { DBOS } from '@dbos-inc/dbos-sdk';
-import { and, asc, eq, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, isNotNull, lte, sql } from 'drizzle-orm';
 import { publishJobs } from '../../db/schema/publish.ts';
 import { withBrand, withTenant, type Tx } from '../../db/tenant.ts';
 import { logger } from '../../log.ts';
-import { listBrands } from '../brands/index.ts';
+import { getBrand, listBrands } from '../brands/index.ts';
 import { approvedFacts } from '../knowledge/index.ts';
 import { findChannel } from './channels.ts';
 import { connectorFor, ConnectorError, type Connector, type PublishRequest } from './connectors/index.ts';
 import { copiesOf, isVideo, mediaFor } from './fit.ts';
 import { applyOutcome, auditJob, dueAt, getJob, type Job } from './jobs.ts';
 import { approvalOf, draftOf, reads, type DraftForPublish, type Reads } from './reads.ts';
+import { nextWindowStart, safeTimezone } from './schedule.ts';
 import { getSettings } from './settings.ts';
 import { isMissed, MISSED, type Outcome } from './state.ts';
 
@@ -49,6 +50,7 @@ export async function dueJobs(now: Date): Promise<DueJob[]> {
  * due. A re-run of this step by the same workflow after a crash finds its own claim.
  */
 async function claim(tx: Tx, brandId: string, jobId: string, token: string, now: Date): Promise<{ dueAt: string } | null> {
+  if (await deferRetry(tx, brandId, jobId, now)) return null;
   const [row] = await tx
     .update(publishJobs)
     .set({ state: 'publishing', workflowId: token, attempts: sql`${publishJobs.attempts} + 1` })
@@ -61,6 +63,23 @@ async function claim(tx: Tx, brandId: string, jobId: string, token: string, now:
   const [mine] = await tx.select().from(publishJobs)
     .where(and(eq(publishJobs.id, jobId), eq(publishJobs.brandId, brandId), eq(publishJobs.state, 'publishing'), eq(publishJobs.workflowId, token)));
   return mine ? { dueAt: dueAt(mine).toISOString() } : null;
+}
+
+/**
+ * A retry (a job with a retry time) due while the brand's publishing hours are closed moves to the start of the next
+ * window, without counting as an attempt. A job at its first scheduled time was checked when it was scheduled.
+ */
+async function deferRetry(tx: Tx, brandId: string, jobId: string, now: Date): Promise<boolean> {
+  const [j] = await tx.select().from(publishJobs)
+    .where(and(eq(publishJobs.id, jobId), eq(publishJobs.brandId, brandId), eq(publishJobs.state, 'scheduled'), isNotNull(publishJobs.nextAttemptAt), lte(due, now)));
+  if (!j) return false;
+  const start = nextWindowStart(now, safeTimezone((await getBrand(tx, brandId)).timezone), await getSettings(tx, brandId));
+  if (!start) return false;
+  const [moved] = await tx.update(publishJobs).set({ nextAttemptAt: start })
+    .where(and(eq(publishJobs.id, jobId), eq(publishJobs.brandId, brandId), eq(publishJobs.state, 'scheduled'), eq(publishJobs.nextAttemptAt, j.nextAttemptAt!)))
+    .returning();
+  if (moved) await auditJob(tx, brandId, moved, 'defer', 'scheduled', 'scheduled', `outside the publishing hours; next try ${start.toISOString()}`, 'system');
+  return true;
 }
 
 /** Applies an outcome to the job this worker claimed. Anything else that changed the job meanwhile wins. */

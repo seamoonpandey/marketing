@@ -34,12 +34,12 @@ beforeEach(() => {
   slept = [];
 });
 
-async function setup(o: { brand?: string; platform?: string; connector?: 'manual' | 'mock'; draft?: DraftForPublish & { brandId: string } } = {}) {
+async function setup(o: { brand?: string; platform?: string; connector?: 'manual' | 'mock'; draft?: DraftForPublish & { brandId: string }; at?: string } = {}) {
   const brand = o.brand ?? (await t.makeBrand());
   const platform = o.platform ?? 'facebook';
   const channel = await withBrand(brand, (tx) => createChannel(tx, brand, { platform, accountName: `@${platform}`, connector: o.connector ?? 'mock' }));
   const draft = o.draft ?? fake.add(brand);
-  const job = await withBrand(brand, (tx) => scheduleJob(tx, brand, { draftId: draft.id, channelId: channel.id, scheduledAt: AT }, [], fake.reads));
+  const job = await withBrand(brand, (tx) => scheduleJob(tx, brand, { draftId: draft.id, channelId: channel.id, scheduledAt: o.at ?? AT }, [], fake.reads));
   return { brand, channel, draft, job, key: job.idempotencyKey };
 }
 /** Sends at T0 + minutes, with the fake gate, the test's mock and no real waiting. */
@@ -204,6 +204,35 @@ describe('the scheduler', () => {
     } finally {
       delete testReads.current;
     }
+  });
+});
+
+describe('a retry outside the publishing hours', () => {
+  it('waits for the start of the next window in the brand\'s timezone, and the wait is not an attempt', async () => {
+    const { brand, job, key } = await setup();
+    mock.program(key, { result: 'error', kind: 'rate_limited', retryAfterSeconds: 120 });
+    // Sent late, at 20:58 Kathmandu time: the retry falls due at 21:00, where the window ends.
+    expect((await send(brand, job.id, 658)).nextAttemptAt!.getTime()).toBe(min(660).getTime());
+    const held = await send(brand, job.id, 660);
+    expect(held).toMatchObject({ state: 'scheduled', attempts: 1 });
+    expect(held.nextAttemptAt!.getTime()).toBe(min(21 * 60).getTime()); // 07:00 the next day, Kathmandu time
+    expect(mock.calls).toHaveLength(1);
+    expect(await send(brand, job.id, 21 * 60)).toMatchObject({ state: 'published', attempts: 2 });
+  });
+
+  it('leaves a job at its first scheduled time alone: it was checked when it was scheduled', async () => {
+    const { brand, job } = await setup({ at: `${DAY}T20:59:00+05:45` });
+    expect(await send(brand, job.id, 661)).toMatchObject({ state: 'published', attempts: 1 }); // 21:01, a minute late
+  });
+
+  it('uses UTC for a brand whose timezone is not valid, and still sends', async () => {
+    const { brand, job, key } = await setup();
+    await t.adminQuery(`update brands set timezone = 'Mars/Olympus' where id = $1`, [brand]);
+    mock.program(key, { result: 'error', kind: 'server' });
+    await send(brand, job.id, 1); // 04:16 UTC: the retry falls due before 07:00 UTC
+    const held = await send(brand, job.id, 5);
+    expect(held.nextAttemptAt!.toISOString()).toBe(`${DAY}T07:00:00.000Z`);
+    expect(await send(brand, job.id, 165)).toMatchObject({ state: 'published', attempts: 2 });
   });
 });
 

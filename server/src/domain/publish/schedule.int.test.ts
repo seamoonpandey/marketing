@@ -3,7 +3,7 @@ import { testDb, type TestDb } from '../../../test/helpers.ts';
 import { withBrand } from '../../db/tenant.ts';
 import { createChannel, updateChannel } from './channels.ts';
 import { fakeReads } from './fake-reads.ts';
-import { cancelJob, offsetAt, parseAt, rescheduleJob, scheduleJob } from './schedule.ts';
+import { cancelJob, nextWindowStart, offsetAt, parseAt, rescheduleJob, scheduleJob } from './schedule.ts';
 import { setSettings } from './settings.ts';
 
 let t: TestDb;
@@ -68,6 +68,20 @@ describe('scheduling', () => {
     await expect(schedule(brand, { draftId: d.id, channelId: channel.id, scheduledAt: '2027-03-28T01:30:00+00:00' })).rejects.toThrow(/does not exist in Europe\/London/);
     const job = await schedule(brand, { draftId: d.id, channelId: channel.id, scheduledAt: '2027-03-28T02:30:00+01:00' });
     expect(job.scheduledAt.toISOString()).toBe('2027-03-28T01:30:00.000Z');
+  });
+
+  it('finds the next window start in the brand\'s time, across a daylight-saving change, with the end of the window outside it', () => {
+    const hours = { windowStart: 7, windowEnd: 21, maxAttempts: 3 };
+    const next = (at: string, tz = 'Europe/London') => nextWindowStart(new Date(at), tz, hours)?.toISOString() ?? null;
+    expect(next('2027-03-27T22:00:00Z')).toBe('2027-03-28T06:00:00.000Z'); // the night clocks go forward: 07:00 BST
+    expect(next('2027-10-30T21:30:00Z')).toBe('2027-10-31T07:00:00.000Z'); // the night clocks go back: 07:00 GMT
+    expect(next('2027-03-28T05:59:00Z')).toBe('2027-03-28T06:00:00.000Z'); // 06:59 BST, before the window
+    expect(next('2027-03-28T06:00:00Z')).toBeNull(); // 07:00 BST, its first minute
+    expect(next('2027-03-28T19:59:59Z')).toBeNull(); // 20:59:59 BST
+    expect(next('2027-03-28T20:00:00Z')).toBe('2027-03-29T06:00:00.000Z'); // 21:00 BST, where it ends
+    expect(next('2026-12-01T15:15:00Z', 'Asia/Kathmandu')).toBe('2026-12-02T01:15:00.000Z'); // 21:00 in Kathmandu
+    // A window starting inside the hour the clocks skip opens at the first minute that exists.
+    expect(nextWindowStart(new Date('2027-03-27T23:00:00Z'), 'Europe/London', { ...hours, windowStart: 1 })?.toISOString()).toBe('2027-03-28T01:00:00.000Z');
   });
 
   it('refuses scheduling for a brand whose timezone is not valid, with a clear message', async () => {
