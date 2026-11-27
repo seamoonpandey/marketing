@@ -5,6 +5,7 @@ import { closeDb, useDatabase } from '../src/db/client.ts';
 import { seedTenant } from '../src/db/seed.ts';
 import { ensureAppRole, POST_SCHEMA_SQL } from '../src/db/setup.ts';
 import { resetTenantCache } from '../src/db/tenant.ts';
+import { launchWorkflows, shutdownWorkflows } from '../src/workflows/index.ts';
 
 export type TestDb = {
   tenantId: string;
@@ -72,4 +73,13 @@ export async function testDb(): Promise<TestDb> {
       await s.end();
     },
   };
+}
+
+/**
+ * Launches DBOS with its system tables in the throwaway database (schema `dbos`), so close() drops
+ * them too. Register test workflows before calling it. Returns the shutdown function.
+ */
+export async function launchTestWorkflows(db: TestDb): Promise<() => Promise<void>> {
+  await launchWorkflows(db.adminUrl);
+  return shutdownWorkflows;
 }
