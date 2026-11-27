@@ -1,8 +1,7 @@
 import { randomBytes } from 'node:crypto';
-import { generateDrizzleJson, generateMigration } from 'drizzle-kit/api';
 import pg from 'pg';
+import { inject } from 'vitest';
 import { closeDb, useDatabase } from '../src/db/client.ts';
-import * as schema from '../src/db/schema/index.ts';
 import { seedTenant } from '../src/db/seed.ts';
 import { ensureAppRole, POST_SCHEMA_SQL } from '../src/db/setup.ts';
 import { resetTenantCache } from '../src/db/tenant.ts';
@@ -18,14 +17,6 @@ export type TestDb = {
   /** Runs SQL as the owner role, which bypasses RLS. For arranging and inspecting data. */
   adminQuery<R extends pg.QueryResultRow = any>(sql: string, params?: unknown[]): Promise<R[]>;
 };
-
-let schemaSql: Promise<string[]> | undefined;
-
-/** The CREATE statements for the current Drizzle schema, from nothing. */
-function currentSchemaSql(): Promise<string[]> {
-  schemaSql ??= generateMigration(generateDrizzleJson({}), generateDrizzleJson(schema));
-  return schemaSql;
-}
 
 function withDatabase(url: string, name: string): string {
   const u = new URL(url);
@@ -50,7 +41,8 @@ export async function testDb(): Promise<TestDb> {
 
   const admin = new pg.Client(adminUrl);
   await admin.connect();
-  for (const statement of await currentSchemaSql()) await admin.query(statement);
+  // The CREATE statements for the current Drizzle schema, from test/global-setup.ts.
+  for (const statement of inject('schemaSql')) await admin.query(statement);
   await admin.query(POST_SCHEMA_SQL);
   const tenantId = await seedTenant(admin);
   await useDatabase(appUrl);

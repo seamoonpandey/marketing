@@ -17,6 +17,7 @@ env.AI_MODEL = 'mock'; // tests never make a paid model call
 export default defineConfig({
   test: {
     env,
+    globalSetup: ['test/global-setup.ts'],
     testTimeout: 30_000,
     hookTimeout: 60_000,
   },

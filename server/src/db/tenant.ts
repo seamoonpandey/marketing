@@ -82,3 +82,8 @@ export async function withBrand<T>(brandId: string, fn: (tx: Tx) => Promise<T>):
     throw e;
   }
 }
+
+/** The tenant a transaction is scoped to (app.tenant_id). */
+export async function tenantOf(tx: Tx): Promise<string> {
+  return (await tx.execute<{ id: string }>(sql`select current_setting('app.tenant_id') as id`)).rows[0]!.id;
+}
