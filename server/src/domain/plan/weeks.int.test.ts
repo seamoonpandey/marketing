@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { F1, F2, facts, fact } from '../../../test/fixtures/plan/facts.ts';
 import { testDb, type TestDb } from '../../../test/helpers.ts';
-import { withBrand } from '../../db/tenant.ts';
+import { withBrand, type Tx } from '../../db/tenant.ts';
 import { addItem, approveWeek, editItem, getWeek, removeItem } from './weeks.ts';
 import { setSettings } from './settings.ts';
 
@@ -92,6 +92,50 @@ describe('week plans', () => {
     await withBrand(b, (tx) => approveWeek(tx, b, prev, facts));
     await withBrand(b, (tx) => addItem(tx, b, SUN, full({ idea: 'shawl STORY' })));
     expect((await week(b)).violations.map((v) => v.rule)).toEqual(['repeat_idea']);
+  });
+
+  // Two requests at once: one holds its transaction open at `gate` while the other runs.
+  const held = <T>(b: string, fn: (tx: Tx) => Promise<T>) => {
+    let reached!: () => void;
+    let release!: () => void;
+    const at = new Promise<void>((r) => (reached = r));
+    const gate = new Promise<void>((r) => (release = r));
+    const done = withBrand(b, async (tx) => {
+      const out = await fn(tx);
+      reached();
+      await gate;
+      return out;
+    });
+    return { at, release, done };
+  };
+  const settle = () => new Promise((r) => setTimeout(r, 300));
+
+  it('an item edit made while an approval commits ends that approval', async () => {
+    const b = await brandWith();
+    const item = await withBrand(b, (tx) => addItem(tx, b, SUN, full()));
+    const approving = held(b, (tx) => approveWeek(tx, b, SUN, facts));
+    await approving.at;
+    const editing = withBrand(b, (tx) => editItem(tx, b, item.id, { cta: '' }));
+    await settle();
+    approving.release();
+    await approving.done;
+    await editing;
+    const w = await week(b);
+    expect(w.items[0]!.cta).toBe('');
+    expect(w.plan!.status).toBe('draft');
+  });
+
+  it('an approval made while an item edit commits checks the edited item', async () => {
+    const b = await brandWith();
+    const item = await withBrand(b, (tx) => addItem(tx, b, SUN, full()));
+    const editing = held(b, (tx) => editItem(tx, b, item.id, { cta: '' }));
+    await editing.at;
+    const approving = withBrand(b, (tx) => approveWeek(tx, b, SUN, facts)).catch((e: unknown) => e);
+    await settle();
+    editing.release();
+    await editing.done;
+    expect(await approving).toMatchObject({ status: 409 });
+    expect((await week(b)).plan!.status).toBe('draft');
   });
 
   it('does not show or edit another brand\'s items', async () => {
