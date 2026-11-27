@@ -2,7 +2,7 @@ import type { ApprovedFact } from '../../contracts/common.ts';
 import type { DraftContent, DraftKind, RenderRecord } from '../../db/schema/studio.ts';
 import { foldText, WORD_END, WORD_START } from '../../text/normalise.ts';
 import { contrast } from '../knowledge/index.ts';
-import type { BrandKit } from './render-types.ts';
+import type { BrandKit } from '../../render/index.ts';
 
 export type Finding = {
   check: 'unverified_number' | 'prohibited_word' | 'too_long' | 'missing_cta' | 'expired_fact' | 'no_rights' | 'text_overflow' | 'not_rendered' | 'low_contrast' | 'many_hashtags';
@@ -10,7 +10,7 @@ export type Finding = {
 };
 
 /** Caption limits in characters by channel; email and website have none. */
-export const CAPTION_LIMITS: Record<string, number> = { x: 280, whatsapp: 1024, facebook: 2000, instagram: 2200, tiktok: 2200, linkedin: 3000, youtube: 5000 };
+const CAPTION_LIMITS: Record<string, number> = { x: 280, whatsapp: 1024, facebook: 2000, instagram: 2200, tiktok: 2200, linkedin: 3000, youtube: 5000 };
 
 /** "1,500.50" is "1500.5"; compared as text, so no two numbers share a form (Number() makes NaN, Infinity, rounding). */
 function canonical(n: string): string {
@@ -52,7 +52,7 @@ export function cardsOf(kind: DraftKind, c: DraftContent): { headline: string; s
 }
 
 const len = (s: string) => Array.from(s.normalize('NFC')).length;
-export const captionOf = (c: DraftContent['copies'][number]) => c.sentences.map((s) => s.text).join(' ');
+const captionOf = (c: DraftContent['copies'][number]) => c.sentences.map((s) => s.text).join(' ');
 
 export function checkDraft(i: {
   kind: DraftKind; channel: string; content: DraftContent; renders: RenderRecord[]; version: number; facts: ApprovedFact[];

@@ -1,7 +1,8 @@
-// The one place Approve reads Studio (docs/structure.md section 10).
+// The one place Approve reads Studio. Every caller takes a StudioReads argument that tests replace.
 import type { ApprovedFact } from '../../contracts/common.ts';
-import type { Tx } from '../../db/tenant.ts';
+import { isUuid, type Tx } from '../../db/tenant.ts';
 import { NotFoundError } from '../../http/errors.ts';
+import { getDraft, listDrafts } from '../studio/index.ts';
 
 export type ReadyDraft = {
   id: string; planItemId: string; kind: string; status: 'draft' | 'ready';
@@ -18,15 +19,9 @@ export type StudioReads = {
   listDrafts(tx: Tx, brandId: string, facts: ApprovedFact[], filter?: { status?: 'draft' | 'ready' }): Promise<ReadyDraft[]>;
 };
 
-/** Studio's getDraft and listDrafts, imported at call time so this module compiles before Studio's domain is merged. */
-export async function studioReads(): Promise<StudioReads> {
-  const m = (await import('../studio/index.ts')) as unknown as Partial<StudioReads>;
-  if (typeof m.getDraft !== 'function' || typeof m.listDrafts !== 'function') throw new Error('Studio does not export getDraft and listDrafts yet');
-  return { getDraft: m.getDraft, listDrafts: m.listDrafts };
-}
+/** Studio's getDraft and listDrafts. */
+export const studioReads = async (): Promise<StudioReads> => ({ getDraft, listDrafts });
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export const isUuid = (s: string) => UUID.test(s);
 
 /** The brand's draft by id, or null when Studio has none (Studio's getDraft may answer null or throw NotFoundError). */
 export async function draftOf(studio: StudioReads, tx: Tx, brandId: string, draftId: string, facts: ApprovedFact[]): Promise<ReadyDraft | null> {

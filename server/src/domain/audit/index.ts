@@ -3,7 +3,7 @@ import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import { auditEvents } from '../../db/schema/core.ts';
 import type { Tx } from '../../db/tenant.ts';
 
-export type AuditInput = {
+type AuditInput = {
   brandId?: string;
   actor: string;
   action: string;
@@ -31,7 +31,7 @@ type AuditRow = {
 };
 
 /** The SHA-256 of a row's fields and the previous row's hash. */
-export function auditHash(r: AuditRow): string {
+function auditHash(r: AuditRow): string {
   const fields = [
     r.id, r.tenantId, r.brandId, r.actor, r.action, r.objectType, r.objectId, r.objectVersion,
     r.result, r.reason, r.traceId, r.createdAt.toISOString(), r.prevHash,

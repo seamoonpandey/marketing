@@ -1,5 +1,4 @@
-// Owned by the approve branch (docs/structure.md). Request and response schemas of
-// /api/brands/{brandId}/approve/…
+// Request and response schemas of /api/brands/{brandId}/approve/…
 import { z } from '@hono/zod-openapi';
 import { orNull } from './common.ts';
 import { Content, Finding, Kind, LeftOut } from './studio.ts';

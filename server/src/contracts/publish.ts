@@ -1,5 +1,4 @@
-// Owned by the publish branch (docs/structure.md). Request and response schemas of
-// /api/brands/{brandId}/publish/…
+// Request and response schemas of /api/brands/{brandId}/publish/…
 import { z } from '@hono/zod-openapi';
 import { orNull } from './common.ts';
 import { channelStatuses, jobStates } from '../db/schema/publish.ts';

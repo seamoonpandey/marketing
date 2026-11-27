@@ -29,7 +29,6 @@ export type Captured = {
 };
 export type Target = { id: string; competitorId: string; url: string; lastSourceId: string | null };
 
-export const runCapNpr = () => process.env.RESEARCH_RUN_CAP_NPR ?? '150';
 const RUN_TYPE = 'research_watch';
 const FAILS_BEFORE_PAUSE = 3;
 
@@ -105,7 +104,7 @@ export async function estimateRun(
     const remaining = await remainingMonthlyCap(tx);
     const wait =
       changed.length > 0 &&
-      (trigger === 'baseline' || Number(estimate.npr) > Number(runCapNpr()) || Number(estimate.npr) > Number(remaining.npr));
+      (trigger === 'baseline' || Number(estimate.npr) > Number(config.RESEARCH_RUN_CAP_NPR) || Number(estimate.npr) > Number(remaining.npr));
     await tx
       .update(watchRuns)
       .set({ estimate, ...(wait ? { state: 'awaiting_approval' as const } : {}) })
@@ -114,7 +113,7 @@ export async function estimateRun(
   });
 }
 
-export type Extracted = { observations: number; discarded: number; profileEntries: number } | { fatal: string };
+type Extracted = { observations: number; discarded: number; profileEntries: number } | { fatal: string };
 
 /** One model call for one changed page. Keeps only what the saved pages back up. */
 export async function extractPage(brandId: string, runId: string, c: Captured): Promise<Extracted> {

@@ -1,5 +1,5 @@
 // The plan draft run: one model call that drafts a week of items or a campaign brief. The run ID is
-// the DBOS workflow ID. Owned by the plan branch.
+// the DBOS workflow ID.
 import { DBOS } from '@dbos-inc/dbos-sdk';
 import type { ApprovedFact, Money } from '../contracts/common.ts';
 import type { PlanCounts } from '../db/schema/plan.ts';

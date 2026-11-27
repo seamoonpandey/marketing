@@ -47,7 +47,7 @@ describe('research API', () => {
     expect((await call('GET', `/brands/${b}/research/observations`)).body).toHaveLength(1);
   });
 
-  it('answers 409 with the base error shape for a run while one is active', async () => {
+  it('answers 409 with the shared error shape for a run while one is active', async () => {
     const brand = await t.makeBrand();
     const [{ id: runId }] = await t.adminQuery(
       `insert into watch_runs (tenant_id, brand_id, trigger, state) values ($1, $2, 'manual', 'running') returning id`,

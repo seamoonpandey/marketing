@@ -12,13 +12,16 @@ const schema = z.object({
   AI_MODEL: z.string().default('anthropic:claude-opus-5-5'),
   ANTHROPIC_API_KEY: z.string().optional(),
   AI_MONTHLY_CAP_NPR: z.string().regex(/^\d+(\.\d+)?$/).default('5000'),
+  // A research run estimated above this waits for the owner's confirmation.
+  RESEARCH_RUN_CAP_NPR: z.string().regex(/^\d+(\.\d+)?$/).default('150'),
   USD_NPR: z.string().regex(/^\d+(\.\d+)?$/).default('155.08'),
   TENANT_SLUG: z.string().default('xenextech'),
   // pm2 sets it per cluster instance (0, 1, …); it names this process's DBOS executor (workflows/index.ts).
   NODE_APP_INSTANCE: z.string().regex(/^\d+$/).optional(),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 
-export type Config = z.infer<typeof schema>;
+type Config = z.infer<typeof schema>;
 
 /** The development defaults above, with the passwords of docker-compose.dev.yml: never a production value. */
 const DEV_ONLY = ['DATABASE_URL', 'DATABASE_ADMIN_URL', 'DBOS_SYSTEM_DATABASE_URL', 'S3_ENDPOINT', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const;

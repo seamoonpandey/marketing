@@ -1,5 +1,4 @@
-// Owned by the studio branch (docs/structure.md). Request and response schemas of
-// /api/brands/{brandId}/studio/…
+// Request and response schemas of /api/brands/{brandId}/studio/…
 import { z } from '@hono/zod-openapi';
 import { namedMoney, orNull } from './common.ts';
 import { channels, formats } from '../domain/plan/enums.ts';

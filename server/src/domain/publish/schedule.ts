@@ -33,7 +33,7 @@ export const safeTimezone = (tz: string) => (offsetAt(tz, new Date()) === null ?
 const fmtOffset = (m: number) => `${m < 0 ? '-' : '+'}${String(Math.floor(Math.abs(m) / 60)).padStart(2, '0')}:${String(Math.abs(m) % 60).padStart(2, '0')}`;
 
 /** "2026-12-01 23:00 Asia/Kathmandu": a time as the brand reads it. */
-export function describeAt(at: Date, timezone: string): string {
+function describeAt(at: Date, timezone: string): string {
   const tz = safeTimezone(timezone);
   const local = new Date(at.getTime() + offsetAt(tz, at)! * 60_000).toISOString();
   return `${local.slice(0, 10)} ${local.slice(11, 16)} ${tz}`;
@@ -70,7 +70,7 @@ export function parseAt(s: string, timezone: string): Date {
 }
 
 /** Refuses a time in the past or outside the publishing window in the brand's timezone. */
-export function checkWindow(at: Date, timezone: string, s: PublishSettings, now: Date): void {
+function checkWindow(at: Date, timezone: string, s: PublishSettings, now: Date): void {
   if (at.getTime() < now.getTime()) throw new ValidationError(`${describeAt(at, timezone)} is in the past`);
   const local = new Date(at.getTime() + offsetAt(timezone, at)! * 60_000);
   const minute = local.getUTCHours() * 60 + local.getUTCMinutes();

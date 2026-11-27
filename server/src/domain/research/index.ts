@@ -1,4 +1,4 @@
-// Module 2 (research branch).
+// Module 2, Research.
 export { routes } from './routes.ts';
 export { addTarget, listTargets, removeTarget, setTargetStatus, suggestTargets } from './targets.ts';
 export { diffText } from './diff.ts';

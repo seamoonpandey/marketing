@@ -4,7 +4,7 @@ import type { Tx } from '../../db/tenant.ts';
 import { getBrand } from '../brands/index.ts';
 import { getPalette, listAssets } from '../knowledge/index.ts';
 import { getSource } from '../sources/index.ts';
-import type { BrandKit } from './render-types.ts';
+import type { BrandKit } from '../../render/index.ts';
 
 export type Env = {
   languages: string[]; kit: BrandKit;

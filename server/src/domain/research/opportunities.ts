@@ -4,7 +4,7 @@ import { estimateTokens, extract } from '../../ai/index.ts';
 import { config } from '../../config.ts';
 import type { ApprovedFact, Money } from '../../contracts/common.ts';
 import { observations, opportunities } from '../../db/schema/research.ts';
-import { withBrand, type Tx } from '../../db/tenant.ts';
+import { isUuid, withBrand, type Tx } from '../../db/tenant.ts';
 import { NotFoundError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { estimateCost } from '../costs/index.ts';
@@ -12,7 +12,6 @@ import { MAX_OUTPUT_TOKENS } from './watch/prompts.ts';
 
 export type Opportunity = typeof opportunities.$inferSelect;
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const Answer = z.object({
   opportunities: z.array(
@@ -84,7 +83,7 @@ export async function listOpportunities(tx: Tx, brandId: string, status?: string
 }
 
 export async function decideOpportunity(tx: Tx, brandId: string, id: string, decision: 'accepted' | 'dismissed'): Promise<Opportunity> {
-  const [row] = UUID.test(id)
+  const [row] = isUuid(id)
     ? await tx
         .update(opportunities).set({ status: decision, decidedAt: new Date() })
         .where(and(eq(opportunities.id, id), eq(opportunities.brandId, brandId))).returning()

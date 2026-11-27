@@ -127,7 +127,7 @@ describe('approve API', () => {
     expect(pv.draft).toMatchObject({ blockingCount: 1, canApprove: false });
   });
 
-  it('validates every body and query and answers 400 with the base error shape', async () => {
+  it('validates every body and query and answers 400 with the shared error shape', async () => {
     const brand = await t.makeBrand();
     const d = studio.put(brand);
     const p = `/brands/${brand}/approve`;

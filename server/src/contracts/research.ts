@@ -1,5 +1,4 @@
-// Owned by the research branch (docs/structure.md). Request and response schemas of
-// /api/brands/{brandId}/research/…
+// Request and response schemas of /api/brands/{brandId}/research/…
 import { z } from '@hono/zod-openapi';
 import { namedMoney, orNull } from './common.ts';
 

@@ -2,14 +2,13 @@ import { and, asc, eq } from 'drizzle-orm';
 import type { AssetOut } from '../../contracts/knowledge.ts';
 import { sources } from '../../db/schema/core.ts';
 import { assets, type AssetRights, type assetKinds } from '../../db/schema/knowledge.ts';
-import type { Tx } from '../../db/tenant.ts';
+import { isUuid, type Tx } from '../../db/tenant.ts';
 import { NotFoundError, ValidationError } from '../../http/errors.ts';
 import { presignDownload } from '../../storage/index.ts';
 import { audit } from '../audit/index.ts';
 import { getSource } from '../sources/index.ts';
 
 type Kind = (typeof assetKinds)[number];
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const licensed = (r: AssetRights) => typeof r.licence === 'string' && r.licence.trim().length > 0;
 
@@ -59,7 +58,7 @@ export async function updateAsset(
 ): Promise<AssetOut> {
   const where = and(eq(assets.id, id), eq(assets.brandId, brandId));
   const set = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined));
-  const [row] = !UUID.test(id) ? []
+  const [row] = !isUuid(id) ? []
     : Object.keys(set).length ? await tx.update(assets).set(set).where(where).returning({ id: assets.id })
     : await tx.select({ id: assets.id }).from(assets).where(where);
   if (!row) throw new NotFoundError('asset', id);

@@ -8,13 +8,13 @@ import { audit } from '../audit/index.ts';
 import { cardsOf } from './checks.ts';
 import { getDraftRow, invalidateReady } from './drafts.ts';
 import { assetBytes, loadEnv, loadLogo } from './env.ts';
-import { defaultRenderer, isRenderUnavailable, SIZES, type Renderer, type Slide } from './render-types.ts';
+import { renderSlide, renderVideo, RenderUnavailable, SIZES, type Renderer, type Slide } from '../../render/index.ts';
 
 /** Renderers handed to startRender, by run id; the workflow step takes its own. In-process only. */
 export const pendingRenderers = new Map<string, Renderer>();
 
 const sha256 = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
-export const VIDEO_UNAVAILABLE = 'The video could not be made because the video engine (ffmpeg) is not available on this server; the images were kept.';
+const VIDEO_UNAVAILABLE = 'The video could not be made because the video engine (ffmpeg) is not available on this server; the images were kept.';
 
 export async function renderDraft(brandId: string, runId: string, draftId: string): Promise<{ rendered: number; note?: string }> {
   const plan = await withBrand(brandId, async (tx) => {
@@ -36,7 +36,7 @@ export async function renderDraft(brandId: string, runId: string, draftId: strin
   });
   if (!plan.slides.length) return { rendered: 0 };
 
-  const renderer = pendingRenderers.get(runId) ?? (await defaultRenderer());
+  const renderer: Renderer = pendingRenderers.get(runId) ?? { renderSlide, renderVideo };
   pendingRenderers.delete(runId);
   const records: RenderRecord[] = [];
   const first: Uint8Array[] = [];
@@ -58,7 +58,7 @@ export async function renderDraft(brandId: string, runId: string, draftId: strin
       const ratio = plan.ratios[0]!;
       records.push({ ratio, ...SIZES[ratio], overflow: false, index: 0, type: 'video', ...(await store(v.mp4, 'mp4', 'video/mp4')) });
     } catch (e) {
-      if (!isRenderUnavailable(e)) throw e;
+      if (!(e instanceof RenderUnavailable)) throw e;
       note = VIDEO_UNAVAILABLE;
     }
   }

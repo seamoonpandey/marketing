@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { testDb, type TestDb } from '../../../test/helpers.ts';
 import { withBrand } from '../../db/tenant.ts';
+import { setSettings as setPlanSettings } from '../plan/index.ts';
 import { approve, bulkApprove, recordView, reject, validApproval } from './decisions.ts';
 import { preview } from './queue.ts';
 import { setPaused, setSettings } from './settings.ts';
@@ -283,7 +284,7 @@ describe('approve decisions', () => {
 
   it('uses the brand plan week for the one-week rule', async () => {
     const b = await t.makeBrand();
-    await withBrand(b, async (tx) => (await import('../plan/index.ts')).setSettings(tx, b, { channels: [], pillars: [], weekStarts: 1 }));
+    await withBrand(b, (tx) => setPlanSettings(tx, b, { channels: [], pillars: [], weekStarts: 1 }));
     const sun = studio.put(b, { day: '2026-11-29' });
     const mon = studio.put(b, { day: '2026-11-30' });
     for (const d of [sun, mon]) await view(b, d);

@@ -1,7 +1,5 @@
 // One post from an approved fact to the owner's manual package and to a connector, through the real Brand, Plan,
-// Studio, Approve and Publish modules: no fake reads. Approve reads Studio and Publish reads both through a dynamic
-// import cast to an interface, so a field that one module renames reaches the next as undefined with no type error;
-// only a run through the real modules shows it. Then each upstream change after scheduling must stop the post.
+// Studio, Approve and Publish modules: no fake reads. Then each upstream change after scheduling must stop the post.
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { fakeRenderer, studioBrand } from '../test/fixtures/studio/setup.ts';
 import { launchTestWorkflows, testDb, type TestDb } from '../test/helpers.ts';
@@ -14,6 +12,7 @@ import { reads } from './domain/publish/reads.ts';
 import { studioReads } from './domain/approve/studio.ts';
 import { getRun, startGenerate, startRender } from './domain/studio/runs.ts';
 import { listDrafts, markReady } from './domain/studio/drafts.ts';
+import { putObject } from './storage/index.ts';
 
 let t: TestDb;
 let stop: () => Promise<void>;
@@ -57,7 +56,6 @@ async function scheduledPost(o: { logo?: boolean } = {}) {
     );
     const key = `tenant/${t.tenantId}/brand/${s.brand}/upload/${src.id}.png`;
     await t.adminQuery(`update sources set object_key = $1 where id = $2`, [key, src.id]);
-    const { putObject } = await import('./storage/index.ts');
     await putObject(key, new Uint8Array([0x89, 0x50, 0x4e, 0x47]), 'image/png');
     logoId = (await call('POST', `${p}/knowledge/assets`, { sourceId: src.id, kind: 'logo', rights: { licence: 'Own work' } })).body.id;
   }

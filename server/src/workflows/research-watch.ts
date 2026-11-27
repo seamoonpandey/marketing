@@ -1,5 +1,5 @@
 // The watch run (WF-002): snapshot each watched page, diff it, and send only changed pages to the
-// model. The run ID is the DBOS workflow ID. Owned by the research branch.
+// model. The run ID is the DBOS workflow ID.
 import { DBOS } from '@dbos-inc/dbos-sdk';
 import { withBrand } from '../db/tenant.ts';
 import { ConflictError } from '../http/errors.ts';

@@ -6,7 +6,7 @@ import robotsParser from 'robots-parser';
 import { ValidationError } from '../../http/errors.ts';
 import { htmlText, htmlTitle } from './html-text.ts';
 
-export const USER_AGENT = 'PrachaarBot/0.1';
+const USER_AGENT = 'PrachaarBot/0.1';
 const MAX_REDIRECTS = 5;
 const MAX_BYTES = 2 * 1024 * 1024;
 const TIMEOUT_MS = 10_000;

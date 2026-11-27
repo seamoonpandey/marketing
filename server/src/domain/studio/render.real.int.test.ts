@@ -7,7 +7,7 @@ import { launchTestWorkflows, testDb, type TestDb } from '../../../test/helpers.
 import { mockAi } from '../../ai/index.ts';
 import { withBrand } from '../../db/tenant.ts';
 import { getObject } from '../../storage/index.ts';
-import { SIZES } from './render-types.ts';
+import { SIZES } from '../../render/index.ts';
 import { getDraft, listDrafts } from './drafts.ts';
 import { getRun, startGenerate, startRender } from './runs.ts';
 

@@ -1,16 +1,16 @@
 import { and, asc, desc, eq, gte, inArray, lt } from 'drizzle-orm';
 import type { ApprovedFact } from '../../contracts/common.ts';
 import { planItems, weekPlans } from '../../db/schema/plan.ts';
-import type { Tx } from '../../db/tenant.ts';
+import { isUuid, type Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { checkBalance, type PlanItem, type Violation } from './balance.ts';
 import { assertSegment, getCampaign } from './campaigns.ts';
-import { addDays, isDay, UUID, weekdayOf } from './dates.ts';
+import { addDays, isDay, weekdayOf } from './dates.ts';
 import { getSettings } from './settings.ts';
 
 export type WeekPlan = typeof weekPlans.$inferSelect;
-export type ItemInput = Partial<Pick<PlanItem, 'format' | 'pillar' | 'funnel' | 'intent' | 'segmentId' | 'campaignId' | 'idea' | 'cta' | 'factIds'>>;
+type ItemInput = Partial<Pick<PlanItem, 'format' | 'pillar' | 'funnel' | 'intent' | 'segmentId' | 'campaignId' | 'idea' | 'cta' | 'factIds'>>;
 
 /** 400 unless weekStart is a real date on the brand's first day of the week. */
 export async function assertWeekStart(tx: Tx, brandId: string, weekStart: string): Promise<void> {
@@ -54,8 +54,8 @@ export async function getWeek(tx: Tx, brandId: string, weekStart: string, facts:
 }
 
 async function checkRefs(tx: Tx, brandId: string, i: ItemInput) {
-  for (const f of i.factIds ?? []) if (!UUID.test(f)) throw new ValidationError('factIds must be fact ids');
-  if (i.segmentId && !UUID.test(i.segmentId)) throw new ValidationError('segmentId is not an id');
+  for (const f of i.factIds ?? []) if (!isUuid(f)) throw new ValidationError('factIds must be fact ids');
+  if (i.segmentId && !isUuid(i.segmentId)) throw new ValidationError('segmentId is not an id');
   await assertSegment(tx, brandId, i.segmentId); // 404 (denied) for another brand's segment
   if (i.campaignId) await getCampaign(tx, brandId, i.campaignId); // 404 (denied) for another brand's campaign
 }
@@ -74,13 +74,13 @@ async function invalidate(tx: Tx, brandId: string, read: WeekPlan): Promise<void
 }
 
 export async function getPlan(tx: Tx, brandId: string, id: string): Promise<WeekPlan> {
-  const [row] = UUID.test(id) ? await tx.select().from(weekPlans).where(and(eq(weekPlans.id, id), eq(weekPlans.brandId, brandId))) : [];
+  const [row] = isUuid(id) ? await tx.select().from(weekPlans).where(and(eq(weekPlans.id, id), eq(weekPlans.brandId, brandId))) : [];
   if (!row) throw new NotFoundError('week_plan', id);
   return row;
 }
 
 export async function getItem(tx: Tx, brandId: string, id: string): Promise<PlanItem> {
-  const [row] = UUID.test(id) ? await tx.select().from(planItems).where(and(eq(planItems.id, id), eq(planItems.brandId, brandId))) : [];
+  const [row] = isUuid(id) ? await tx.select().from(planItems).where(and(eq(planItems.id, id), eq(planItems.brandId, brandId))) : [];
   if (!row) throw new NotFoundError('plan_item', id);
   return row;
 }

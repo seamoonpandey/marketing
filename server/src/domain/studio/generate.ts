@@ -14,7 +14,7 @@ import { composeCopy, kindFor } from './compose.ts';
 import { loadEnv, normLang } from './env.ts';
 import { isFinal, runError } from '../../workflows/index.ts';
 
-export const COPY_MAX_OUTPUT = 4096;
+const COPY_MAX_OUTPUT = 4096;
 export const NO_FACTS = 'Approve brand facts first: a draft needs at least one approved fact';
 
 const Answer = z.object({
@@ -83,14 +83,14 @@ const cut = (s: string | null | undefined, n: number) => (s ?? '').replace(UNSAF
 const optional = (s: string | null | undefined, n: number) => cut(s, n) || undefined;
 
 const RATIOS: Record<string, Ratio[]> = { instagram: ['1:1', '4:5'], tiktok: ['9:16'], youtube: ['16:9'] };
-export function ratiosFor(kind: DraftKind, channel: string, format: string | null): Ratio[] {
+function ratiosFor(kind: DraftKind, channel: string, format: string | null): Ratio[] {
   if (kind === 'video' || format === 'story') return channel === 'youtube' ? ['16:9'] : ['9:16'];
   return RATIOS[channel] ?? ['1:1'];
 }
 const templateFor = (pillar: string | null): TemplateName => (pillar === 'offer' ? 'offer' : pillar === 'proof' ? 'quote' : 'headline');
 
 /** Turns the model's answer into stored content. Fact ids the model invented are removed; claims left without one are left out. */
-export function buildContent(item: Item, languages: string[], answer: Answer, facts: ApprovedFact[]) {
+function buildContent(item: Item, languages: string[], answer: Answer, facts: ApprovedFact[]) {
   const kind = kindFor(item.format);
   const leftOut: LeftOut[] = [];
   const copies: DraftContent['copies'] = [];

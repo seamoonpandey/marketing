@@ -3,7 +3,7 @@ import { and, desc, eq, inArray } from 'drizzle-orm';
 import type { ApprovedFact } from '../../contracts/common.ts';
 import { approvals, approvalViews } from '../../db/schema/approve.ts';
 import { assets } from '../../db/schema/knowledge.ts';
-import { currentTenantId, type Tx } from '../../db/tenant.ts';
+import { isUuid, currentTenantId, type Tx } from '../../db/tenant.ts';
 import { ConflictError, HttpError, NotFoundError, ValidationError } from '../../http/errors.ts';
 import { brandPrefix, underPrefix } from '../../storage/index.ts';
 import { audit } from '../audit/index.ts';
@@ -12,9 +12,9 @@ import { payloadHash, payloadOf } from './hash.ts';
 import { plain, riskOf, textOf } from './risk.ts';
 import { getSettings, type ApproveSettings } from './settings.ts';
 import { approvalState, expiryOf, MIN_NOTE, noteLength, type Approval } from './state.ts';
-import { draftOf, isUuid, studioReads, type ReadyDraft, type StudioReads } from './studio.ts';
+import { draftOf, studioReads, type ReadyDraft, type StudioReads } from './studio.ts';
 
-export const CHANGED = 'changed since you opened it';
+const CHANGED = 'changed since you opened it';
 /** A 409; its code is `changed` when the payload changed since the screen showed it, so screens need not match the message. */
 const refused = (why: string, message = why) => (why === CHANGED ? new HttpError(409, 'changed', message) : new ConflictError(message));
 

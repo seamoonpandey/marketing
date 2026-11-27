@@ -98,7 +98,7 @@ export const pill = (w: number, h: number, fill: string) =>
   svg(w, h, `<rect width="${w}" height="${h}" rx="${h / 2}" fill="${fill}"/>`);
 export const rect = (w: number, h: number, fill: string, op = 1, r = 0) =>
   svg(w, h, `<rect width="${w}" height="${h}" rx="${r}" fill="${fill}" fill-opacity="${op}"/>`);
-export const disc = (d: number, fill: string, op: number) =>
+const disc = (d: number, fill: string, op: number) =>
   svg(d, d, `<circle cx="${d / 2}" cy="${d / 2}" r="${d / 2}" fill="${fill}" fill-opacity="${op}"/>`);
 
 /** The photo cropped to cover w×h, with rounded corners (r = h/2 and w = h gives a circle). */

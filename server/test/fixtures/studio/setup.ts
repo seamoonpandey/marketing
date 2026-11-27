@@ -3,8 +3,7 @@ import type { ApprovedFact } from '../../../src/contracts/common.ts';
 import { withBrand } from '../../../src/db/tenant.ts';
 import { approvedFacts, enterFact, findOrCreateSubject } from '../../../src/domain/knowledge/index.ts';
 import { addItem, approveWeek, getWeek, setSettings } from '../../../src/domain/plan/index.ts';
-import type { Renderer } from '../../../src/domain/studio/render-types.ts';
-import { SIZES } from '../../../src/domain/studio/render-types.ts';
+import { RenderUnavailable, SIZES, type Renderer } from '../../../src/render/index.ts';
 import type { TestDb } from '../../helpers.ts';
 
 export const SUN = '2026-11-29';
@@ -45,7 +44,7 @@ export const fakeRenderer = (): Renderer & { calls: string[]; unavailable: boole
       return { png: new TextEncoder().encode(`png ${slide.headline} ${ratio}`), ...SIZES[ratio], overflow: slide.headline.includes('OVERFLOW') };
     },
     async renderVideo(i: { frames: Uint8Array[]; secondsEach: number[] }) {
-      if (r.unavailable) throw new (class RenderUnavailable extends Error {})('no ffmpeg');
+      if (r.unavailable) throw new RenderUnavailable('no ffmpeg');
       return { mp4: new TextEncoder().encode('mp4'), seconds: i.secondsEach.reduce((a, b) => a + b, 0) };
     },
   };

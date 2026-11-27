@@ -21,7 +21,7 @@ const app = (c: Ctx, path: string) => `/app/b/${c.brandId}${path}`;
 const first = (isos: (string | null)[]) => isos.filter((s): s is string => !!s).sort()[0] ?? null;
 
 /** The instant a calendar day starts in a timezone (an invalid timezone reads as UTC). */
-export function startOfDay(day: string, timezone: string): string {
+function startOfDay(day: string, timezone: string): string {
   const utc = Date.parse(`${day}T00:00:00Z`);
   const offset = (t: number) => {
     try {

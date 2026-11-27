@@ -1,5 +1,5 @@
 // The studio run: copy for several plan items, or the render of one draft. The run ID is the DBOS
-// workflow ID of the first attempt; a retry starts a new workflow for the same run. Owned by the studio branch.
+// workflow ID of the first attempt; a retry starts a new workflow for the same run.
 import { DBOS } from '@dbos-inc/dbos-sdk';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { ApprovedFact, Money } from '../contracts/common.ts';

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { sources } from '../../db/schema/core.ts';
-import { tenantOf, type Tx } from '../../db/tenant.ts';
+import { isUuid, tenantOf, type Tx } from '../../db/tenant.ts';
 import { NotFoundError, ValidationError } from '../../http/errors.ts';
 import { deleteObject, getObject, objectKey, objectSize, presignUpload, putObject } from '../../storage/index.ts';
 import { audit } from '../audit/index.ts';
@@ -43,7 +43,6 @@ const columns = {
   meta: sources.meta,
 };
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sha256 = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
 // The browser PUTs here. Its presigned URL stays valid after completion and the browser picks the
 // Content-Type, so only completeUpload writes the source's own key, with the checked bytes and type.
@@ -150,7 +149,7 @@ export async function completeUpload(tx: Tx, brandId: string, sourceId: string):
 }
 
 export async function getSource(tx: Tx, brandId: string, id: string): Promise<Source> {
-  const [row] = UUID.test(id)
+  const [row] = isUuid(id)
     ? await tx.select(columns).from(sources).where(and(eq(sources.id, id), eq(sources.brandId, brandId)))
     : [];
   if (!row) throw new NotFoundError('source', id);

@@ -1,4 +1,4 @@
-// Module 3 (plan branch).
+// Module 3, Plan.
 export { routes } from './routes.ts';
 export { getSettings, setSettings, type PlanSettings } from './settings.ts';
 export { createCampaign, getCampaign, listCampaigns, updateCampaign } from './campaigns.ts';

@@ -49,6 +49,8 @@ export function withTenant<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** True for a UUID. Check an id from a request before Postgres sees it, which answers a malformed one with an error, not a miss. */
+export const isUuid = (s: string): boolean => UUID.test(s);
 
 /**
  * Runs fn in a transaction scoped to one brand of the tenant. A brand outside the tenant, or a
@@ -57,7 +59,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function withBrand<T>(brandId: string, fn: (tx: Tx) => Promise<T>): Promise<T> {
   let brandFound = false;
   try {
-    if (!UUID.test(brandId)) throw new NotFoundError('brand', brandId);
+    if (!isUuid(brandId)) throw new NotFoundError('brand', brandId);
     return await scoped([brandId], async (tx) => {
       const [row] = await tx.select({ id: brands.id }).from(brands).where(eq(brands.id, brandId));
       if (!row) throw new NotFoundError('brand', brandId);

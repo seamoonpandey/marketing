@@ -2,7 +2,7 @@ import { DBOS } from '@dbos-inc/dbos-sdk';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { isUniqueViolation } from '../../../db/client.ts';
 import { watchRuns, watchSchedules } from '../../../db/schema/research.ts';
-import { withBrand, withTenant, type Tx } from '../../../db/tenant.ts';
+import { isUuid, withBrand, withTenant, type Tx } from '../../../db/tenant.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../../http/errors.ts';
 import { cancelRun as cancelRunIn, QUEUE, retryRun as retryRunIn, type RunTable } from '../../../workflows/index.ts';
 import { watchWorkflow } from '../../../workflows/research-watch.ts';
@@ -12,7 +12,6 @@ import { listBrands } from '../../brands/index.ts';
 export type WatchRun = typeof watchRuns.$inferSelect;
 export type Schedule = { enabled: boolean; weekday: number; hour: number; lastRunAt: Date | null };
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ACTIVE = ['running', 'awaiting_approval'] as const;
 const ACTIVE_MESSAGE = 'A research run is already in progress for this brand';
 
@@ -39,7 +38,7 @@ export async function startRun(brandId: string, trigger: 'baseline' | 'weekly' |
 }
 
 export async function getRun(tx: Tx, brandId: string, runId: string): Promise<WatchRun> {
-  const [row] = UUID.test(runId)
+  const [row] = isUuid(runId)
     ? await tx.select().from(watchRuns).where(and(eq(watchRuns.id, runId), eq(watchRuns.brandId, brandId)))
     : [];
   if (!row) throw new NotFoundError('watch_run', runId);

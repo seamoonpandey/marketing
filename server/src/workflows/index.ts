@@ -37,7 +37,7 @@ export const QUEUE = 'default';
 
 // Fixed so a restarted process recovers the workflows a previous process left unfinished.
 // Bump it only with a deliberate migration of in-flight runs.
-export const APPLICATION_VERSION = '1';
+const APPLICATION_VERSION = '1';
 
 /**
  * This process's DBOS executor ID. At launch an executor recovers the unfinished workflows recorded under its own

@@ -7,7 +7,7 @@ import { ensureAppRole, POST_SCHEMA_SQL } from '../src/db/setup.ts';
 import { resetTenantCache } from '../src/db/tenant.ts';
 import { launchWorkflows, shutdownWorkflows } from '../src/workflows/index.ts';
 
-// Test files run in parallel against one Postgres that other worktrees' suites share (docs/structure.md section 6),
+// Test files run in parallel against one Postgres that other worktrees' suites share,
 // and its 100 connections ran out with the default pools (10 app and 10 DBOS per file). A file needs only a few.
 const POOL = 4;
 

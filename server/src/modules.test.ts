@@ -12,14 +12,14 @@ beforeAll(async () => {
 });
 afterAll(() => t.close());
 
-describe('module stubs', () => {
+describe('modules', () => {
   it('mounts every module router and the app starts', async () => {
     expect(moduleRoutes.length).toBeGreaterThan(0);
     for (const r of moduleRoutes) expect(r).toBeInstanceOf(OpenAPIHono);
     expect((await createApp().request('/api/health')).status).toBe(200);
   });
 
-  it('approvedFacts returns [] until the brand branch fills it', async () => {
+  it('approvedFacts of a brand with no facts is empty, with or without a section', async () => {
     const brand = await t.makeBrand();
     expect(await withBrand(brand, (tx) => approvedFacts(tx, brand))).toEqual([]);
     expect(await withBrand(brand, (tx) => approvedFacts(tx, brand, { section: 'identity' }))).toEqual([]);

@@ -3,14 +3,13 @@ import { and, desc, eq, sql } from 'drizzle-orm';
 import type { ApprovedFact, Money } from '../../contracts/common.ts';
 import { isUniqueViolation } from '../../db/client.ts';
 import { planRuns } from '../../db/schema/plan.ts';
-import { withBrand, type Tx } from '../../db/tenant.ts';
+import { isUuid, withBrand, type Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError } from '../../http/errors.ts';
 import { cancelRun as cancelRunIn, QUEUE, retryRun as retryRunIn, type RunTable } from '../../workflows/index.ts';
 import { planWorkflow } from '../../workflows/plan-draft.ts';
 import { audit } from '../audit/index.ts';
 import { estimateBrief } from './brief.ts';
 import { getCampaign } from './campaigns.ts';
-import { UUID } from './dates.ts';
 import { checkWeekDraft, estimateWeekCost } from './steps.ts';
 import { NO_FACTS } from './steps.ts';
 import { ValidationError } from '../../http/errors.ts';
@@ -48,7 +47,7 @@ export async function generateBrief(brandId: string, campaignId: string, facts: 
 }
 
 export async function getRun(tx: Tx, brandId: string, runId: string): Promise<PlanRun> {
-  const [row] = UUID.test(runId) ? await tx.select().from(planRuns).where(and(eq(planRuns.id, runId), eq(planRuns.brandId, brandId))) : [];
+  const [row] = isUuid(runId) ? await tx.select().from(planRuns).where(and(eq(planRuns.id, runId), eq(planRuns.brandId, brandId))) : [];
   if (!row) throw new NotFoundError('plan_run', runId);
   return row;
 }

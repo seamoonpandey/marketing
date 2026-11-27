@@ -18,4 +18,3 @@ export function todayIn(timezone: string, now = new Date()): string {
 /** The first day of the week (weekStarts: 0 Sunday … 6) that holds `day`; a day that is not a date comes back as it is. */
 export const weekStartOf = (day: string, weekStarts: number): string =>
   Number.isNaN(Date.parse(`${day}T00:00:00Z`)) ? day : addDays(day, -((weekdayOf(day) - weekStarts + 7) % 7));
-export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

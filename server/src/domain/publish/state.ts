@@ -33,9 +33,9 @@ export type Next = {
   refused?: string;
 };
 
-export const MISSED_AFTER_MS = 24 * 3_600_000;
+const MISSED_AFTER_MS = 24 * 3_600_000;
 export const MISSED = 'missed its time';
-export const STALLED = 'the send did not finish';
+const STALLED = 'the send did not finish';
 /** A job due more than 24 hours ago is not sent. */
 export const isMissed = (dueAt: Date, now: Date) => now.getTime() - dueAt.getTime() > MISSED_AFTER_MS;
 

@@ -19,7 +19,7 @@ export function copiesOf(content: unknown): Copy[] {
 }
 
 /** The text that is posted: caption, call to action and hashtags. */
-export const postText = (c: Copy) => [c.caption, c.cta, c.hashtags.join(' ')].filter(Boolean).join('\n\n');
+const postText = (c: Copy) => [c.caption, c.cta, c.hashtags.join(' ')].filter(Boolean).join('\n\n');
 
 /** The longest posted text over the draft's languages, in characters (code points). */
 export const captionLength = (d: DraftForPublish) => Math.max(0, ...copiesOf(d.content).map((c) => [...postText(c)].length));

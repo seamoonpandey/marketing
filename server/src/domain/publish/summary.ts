@@ -30,7 +30,7 @@ export function excerptOf(d: DraftForPublish | undefined): string | null {
   return chars.length > 140 ? `${chars.slice(0, 139).join('')}…` : c;
 }
 
-export function toJobView(j: Job, channel: Channel | undefined, draft: DraftForPublish | undefined): JobView {
+function toJobView(j: Job, channel: Channel | undefined, draft: DraftForPublish | undefined): JobView {
   return {
     id: j.id, draftId: j.draftId, draftVersion: j.draftVersion, payloadHash: j.payloadHash, channelId: j.channelId,
     channel: channel ? { id: channel.id, platform: channel.platform, accountName: channel.accountName, mode: channel.mode, status: channel.status } : null,

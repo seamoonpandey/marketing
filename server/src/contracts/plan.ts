@@ -1,5 +1,4 @@
-// Owned by the plan branch (docs/structure.md). Request and response schemas of
-// /api/brands/{brandId}/plan/…
+// Request and response schemas of /api/brands/{brandId}/plan/…
 import { z } from '@hono/zod-openapi';
 import { namedMoney, orNull } from './common.ts';
 import { briefSections, campaignStatuses, channels, formats, funnels, intents, objectives, pillars } from '../domain/plan/enums.ts';
@@ -82,7 +81,6 @@ export const CampaignPatch = z
 export const CampaignsQuery = z.object({ status: CampaignStatus.optional() });
 
 export const Statement = z.object({ text: z.string().trim().min(1).max(2000), factIds: z.array(z.string()).optional() }).openapi('PlanStatement');
-export const BriefSection = z.enum(briefSections).openapi('PlanBriefSection');
 export const BriefBody = z.object(Object.fromEntries(briefSections.map((s) => [s, z.array(Statement)])) as Record<(typeof briefSections)[number], z.ZodArray<typeof Statement>>).openapi('PlanBriefBody');
 export const Brief = z
   .object({

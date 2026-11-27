@@ -1,11 +1,11 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { campaigns } from '../../db/schema/plan.ts';
-import type { Tx } from '../../db/tenant.ts';
+import { isUuid, type Tx } from '../../db/tenant.ts';
 import { NotFoundError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { listSubjects } from '../knowledge/index.ts';
 import { listOpportunities } from '../research/index.ts';
-import { isDay, UUID } from './dates.ts';
+import { isDay } from './dates.ts';
 
 export type Campaign = typeof campaigns.$inferSelect;
 type Fields = Pick<typeof campaigns.$inferInsert, 'name' | 'objective' | 'status' | 'startsOn' | 'endsOn' | 'segmentId' | 'budgetNpr'>;
@@ -13,7 +13,7 @@ type Fields = Pick<typeof campaigns.$inferInsert, 'name' | 'objective' | 'status
 function check(f: { startsOn?: string | null; endsOn?: string | null; segmentId?: string | null }) {
   for (const d of [f.startsOn, f.endsOn]) if (d && !isDay(d)) throw new ValidationError('Dates are YYYY-MM-DD');
   if (f.startsOn && f.endsOn && f.endsOn < f.startsOn) throw new ValidationError('ends_on is before starts_on');
-  if (f.segmentId && !UUID.test(f.segmentId)) throw new ValidationError('segmentId is not an id');
+  if (f.segmentId && !isUuid(f.segmentId)) throw new ValidationError('segmentId is not an id');
 }
 
 /** 404 (denied) unless segmentId, when given, is a segment of this brand. */
@@ -28,7 +28,7 @@ export async function createCampaign(
   check(i);
   await assertSegment(tx, brandId, i.segmentId);
   if (i.opportunityId) {
-    const opp = UUID.test(i.opportunityId) ? (await listOpportunities(tx, brandId)).find((o) => o.id === i.opportunityId) : undefined;
+    const opp = isUuid(i.opportunityId) ? (await listOpportunities(tx, brandId)).find((o) => o.id === i.opportunityId) : undefined;
     if (!opp) throw new NotFoundError('opportunity', i.opportunityId);
     if (opp.status !== 'accepted') throw new ValidationError(`The opportunity is ${opp.status}; accept it first`);
   }
@@ -38,7 +38,7 @@ export async function createCampaign(
 }
 
 export async function getCampaign(tx: Tx, brandId: string, id: string): Promise<Campaign> {
-  const [row] = UUID.test(id) ? await tx.select().from(campaigns).where(and(eq(campaigns.id, id), eq(campaigns.brandId, brandId))) : [];
+  const [row] = isUuid(id) ? await tx.select().from(campaigns).where(and(eq(campaigns.id, id), eq(campaigns.brandId, brandId))) : [];
   if (!row) throw new NotFoundError('campaign', id);
   return row;
 }

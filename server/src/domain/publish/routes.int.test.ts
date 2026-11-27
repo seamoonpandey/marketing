@@ -106,7 +106,7 @@ describe('publish API', () => {
     expect(body.drafts[0]).toMatchObject({ kind: 'post', excerpt: 'Warm pashmina shawls, woven in Kathmandu.', thumbnailUrl: null, version: 1 });
   });
 
-  it('answers 400 with the base error shape for every bad body and query', async () => {
+  it('answers 400 with the shared error shape for every bad body and query', async () => {
     const { p, job, channel, draft } = await brandWithJob();
     const bad = [
       await call('POST', `${p}/channels`, { platform: 'myspace', accountName: '@a' }),

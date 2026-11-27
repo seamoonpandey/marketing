@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import type { ApprovedFact, Money } from '../../contracts/common.ts';
 import { studioRuns } from '../../db/schema/studio.ts';
-import { withBrand, type Tx } from '../../db/tenant.ts';
+import { isUuid, withBrand, type Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError } from '../../http/errors.ts';
 import { cancelRun as cancelRunIn, QUEUE } from '../../workflows/index.ts';
 import { studioWorkflow } from '../../workflows/studio-run.ts';
@@ -12,13 +12,13 @@ import { audit } from '../audit/index.ts';
 import { assertDraftable, estimateDrafts } from './generate.ts';
 import { getDraftRow, type StudioRunRow } from './drafts.ts';
 import { pendingRenderers } from './rendering.ts';
-import type { Renderer } from './render-types.ts';
+import type { Renderer } from '../../render/index.ts';
 
 const FREE: Money = { usd: '0.0000', npr: '0.00' };
 export { estimateDrafts };
 
 export async function getRun(tx: Tx, brandId: string, runId: string): Promise<StudioRunRow> {
-  const [row] = /^[0-9a-f-]{36}$/i.test(runId) ? await tx.select().from(studioRuns).where(and(eq(studioRuns.id, runId), eq(studioRuns.brandId, brandId))) : [];
+  const [row] = isUuid(runId) ? await tx.select().from(studioRuns).where(and(eq(studioRuns.id, runId), eq(studioRuns.brandId, brandId))) : [];
   if (!row) throw new NotFoundError('studio_run', runId);
   return row;
 }

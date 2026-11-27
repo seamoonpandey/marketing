@@ -1,4 +1,3 @@
-// Owned by the publish branch (docs/structure.md).
 import { sql } from 'drizzle-orm';
 import { boolean, index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { platforms } from '../../domain/publish/capabilities.ts';

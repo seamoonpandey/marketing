@@ -2,11 +2,11 @@
 import type { z } from '@hono/zod-openapi';
 import { modules, type Home } from '../../contracts/home.ts';
 import { withBrand, type Tx } from '../../db/tenant.ts';
-import { queue, validApproval } from '../approve/index.ts';
+import { queue } from '../approve/index.ts';
 import { getBrand } from '../brands/index.ts';
 import { todayIn } from '../plan/index.ts';
 import { brandCosts } from '../costs/index.ts';
-import { summary as publishSummary } from '../publish/index.ts';
+import { liveReads, summary as publishSummary } from '../publish/index.ts';
 import { getDraft, listDrafts } from '../studio/index.ts';
 import * as collect from './collect.ts';
 import { rank } from './rank.ts';
@@ -17,8 +17,8 @@ export { rank, type Item } from './rank.ts';
 export type Readers = { studio: Parameters<typeof queue>[3]; publish: Parameters<typeof publishSummary>[2] };
 /** Where Home gets Studio's drafts and the Approve gate from. Tests swap them for fakes, as with fetchGuard. */
 export const readers: Readers = {
-  studio: { getDraft, listDrafts } as unknown as Readers['studio'],
-  publish: { validApproval, getDraft, listDrafts } as unknown as Readers['publish'],
+  studio: { getDraft, listDrafts },
+  publish: liveReads,
 };
 
 type HomeView = z.infer<typeof Home>;

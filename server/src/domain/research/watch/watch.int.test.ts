@@ -24,6 +24,7 @@ let origin: string;
 let t: TestDb;
 let stop: () => Promise<void>;
 const saved = { ...fetchGuard };
+const cap = config.RESEARCH_RUN_CAP_NPR;
 
 beforeAll(async () => {
   server = http.createServer((req, res) => {
@@ -47,7 +48,7 @@ afterAll(async () => {
 });
 afterEach(() => {
   mockAi.reset();
-  delete process.env.RESEARCH_RUN_CAP_NPR;
+  config.RESEARCH_RUN_CAP_NPR = cap;
 });
 
 const SETTLED = ['awaiting_approval', 'completed', 'failed_retryable', 'failed_final', 'cancelled'];
@@ -197,7 +198,7 @@ describe('watch run', () => {
 
   it('stops a weekly run estimated above the cap at awaiting_approval', async () => {
     const { brand } = await setup();
-    process.env.RESEARCH_RUN_CAP_NPR = '1';
+    config.RESEARCH_RUN_CAP_NPR = '1';
     const { runId } = await startRun(brand, 'weekly');
     const run = await settle(brand, runId);
     expect(run.state).toBe('awaiting_approval');

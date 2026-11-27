@@ -1,4 +1,4 @@
-// Owned by the brand branch (docs/structure.md): request and response schemas of /api/brands/{brandId}/knowledge.
+// Request and response schemas of /api/brands/{brandId}/knowledge.
 import { z } from '@hono/zod-openapi';
 import { Competitor } from './brands.ts';
 import { Money, orNull } from './common.ts';

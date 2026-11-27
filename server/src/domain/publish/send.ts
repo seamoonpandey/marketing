@@ -17,11 +17,11 @@ import { nextWindowStart, safeTimezone } from './schedule.ts';
 import { getSettings } from './settings.ts';
 import { isMissed, MISSED, type Outcome } from './state.ts';
 
-export type SendDeps = { reads?: Reads; connector?: Connector; now?: () => Date; sleep?: (seconds: number) => Promise<void> };
+type SendDeps = { reads?: Reads; connector?: Connector; now?: () => Date; sleep?: (seconds: number) => Promise<void> };
 
 const RECONCILE_AFTER = [60, 300, 900];
 /** Longer than a send can take: a job publishing this long may or may not have been posted. */
-export const STALL_AFTER_MS = 15 * 60_000;
+const STALL_AFTER_MS = 15 * 60_000;
 const step = <T>(name: string, fn: () => Promise<T>) => DBOS.runStep(fn, { name });
 const due = sql`coalesce(${publishJobs.nextAttemptAt}, ${publishJobs.scheduledAt})`;
 
@@ -113,7 +113,7 @@ async function gate(tx: Tx, brandId: string, job: Job, r: Reads): Promise<Gated>
 }
 
 /** The post: the first language's caption with its call to action, its hashtags, and the media in the platform's shape. */
-export function requestFor(draft: Pick<DraftForPublish, 'kind' | 'content' | 'renders'>, channel: { platform: string; accountName: string }): PublishRequest {
+function requestFor(draft: Pick<DraftForPublish, 'kind' | 'content' | 'renders'>, channel: { platform: string; accountName: string }): PublishRequest {
   const [copy] = copiesOf(draft.content);
   const { items } = mediaFor(draft as DraftForPublish, channel.platform);
   return {
