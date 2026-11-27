@@ -12,6 +12,7 @@ import { estimateCost } from '../costs/index.ts';
 import { getItem, getPlan } from '../plan/index.ts';
 import { composeCopy, kindFor } from './compose.ts';
 import { loadEnv, normLang } from './env.ts';
+import { runError } from '../../workflows/index.ts';
 
 export const COPY_MAX_OUTPUT = 4096;
 export const NO_FACTS = 'Approve brand facts first: a draft needs at least one approved fact';
@@ -145,6 +146,6 @@ export async function generateOne(brandId: string, runId: string, planItemId: st
     });
   } catch (e) {
     const final = (e instanceof AiError && !e.retryable) || (e instanceof HttpError && e.status !== 402);
-    return { planItemId, ok: false, message: (e as Error).message.slice(0, 500), retryable: !final };
+    return { planItemId, ok: false, message: runError(e).slice(0, 500), retryable: !final };
   }
 }

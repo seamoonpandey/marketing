@@ -7,6 +7,7 @@ import { approvedFacts } from '../domain/knowledge/index.ts';
 import { generateOpportunities } from '../domain/research/opportunities.ts';
 import { dueBrands, startRun } from '../domain/research/watch/run.ts';
 import { capture, estimateRun, extractPage, loadRun, setRunState, type Captured } from '../domain/research/watch/steps.ts';
+import { runError } from './index.ts';
 
 const APPROVAL_WAIT_SECONDS = 7 * 86_400;
 
@@ -52,7 +53,7 @@ export const watchWorkflow = DBOS.registerWorkflow(
       );
     } catch (e) {
       // A cancelled workflow cannot run steps; setRunState only touches runs that are still active.
-      await DBOS.runStep(() => setRunState(brandId, runId, 'failed_retryable', { error: (e as Error).message }), { name: 'fail' }).catch(() => {});
+      await DBOS.runStep(() => setRunState(brandId, runId, 'failed_retryable', { error: runError(e) }), { name: 'fail' }).catch(() => {});
       throw e;
     }
   },

@@ -1,10 +1,23 @@
 import { DBOS, type WorkflowHandle } from '@dbos-inc/dbos-sdk';
+import { AiError } from '../ai/index.ts';
 import { config } from '../config.ts';
 import { runStates } from '../db/schema/core.ts';
+import { HttpError } from '../http/errors.ts';
+import { logger } from '../log.ts';
 
 /** Appendix B run states, stored in every run table's `state` column (runColumns). */
 export type RunState = (typeof runStates)[number];
 export { runStates };
+
+/**
+ * What a failed run shows the owner: the message of an error meant for them (an HttpError or an AiError), else a
+ * plain sentence, with the error itself logged. A database error's message holds its SQL and parameters.
+ */
+export function runError(e: unknown): string {
+  if (e instanceof HttpError || e instanceof AiError) return e.message;
+  logger.error({ err: e }, 'run failed on an unexpected error');
+  return 'The run stopped on an unexpected error; retry it';
+}
 
 /** The one queue. Enqueue with DBOS.startWorkflow(fn, { queueName: QUEUE }). */
 export const QUEUE = 'default';
