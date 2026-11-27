@@ -1,4 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
+import { HTTPException } from 'hono/http-exception';
 import { routes as brandRoutes } from './domain/brands/index.ts';
 import { errorBody, HttpError } from './http/errors.ts';
 import { logger } from './log.ts';
@@ -16,6 +17,8 @@ export function createApp() {
   app.notFound((c) => c.json(errorBody('not_found', 'No such route'), 404));
   app.onError((err, c) => {
     if (err instanceof HttpError) return c.json(errorBody(err.code, err.message), err.status as 400);
+    // Hono's own request errors: a body that is not JSON, or no JSON Content-Type.
+    if (err instanceof HTTPException) return c.json(errorBody('validation', err.message), err.status);
     // A unique constraint the domain did not check first.
     if ((err.cause as { code?: string } | undefined)?.code === '23505')
       return c.json(errorBody('conflict', 'That already exists'), 409);
