@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import type { ReadyDraft } from './studio.ts';
 
-/** Exactly what an approval binds to. Render order is kept: it is the order the files go out in. */
+/** Exactly what an approval binds to. Render order and each render's slide index are kept: they are the order the files go out in. */
 export type Payload = {
   objectType: 'studio_draft'; objectId: string; version: number; channel: string; day: string;
-  kind: string; content: unknown; renders: { ratio: string; sha256: string }[];
+  kind: string; content: unknown; renders: { ratio: string; sha256: string; index?: number }[];
 };
 
 /** The payload of a draft that is ready at its current version, or null. A file without a checksum cannot be bound to, so it makes the draft unapprovable. */
@@ -13,7 +13,7 @@ export function payloadOf(d: ReadyDraft): Payload | null {
   if (d.renders.some((r) => typeof r.sha256 !== 'string' || !r.sha256)) return null;
   return {
     objectType: 'studio_draft', objectId: d.id, version: d.currentVersion, channel: d.channel, day: d.day, kind: d.kind,
-    content: d.content, renders: d.renders.map((r) => ({ ratio: r.ratio, sha256: r.sha256 })),
+    content: d.content, renders: d.renders.map((r) => ({ ratio: r.ratio, sha256: r.sha256, index: r.index })),
   };
 }
 

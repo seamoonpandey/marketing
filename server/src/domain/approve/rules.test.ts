@@ -60,6 +60,13 @@ describe('payloadHash', () => {
     for (const p of changed) expect(payloadHash(p)).not.toBe(h);
   });
 
+  it('changes when the same files move to other slide positions', () => {
+    const r = (c: string, index: number) => ({ ratio: '1:1', key: `${c}.png`, width: 1080, height: 1080, overflow: false, sha256: c.repeat(64), index, type: 'image' as const });
+    const h = (renders: ReadyDraft['renders']) => payloadHash(payloadOf(draft({ kind: 'carousel', renders }))!);
+    // The preview shows, and a publisher sends, slides by index: these two go out in opposite orders.
+    expect(h([r('a', 1), r('b', 0)])).not.toBe(h([r('a', 0), r('b', 1)]));
+  });
+
   it('(review focus 2) hashes a draft with no renders, the same twice', () => {
     const p = payloadOf(draft({ kind: 'post', renders: [] }))!;
     expect(p.renders).toEqual([]);
