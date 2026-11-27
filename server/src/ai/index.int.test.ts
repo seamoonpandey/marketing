@@ -1,8 +1,9 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { testDb, type TestDb } from '../../test/helpers.ts';
 import { BudgetError } from '../http/errors.ts';
 import { AiError, extract, mockAi } from './index.ts';
+import { mockModel } from './mock.ts';
 
 let t: TestDb;
 let brand: string;
@@ -64,6 +65,33 @@ describe('extract', () => {
     mockAi.queue({ name: 'x', founded: 1 });
     await expect(run()).rejects.toBeInstanceOf(BudgetError);
     expect(mockAi.calls).toEqual([]);
+  });
+
+  it('lets only one of two concurrent calls spend the last of the cap', async () => {
+    // 500 NPR left; each call may cost about 310 NPR (100k output tokens) and does.
+    await t.adminQuery(
+      `insert into cost_events (tenant_id, brand_id, run_type, run_id, provider, model, input_tokens, output_tokens,
+         ok, rate_in_usd, rate_out_usd, usd_npr, cost_usd, cost_npr)
+       values ($1, $2, 'test', 'big', 'anthropic', 'claude-opus-5-5', 1, 1, true, 4, 20, 155.08, 29.02, 4500)`,
+      [t.tenantId, brand],
+    );
+    const answer = JSON.stringify({ name: 'x'.repeat(400_000), founded: 1 });
+    mockAi.queue(answer, answer);
+    // A real call takes seconds; so does this one.
+    const generate = (mockModel as any).doGenerate;
+    const slow = vi.spyOn(mockModel as any, 'doGenerate').mockImplementation(async (o) => {
+      await new Promise((r) => setTimeout(r, 300));
+      return generate.call(mockModel, o);
+    });
+    const big = () => extract({
+      brandId: brand, runType: 'test', runId: 'run-2', system: 'Extract the brand.',
+      parts: [{ type: 'text', text: 'Himal' }], schema, maxOutputTokens: 100_000,
+    });
+    const results = await Promise.allSettled([big(), big()]);
+    slow.mockRestore();
+    expect(results.filter((r) => r.status === 'rejected').map((r) => r.reason)).toEqual([expect.any(BudgetError)]);
+    const [{ spent }] = await t.adminQuery(`select sum(cost_npr) as spent from cost_events`);
+    expect(Number(spent)).toBeLessThanOrEqual(5000);
   });
 
   it('treats a refusal as final', async () => {

@@ -7,6 +7,8 @@ const API_PORT = process.env.API_PORT ?? '3141';
 export default defineConfig({
   testDir: 'e2e',
   fullyParallel: false,
+  // One worker: the mock model's answer queue is shared by the whole API process.
+  workers: 1,
   retries: 0,
   reporter: 'list',
   use: { baseURL: `http://127.0.0.1:${WEB_PORT}`, trace: 'retain-on-failure' },
