@@ -52,6 +52,7 @@ export const QueueDraft = z
     version: z.number().int().openapi({ description: 'The current version.' }), kind: Kind, status: z.enum(['draft', 'ready']),
     channel: z.string(), day: day.openapi({ description: 'The day it is planned to go out.' }),
     weekStart: day.openapi({ description: "The first day of the brand's plan week holding day. A bulk approval stays inside one." }),
+    pillar: z.string().nullable().openapi({ description: 'The plan item\'s content pillar; comparison and offer raise the risk.' }),
     excerpt: z.string().openapi({ description: 'The start of the first caption, at most 140 characters.' }),
     thumbnailUrl: z.string().nullable().openapi({ description: 'Presigned URL of the first rendered image; null when there is none.' }),
     risk: Risk, riskReasons: z.array(z.string()),

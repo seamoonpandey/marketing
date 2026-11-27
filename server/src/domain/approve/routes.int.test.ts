@@ -92,6 +92,15 @@ describe('approve API', () => {
     expect(await views(d.id)).toEqual([1, 2]);
   });
 
+  it('gives each queue item its pillar, which the risk rule reads', async () => {
+    const brand = await t.makeBrand();
+    const offer = studio.put(brand, { pillar: 'offer' });
+    const plain = studio.put(brand, { day: '2026-12-02', pillar: null });
+    const items = (await call('GET', `/brands/${brand}/approve/queue`)).body.items;
+    expect(items.find((i: any) => i.draftId === offer.id).draft).toMatchObject({ pillar: 'offer', risk: 'medium' });
+    expect(items.find((i: any) => i.draftId === plain.id).draft).toMatchObject({ pillar: null });
+  });
+
   it("leaves out a render stored outside the brand's own prefix, and refuses to approve it", async () => {
     const brand = await t.makeBrand();
     const other = await t.makeBrand();

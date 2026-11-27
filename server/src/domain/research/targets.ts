@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { watchTargets } from '../../db/schema/research.ts';
 import type { Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../http/errors.ts';
@@ -50,6 +50,8 @@ export async function addTarget(
     if (ownUrl && (host(url) === host(ownUrl) || host(url).endsWith(`.${host(ownUrl)}`))) throw new ValidationError("That page is on the brand's own site; only competitors' pages are watched");
   }
 
+  // One add at a time per brand, so simultaneous requests cannot each count below a limit and all insert.
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`watch-targets:${brandId}`}, 0))`);
   const all = await listTargets(tx, brandId);
   if (all.some((t) => t.url === url.href)) throw new ConflictError('That page is already on the watch list');
   const mine = all.filter((t) => t.competitorId === i.competitorId);

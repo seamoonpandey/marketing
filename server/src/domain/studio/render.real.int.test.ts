@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { afterAll, afterEach, beforeAll, expect, it } from 'vitest';
@@ -24,6 +25,8 @@ const wait = async (brand: string, runId: string) => {
   }
   throw new Error('run did not finish');
 };
+const sha256 = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
+const hasFfmpeg = spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status === 0;
 
 it('renders a three-slide carousel with the real engine: PNGs of the right size, each hash matches its bytes', async () => {
   const s = await studioBrand(t, { formats: ['carousel'] });
@@ -42,7 +45,26 @@ it('renders a three-slide carousel with the real engine: PNGs of the right size,
     const meta = await sharp(bytes).metadata();
     expect(meta).toMatchObject({ format: 'png', width: r.width, height: r.height });
     expect({ width: r.width, height: r.height }).toEqual(SIZES[r.ratio]);
-    expect(createHash('sha256').update(bytes).digest('hex')).toBe((r as unknown as { sha256: string }).sha256);
+    expect(sha256(bytes)).toBe(r.sha256);
   }
   expect(new Set(renders.map((r) => r.ratio)).size).toBe(2);
+}, 60_000);
+
+it.skipIf(!hasFfmpeg)('renders a three-scene video with the real engine and ffmpeg: an MP4 stored with its checksum, and the draft is rendered', async () => {
+  const s = await studioBrand(t, { formats: ['short_video'] });
+  mockAi.queue({
+    copies: [{ language: 'en', sentences: [{ text: 'A warm pashmina shawl.', claim: true, factIds: [s.price.id] }], hashtags: [], cta: 'Order today' }],
+    scenes: ['Pashmina', 'Hand-woven', 'Shop now'].map((onScreenText) => ({ onScreenText, voiceover: 'Warm and soft.', shot: 'Close-up', seconds: 1 })),
+  });
+  expect((await wait(s.brand, (await startGenerate(s.brand, s.itemIds, s.facts)).runId)).state).toBe('completed');
+  const [d] = await withBrand(s.brand, (tx) => listDrafts(tx, s.brand, s.facts));
+  expect(d!.findings).toContainEqual(expect.objectContaining({ check: 'not_rendered' }));
+  const run = await wait(s.brand, (await startRender(s.brand, d!.id)).runId); // no renderer given: the real engine
+  expect(run).toMatchObject({ state: 'completed', counts: { rendered: 4 }, error: null }); // three 9:16 cards and the MP4
+  const v = await withBrand(s.brand, (tx) => getDraft(tx, s.brand, d!.id, s.facts));
+  const [video] = v.renders.filter((r) => r.type === 'video');
+  const bytes = await getObject(video!.key);
+  expect(Buffer.from(bytes.subarray(4, 8)).toString('ascii')).toBe('ftyp'); // an MP4 container
+  expect(video).toMatchObject({ ratio: '9:16', ...SIZES['9:16'], sha256: sha256(bytes) });
+  expect(v.findings.filter((f) => f.check === 'not_rendered')).toEqual([]);
 }, 60_000);

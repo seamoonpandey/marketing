@@ -77,7 +77,7 @@ export async function queue(tx: Tx, brandId: string, facts: ApprovedFact[], stud
       const viewed = !!x.hash && seen.has(`${d.id}:${d.currentVersion}:${x.hash}`);
       const img = firstImage(ctx, d);
       draft = {
-        version: d.currentVersion, kind: d.kind as Kind, status: d.status, channel: d.channel, day: d.day, weekStart: weekStartOf(d.day, weekStarts),
+        version: d.currentVersion, kind: d.kind as Kind, status: d.status, channel: d.channel, day: d.day, weekStart: weekStartOf(d.day, weekStarts), pillar: d.pillar,
         excerpt: excerptOf(d.content), thumbnailUrl: img ? await presignDownload(img.key) : null,
         risk: x.risk.risk, riskReasons: x.risk.reasons, payloadHash: x.hash, blockingCount: x.blockingCount, viewed,
         canApprove: !x.cannotApprove, cannotApproveReason: x.cannotApprove, noteRequired: x.risk.risk === 'high',

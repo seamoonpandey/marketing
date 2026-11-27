@@ -1,17 +1,21 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { launchTestWorkflows, testDb, type TestDb } from '../../../../test/helpers.ts';
 import { mockAi } from '../../../ai/index.ts';
+import { config } from '../../../config.ts';
 import { withBrand } from '../../../db/tenant.ts';
 import { ConflictError } from '../../../http/errors.ts';
 import { createCompetitor, deleteCompetitor } from '../../brands/index.ts';
+import { estimateCost } from '../../costs/index.ts';
 import { fetchGuard } from '../../sources/fetch.ts';
 import { verifyQuote } from '../../sources/index.ts';
 import { listObservations } from '../observations.ts';
 import { addTarget, listTargets } from '../targets.ts';
 import { cancelRun, confirmRun, dueBrands, getRun, setSchedule, startRun } from './index.ts';
+import { estimateRun, type Captured } from './steps.ts';
 
 const fixture = (name: string) => readFileSync(new URL(`../../../../test/fixtures/research/site/${name}.html`, import.meta.url), 'utf8');
 let pages: Record<string, string> = {};
@@ -200,6 +204,16 @@ describe('watch run', () => {
     expect(Number(run.estimate!.npr)).toBeGreaterThan(1);
     expect(mockAi.calls).toHaveLength(0);
     await cancelRun(brand, runId);
+  });
+
+  it('counts the opportunities call in the estimate, so a run just under its cap cannot go over it', async () => {
+    const brand = await t.makeBrand();
+    const page = (first: boolean): Captured => ({
+      targetId: randomUUID(), competitorId: randomUUID(), url: `${origin}/pricing`, sourceId: null, prevSourceId: null, first, changed: true, blocks: [], error: null,
+    });
+    const npr = async (first: boolean) => Number((await estimateRun(brand, randomUUID(), 'weekly', [page(first)])).estimate.npr);
+    // A changed page yields observations and so the opportunities call; a first (profile) page does not.
+    expect((await npr(false)) - (await npr(true))).toBeGreaterThanOrEqual(Number(estimateCost(config.AI_MODEL, 0, 8192).npr));
   });
 
   it('finds a Kathmandu brand due on Monday 06:00 local, once a week', async () => {

@@ -12,9 +12,11 @@ import { withBrand } from '../../../db/tenant.ts';
 import { BudgetError } from '../../../http/errors.ts';
 import { audit } from '../../audit/index.ts';
 import { listCompetitors } from '../../brands/index.ts';
+import { approvedFacts } from '../../knowledge/index.ts';
 import { estimateCost, remainingMonthlyCap } from '../../costs/index.ts';
 import { getSource, normalizeQuote, savePageSource, verifyQuote, FetchError } from '../../sources/index.ts';
 import { diffText } from '../diff.ts';
+import { estimateOpportunities } from '../opportunities.ts';
 import { addMoney } from './money.ts';
 import {
   MAX_OUTPUT_TOKENS, OBSERVATION_SYSTEM, ObservationAnswer, PROFILE_SYSTEM, ProfileAnswer, pageParts,
@@ -87,7 +89,7 @@ const call = (c: Captured, text: string) => ({
   parts: pageParts(c.url, text, c.first ? null : c.blocks),
 });
 
-/** The most the changed pages can cost, and whether the owner must confirm first. */
+/** The most the changed pages and the opportunities call after them can cost, and whether the owner must confirm first. */
 export async function estimateRun(
   brandId: string, runId: string, trigger: string, changed: Captured[],
 ): Promise<{ estimate: Money; wait: boolean }> {
@@ -96,8 +98,10 @@ export async function estimateRun(
     const { system, parts } = call(c, await pageText(brandId, c.sourceId));
     costs.push(estimateCost(config.AI_MODEL, estimateTokens([{ type: 'text', text: system }, ...parts]), MAX_OUTPUT_TOKENS));
   }
-  const estimate = addMoney(costs);
+  const observed = changed.filter((c) => !c.first).map((c) => c.url); // a first page is profiled, and yields no observation
   return withBrand(brandId, async (tx) => {
+    if (observed.length) costs.push(estimateOpportunities(await approvedFacts(tx, brandId), observed));
+    const estimate = addMoney(costs);
     const remaining = await remainingMonthlyCap(tx);
     const wait =
       changed.length > 0 &&
