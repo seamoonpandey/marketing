@@ -3,11 +3,9 @@
 import { DBOS } from '@dbos-inc/dbos-sdk';
 import type { ApprovedFact, Money } from '../contracts/common.ts';
 import type { PlanCounts } from '../db/schema/plan.ts';
-import { AiError } from '../ai/index.ts';
 import { draftBrief, storeBrief } from '../domain/plan/brief.ts';
 import { draftWeek, setRunState, storeWeek } from '../domain/plan/steps.ts';
-import { HttpError } from '../http/errors.ts';
-import { runError } from './index.ts';
+import { isFinal, runError } from './index.ts';
 
 export const planWorkflow = DBOS.registerWorkflow(
   async (brandId: string, runId: string, kind: 'week' | 'brief', targetId: string, facts: ApprovedFact[]): Promise<void> => {
@@ -27,11 +25,8 @@ export const planWorkflow = DBOS.registerWorkflow(
       }
       await DBOS.runStep(() => setRunState(brandId, runId, 'completed', { counts, actual: cost }), { name: 'finish' });
     } catch (e) {
-      // Only an answer the model will not change (a refusal, off-schema output) or a bad request is final;
-      // an outage, the monthly cap and anything unknown can be retried.
-      const final = (e instanceof AiError && !e.retryable) || e instanceof HttpError && e.status !== 402;
       // A cancelled workflow cannot run steps; setRunState only touches runs that are still active.
-      await DBOS.runStep(() => setRunState(brandId, runId, final ? 'failed_final' : 'failed_retryable', { error: runError(e) }), { name: 'fail' }).catch(() => {});
+      await DBOS.runStep(() => setRunState(brandId, runId, isFinal(e) ? 'failed_final' : 'failed_retryable', { error: runError(e) }), { name: 'fail' }).catch(() => {});
       throw e;
     }
   },

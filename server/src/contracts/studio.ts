@@ -1,13 +1,13 @@
 // Owned by the studio branch (docs/structure.md). Request and response schemas of
 // /api/brands/{brandId}/studio/…
 import { z } from '@hono/zod-openapi';
+import { namedMoney, orNull } from './common.ts';
 import { channels, formats } from '../domain/plan/enums.ts';
 import { draftKinds, ratios, templates } from '../db/schema/studio.ts';
 
 const iso = z.string().openapi({ example: '2026-11-27T06:00:00.000Z', description: 'ISO 8601 timestamp' });
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).openapi({ example: '2026-11-29', description: 'A calendar date, YYYY-MM-DD' });
-// Money, restated here: the base Money schema carries a description that openapi-typescript turns into `Money & unknown`.
-const StudioMoney = z.object({ usd: z.string(), npr: z.string() }).openapi('StudioMoney', { description: 'Decimal strings: usd to 4 places, npr to 2.' });
+const StudioMoney = namedMoney('StudioMoney');
 
 export const Kind = z.enum(draftKinds).openapi('StudioKind', { description: 'post: copy only. static: one image. carousel: 2 to 10 slides. video: a script and a rendered video.' });
 export const Ratio = z.enum(ratios).openapi('StudioRatio');
@@ -89,7 +89,7 @@ export const StudioRun = z
     id: z.string(), kind: z.enum(['generate', 'render']), targets: z.array(z.string()).openapi({ description: 'Plan item ids (generate) or the draft id (render).' }),
     state: RunState,
     error: z.string().nullable().openapi({ description: 'On a failed run its reason. A completed render run can carry a plain note, such as the video engine being unavailable while the images were kept.' }),
-    startedAt: iso.nullable(), finishedAt: iso.nullable(), estimate: z.union([StudioMoney, z.null()]), actual: z.union([StudioMoney, z.null()]),
+    startedAt: iso.nullable(), finishedAt: iso.nullable(), estimate: orNull(StudioMoney), actual: orNull(StudioMoney),
     counts: z
       .object({
         drafted: z.number().int().optional(), failed: z.number().int().optional(), rendered: z.number().int().optional(),
@@ -107,7 +107,7 @@ export const Estimate = z
 // ---------- overview
 export const PlanItemRef = z
   .object({
-    id: z.string(), day, channel: z.enum(channels), format: z.union([z.enum(formats), z.null()]), idea: z.string(), cta: z.string(),
+    id: z.string(), day, channel: z.enum(channels), format: orNull(z.enum(formats)), idea: z.string(), cta: z.string(),
     kind: Kind.openapi({ description: 'The kind of draft this item gets.' }),
   })
   .openapi('StudioPlanItem');
@@ -118,7 +118,7 @@ export const DraftCard = z
     thumbnailUrl: z.string().nullable().openapi({ description: 'First rendered image, or null before the first render.' }),
   })
   .openapi('StudioDraftCard');
-export const OverviewItem = z.object({ item: PlanItemRef, draft: z.union([DraftCard, z.null()]).openapi({ description: 'null until drafted.' }) }).openapi('StudioOverviewItem');
+export const OverviewItem = z.object({ item: PlanItemRef, draft: orNull(DraftCard).openapi({ description: 'null until drafted.' }) }).openapi('StudioOverviewItem');
 export const OverviewQuery = z.object({
   weekStart: day.optional().openapi({ description: 'The first day of a brand week. Default: the current week. Another day answers 400.' }),
 });
@@ -128,7 +128,7 @@ export const Overview = z
     planApproved: z.boolean().openapi({ description: 'False when the week has no approved plan: items is then empty and the screen links to the Plan calendar.' }),
     items: z.array(OverviewItem).openapi({ description: 'The approved plan items, by day then position.' }),
     ready: z.object({ facts: z.boolean().openapi({ description: 'The brand has an approved fact. Drafting needs it.' }) }).openapi('StudioReady'),
-    latestRun: z.union([StudioRun, z.null()]).openapi({ description: 'The newest generate run that touched one of these items, so a screen can resume RunProgress.' }),
+    latestRun: orNull(StudioRun).openapi({ description: 'The newest generate run that touched one of these items, so a screen can resume RunProgress.' }),
     monthCost: StudioMoney.openapi({ description: "This month's (UTC) AI spend on Studio." }),
   })
   .openapi('StudioOverview');
@@ -145,9 +145,9 @@ export const DraftView = z
     }),
     version: z.object({ version: z.number().int(), origin: z.enum(['model', 'owner']), createdAt: iso }),
     versions: z.array(z.object({ version: z.number().int(), origin: z.enum(['model', 'owner']), createdAt: iso })).openapi({ description: 'Newest first.' }),
-    planItem: z.union([PlanItemRef, z.null()]).openapi({ description: 'null when the plan item was deleted; the draft stays readable.' }),
+    planItem: orNull(PlanItemRef).openapi({ description: 'null when the plan item was deleted; the draft stays readable.' }),
     planApproved: z.boolean().openapi({ description: 'False when the item was deleted or its week went back to draft: the draft is stale, readable, and cannot be regenerated.' }),
-    weekStart: z.union([day, z.null()]).openapi({ description: "The first day of the plan item's week, so a screen can link back to it; null when the item was deleted." }),
+    weekStart: orNull(day).openapi({ description: "The first day of the plan item's week, so a screen can link back to it; null when the item was deleted." }),
     channel: z.string(), languages: z.array(z.string()).openapi({ description: 'The brand languages.' }),
     missingLanguages: z.array(z.string()).openapi({ description: 'Brand languages with no copy in this version.' }),
     content: Content,
@@ -155,7 +155,7 @@ export const DraftView = z
     facts: z.array(FactRef), findings: z.array(Finding).openapi({ description: 'Blocking first. Computed on every read against today\'s facts and rights.' }),
     blockingCount: z.number().int(), renders: z.array(Render).openapi({ description: 'Of the current version only.' }),
     canMarkReady: z.boolean(), cannotMarkReadyReason: z.string().nullable(),
-    latestRun: z.union([StudioRun, z.null()]).openapi({ description: 'The newest run of this draft (its generate run or a render run).' }),
+    latestRun: orNull(StudioRun).openapi({ description: 'The newest run of this draft (its generate run or a render run).' }),
   })
   .openapi('StudioDraftView');
 

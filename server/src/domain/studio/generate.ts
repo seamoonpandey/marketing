@@ -1,18 +1,18 @@
 // Copy generation: the estimate and the one model call per plan item (a workflow step each).
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { AiError, estimateTokens, extract } from '../../ai/index.ts';
+import { estimateTokens, extract } from '../../ai/index.ts';
 import { config } from '../../config.ts';
 import type { ApprovedFact, Money } from '../../contracts/common.ts';
 import { studioDrafts, studioRuns, studioVersions, type DraftContent, type DraftKind, type LeftOut, type Ratio, type TemplateName } from '../../db/schema/studio.ts';
 import { withBrand, type Tx } from '../../db/tenant.ts';
-import { ConflictError, HttpError, ValidationError } from '../../http/errors.ts';
+import { ConflictError, ValidationError } from '../../http/errors.ts';
 import { audit } from '../audit/index.ts';
 import { estimateCost } from '../costs/index.ts';
 import { getItem, getPlan } from '../plan/index.ts';
 import { composeCopy, kindFor } from './compose.ts';
 import { loadEnv, normLang } from './env.ts';
-import { runError } from '../../workflows/index.ts';
+import { isFinal, runError } from '../../workflows/index.ts';
 
 export const COPY_MAX_OUTPUT = 4096;
 export const NO_FACTS = 'Approve brand facts first: a draft needs at least one approved fact';
@@ -145,7 +145,6 @@ export async function generateOne(brandId: string, runId: string, planItemId: st
       return { planItemId, ok: true as const, draftId: d!.id, missing: b.missing };
     });
   } catch (e) {
-    const final = (e instanceof AiError && !e.retryable) || (e instanceof HttpError && e.status !== 402);
-    return { planItemId, ok: false, message: runError(e).slice(0, 500), retryable: !final };
+    return { planItemId, ok: false, message: runError(e).slice(0, 500), retryable: !isFinal(e) };
   }
 }

@@ -1,10 +1,11 @@
 import { DBOS } from '@dbos-inc/dbos-sdk';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import type { ApprovedFact, Money } from '../../contracts/common.ts';
+import { isUniqueViolation } from '../../db/client.ts';
 import { planRuns } from '../../db/schema/plan.ts';
 import { withBrand, type Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError } from '../../http/errors.ts';
-import { QUEUE, retryWorkflow } from '../../workflows/index.ts';
+import { cancelRun as cancelRunIn, QUEUE, retryRun as retryRunIn, type RunTable } from '../../workflows/index.ts';
 import { planWorkflow } from '../../workflows/plan-draft.ts';
 import { audit } from '../audit/index.ts';
 import { estimateBrief } from './brief.ts';
@@ -15,8 +16,6 @@ import { NO_FACTS } from './steps.ts';
 import { ValidationError } from '../../http/errors.ts';
 
 export type PlanRun = typeof planRuns.$inferSelect;
-const ACTIVE = ['running', 'awaiting_approval'] as const;
-const isUnique = (e: unknown) => [e, (e as { cause?: unknown })?.cause].some((x) => (x as { code?: string })?.code === '23505');
 
 export const estimateWeek = estimateWeekCost;
 
@@ -26,7 +25,7 @@ async function start(brandId: string, kind: 'week' | 'brief', targetId: string, 
     try {
       await tx.insert(planRuns).values({ id, brandId, kind, targetId, state: 'running', startedAt: new Date(), workflowId: id, estimate });
     } catch (e) {
-      if (isUnique(e)) throw new ConflictError(`A ${kind === 'week' ? 'week draft' : 'brief draft'} is already running for this ${kind === 'week' ? 'week' : 'campaign'}`);
+      if (isUniqueViolation(e)) throw new ConflictError(`A ${kind === 'week' ? 'week draft' : 'brief draft'} is already running for this ${kind === 'week' ? 'week' : 'campaign'}`);
       throw e;
     }
     await audit(tx, { brandId, actor: 'operator', action: 'plan.run.start', objectType: 'plan_run', objectId: id, result: 'ok', reason: kind });
@@ -61,31 +60,7 @@ export async function latestRun(tx: Tx, brandId: string, kind: 'week' | 'brief',
   return row ?? null;
 }
 
-export async function cancelRun(brandId: string, runId: string): Promise<void> {
-  const run = await withBrand(brandId, async (tx) => {
-    const r = await getRun(tx, brandId, runId);
-    if (!(ACTIVE as readonly string[]).includes(r.state)) throw new ConflictError('This run has already finished');
-    await tx.update(planRuns).set({ state: 'cancelled', finishedAt: new Date() }).where(eq(planRuns.id, runId));
-    await audit(tx, { brandId, actor: 'operator', action: 'plan.run.cancel', objectType: 'plan_run', objectId: runId, result: 'ok' });
-    return r;
-  });
-  await DBOS.cancelWorkflow(run.workflowId ?? runId);
-}
-
+const RUNS: RunTable = { table: planRuns, get: getRun, action: 'plan.run', objectType: 'plan_run' };
+export const cancelRun = (brandId: string, runId: string) => cancelRunIn(RUNS, brandId, runId);
 /** Restarts a failed run from its failed step; a step that already finished is not repeated. */
-export async function retryRun(brandId: string, runId: string): Promise<void> {
-  const run = await withBrand(brandId, async (tx) => {
-    const r = await getRun(tx, brandId, runId);
-    if (r.state !== 'failed_retryable') throw new ConflictError('Only a run that failed with a retryable error can be retried');
-    try {
-      await tx.update(planRuns).set({ state: 'running', error: null, finishedAt: null }).where(eq(planRuns.id, runId));
-    } catch (e) {
-      if (isUnique(e)) throw new ConflictError('Another draft is already running for this target');
-      throw e;
-    }
-    await audit(tx, { brandId, actor: 'operator', action: 'plan.run.retry', objectType: 'plan_run', objectId: runId, result: 'ok' });
-    return r;
-  });
-  const handle = await retryWorkflow(run.workflowId ?? runId);
-  await withBrand(brandId, (tx) => tx.update(planRuns).set({ workflowId: handle.workflowID }).where(eq(planRuns.id, runId)));
-}
+export const retryRun = (brandId: string, runId: string) => retryRunIn(RUNS, brandId, runId, 'Another draft is already running for this target');

@@ -6,7 +6,7 @@ import type { ApprovedFact, Money } from '../../contracts/common.ts';
 import { studioRuns } from '../../db/schema/studio.ts';
 import { withBrand, type Tx } from '../../db/tenant.ts';
 import { ConflictError, NotFoundError } from '../../http/errors.ts';
-import { QUEUE } from '../../workflows/index.ts';
+import { cancelRun as cancelRunIn, QUEUE } from '../../workflows/index.ts';
 import { studioWorkflow } from '../../workflows/studio-run.ts';
 import { audit } from '../audit/index.ts';
 import { assertDraftable, estimateDrafts } from './generate.ts';
@@ -14,7 +14,6 @@ import { getDraftRow, type StudioRunRow } from './drafts.ts';
 import { pendingRenderers } from './rendering.ts';
 import type { Renderer } from './render-types.ts';
 
-const ACTIVE = ['running', 'awaiting_approval'] as const;
 const FREE: Money = { usd: '0.0000', npr: '0.00' };
 export { estimateDrafts };
 
@@ -69,16 +68,8 @@ export async function startRender(brandId: string, draftId: string, renderer?: R
   return { runId };
 }
 
-export async function cancelRun(brandId: string, runId: string): Promise<void> {
-  const run = await withBrand(brandId, async (tx) => {
-    const r = await getRun(tx, brandId, runId);
-    if (!(ACTIVE as readonly string[]).includes(r.state)) throw new ConflictError('This run has already finished');
-    await tx.update(studioRuns).set({ state: 'cancelled', finishedAt: new Date() }).where(eq(studioRuns.id, runId));
-    await audit(tx, { brandId, actor: 'operator', action: 'studio.run.cancel', objectType: 'studio_run', objectId: runId, result: 'ok' });
-    return r;
-  });
-  await DBOS.cancelWorkflow(run.workflowId ?? runId);
-}
+export const cancelRun = (brandId: string, runId: string) =>
+  cancelRunIn({ table: studioRuns, get: getRun, action: 'studio.run', objectType: 'studio_run' }, brandId, runId);
 
 /**
  * Redoes only what failed: the plan items whose copy failed (a finished run that lists failures, or one

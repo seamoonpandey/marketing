@@ -4,7 +4,7 @@ import { studioDrafts } from '../../db/schema/studio.ts';
 import type { Tx } from '../../db/tenant.ts';
 import { presignDownload } from '../../storage/index.ts';
 import { getBrand } from '../brands/index.ts';
-import { getSettings, getWeek, listItems } from '../plan/index.ts';
+import { getSettings, getWeek, listItems, todayIn, weekStartOf } from '../plan/index.ts';
 import { kindFor } from './compose.ts';
 import { buildView } from './drafts.ts';
 import { loadEnv } from './env.ts';
@@ -18,23 +18,10 @@ export async function monthCost(tx: Tx, brandId: string): Promise<Money> {
   return rows[0]!;
 }
 
-const dayOf = (s: string) => new Date(`${s}T00:00:00Z`);
-const addDays = (s: string, n: number) => new Date(dayOf(s).getTime() + n * 86_400_000).toISOString().slice(0, 10);
-/** The first day (weekday `weekStarts`, 0 Sunday) of the week holding today in the brand's timezone. */
-function currentWeekStart(timezone: string, weekStarts: number): string {
-  let today: string;
-  try {
-    today = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  } catch {
-    today = new Date().toISOString().slice(0, 10);
-  }
-  return addDays(today, -((dayOf(today).getUTCDay() - weekStarts + 7) % 7));
-}
-
 /** The week's approved plan items with each draft's state, so the dashboard needs one call. */
 export async function overview(tx: Tx, brandId: string, weekStart: string | undefined, facts: ApprovedFact[]) {
   const settings = await getSettings(tx, brandId);
-  const ws = weekStart ?? currentWeekStart((await getBrand(tx, brandId)).timezone, settings.weekStarts);
+  const ws = weekStart ?? weekStartOf(todayIn((await getBrand(tx, brandId)).timezone), settings.weekStarts);
   const w = await getWeek(tx, brandId, ws, facts); // 400 unless ws is the first day of the brand's week
   const approved = w.plan?.status === 'approved' ? w.plan : w.approvedPlan;
   const items = !approved ? [] : approved.id === w.plan?.id ? w.items : await listItems(tx, approved.id);

@@ -7,9 +7,7 @@ import { studioRuns, type StudioCounts } from '../db/schema/studio.ts';
 import { withBrand } from '../db/tenant.ts';
 import { generateOne, type ItemResult } from '../domain/studio/generate.ts';
 import { pendingRenderers, renderDraft } from '../domain/studio/rendering.ts';
-import { HttpError } from '../http/errors.ts';
-import { AiError } from '../ai/index.ts';
-import { runError } from './index.ts';
+import { isFinal, runError } from './index.ts';
 
 type End = 'completed' | 'failed_retryable' | 'failed_final';
 
@@ -56,8 +54,7 @@ export const studioWorkflow = DBOS.registerWorkflow(
         await DBOS.runStep(() => setRunState(brandId, runId, 'completed', { counts: { rendered: r.rendered }, error: r.note ?? null }), { name: 'finish' });
       }
     } catch (e) {
-      const final = (e instanceof AiError && !e.retryable) || (e instanceof HttpError && e.status !== 402);
-      await DBOS.runStep(() => setRunState(brandId, runId, final ? 'failed_final' : 'failed_retryable', { error: runError(e).slice(0, 500) }), { name: 'fail' }).catch(() => {});
+      await DBOS.runStep(() => setRunState(brandId, runId, isFinal(e) ? 'failed_final' : 'failed_retryable', { error: runError(e).slice(0, 500) }), { name: 'fail' }).catch(() => {});
       throw e;
     } finally {
       pendingRenderers.delete(runId);

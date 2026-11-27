@@ -2,7 +2,7 @@
 // while the approval still matches what the job was scheduled with.
 import type { ApprovedFact } from '../../contracts/common.ts';
 import { tenantOf, type Tx } from '../../db/tenant.ts';
-import { presignDownload } from '../../storage/index.ts';
+import { brandPrefix, presignDownload, underPrefix } from '../../storage/index.ts';
 import type { Channel } from './channels.ts';
 import { copiesOf, isVideo, mediaFor, type Copy } from './fit.ts';
 import type { Job } from './jobs.ts';
@@ -15,14 +15,6 @@ export type Package = {
 
 const none = (reason: string): Package => ({ available: false, reason, ratio: null, captions: [], media: [] });
 
-/** Presigns only keys under this tenant and brand, so a draft can never hand out another brand's file. */
-export async function brandKeyPrefix(tx: Tx, brandId: string) {
-  return `tenant/${await tenantOf(tx)}/brand/${brandId}/`;
-}
-
-/** A key under the prefix with no . or .. segment, which a URL would resolve out of it. */
-export const underPrefix = (prefix: string, key: string) => key.startsWith(prefix) && !key.split('/').some((p) => p === '.' || p === '..');
-
 export async function jobPackage(tx: Tx, brandId: string, job: Job, channel: Channel | null, r: Reads, facts: ApprovedFact[]): Promise<Package> {
   const draft = await draftOf(r, tx, brandId, job.draftId, facts);
   if (!draft) return none('The draft no longer exists');
@@ -31,7 +23,7 @@ export async function jobPackage(tx: Tx, brandId: string, job: Job, channel: Cha
     return none('The approval no longer matches what was scheduled, so there is nothing here to post');
   const platform = channel?.platform ?? draft.channel;
   const { ratio, items } = mediaFor(draft, platform);
-  const prefix = await brandKeyPrefix(tx, brandId);
+  const prefix = brandPrefix(await tenantOf(tx), brandId);
   if (items.some((m) => !underPrefix(prefix, m.key))) return none('A media file of this draft is not stored for this brand');
   const media = await Promise.all(
     items.map(async (m, i) => {

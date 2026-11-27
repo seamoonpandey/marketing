@@ -5,14 +5,14 @@ import type * as C from '../../contracts/publish.ts';
 import type { ApprovedFact } from '../../contracts/common.ts';
 import { auditEvents } from '../../db/schema/core.ts';
 import { jobStates, publishChannels, publishJobs } from '../../db/schema/publish.ts';
-import type { Tx } from '../../db/tenant.ts';
+import { tenantOf, type Tx } from '../../db/tenant.ts';
 import { ValidationError } from '../../http/errors.ts';
-import { presignDownload } from '../../storage/index.ts';
+import { brandPrefix, presignDownload, underPrefix } from '../../storage/index.ts';
 import { getBrand } from '../brands/index.ts';
 import { findChannel, listChannels, type Channel } from './channels.ts';
 import { captionLength, copiesOf, fits, isVideo } from './fit.ts';
 import { dueAt, getJob, type Job } from './jobs.ts';
-import { brandKeyPrefix, jobPackage, underPrefix } from './package.ts';
+import { jobPackage } from './package.ts';
 import { approvalOf, type DraftForPublish, type Reads } from './reads.ts';
 import { parseInstant, safeTimezone } from './schedule.ts';
 import { getSettings } from './settings.ts';
@@ -88,7 +88,7 @@ export async function summary(tx: Tx, brandId: string, r: Reads, facts: Approved
 /** Ready drafts with a valid approval, and for each channel whether the draft can go there and why not. */
 export async function schedulable(tx: Tx, brandId: string, r: Reads, facts: ApprovedFact[]): Promise<z.infer<typeof C.Schedulable>> {
   const channels = await listChannels(tx, brandId);
-  const prefix = await brandKeyPrefix(tx, brandId);
+  const prefix = brandPrefix(await tenantOf(tx), brandId);
   const drafts: z.infer<typeof C.SchedulableDraft>[] = [];
   for (const d of await r.listDrafts(tx, brandId, facts, { status: 'ready' })) {
     const approval = await approvalOf(r, tx, brandId, d.id, facts);

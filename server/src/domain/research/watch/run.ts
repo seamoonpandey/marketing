@@ -1,9 +1,10 @@
 import { DBOS } from '@dbos-inc/dbos-sdk';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { isUniqueViolation } from '../../../db/client.ts';
 import { watchRuns, watchSchedules } from '../../../db/schema/research.ts';
 import { withBrand, withTenant, type Tx } from '../../../db/tenant.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../../http/errors.ts';
-import { QUEUE, retryWorkflow } from '../../../workflows/index.ts';
+import { cancelRun as cancelRunIn, QUEUE, retryRun as retryRunIn, type RunTable } from '../../../workflows/index.ts';
 import { watchWorkflow } from '../../../workflows/research-watch.ts';
 import { audit } from '../../audit/index.ts';
 import { listBrands } from '../../brands/index.ts';
@@ -13,7 +14,6 @@ export type Schedule = { enabled: boolean; weekday: number; hour: number; lastRu
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ACTIVE = ['running', 'awaiting_approval'] as const;
-const isUnique = (e: unknown) => [e, (e as { cause?: unknown })?.cause].some((x) => (x as { code?: string })?.code === '23505');
 const ACTIVE_MESSAGE = 'A research run is already in progress for this brand';
 
 /** Creates the run row, then queues its workflow (the workflow ID is the run ID). 409 if a run is active. */
@@ -25,7 +25,7 @@ export async function startRun(brandId: string, trigger: 'baseline' | 'weekly' |
     try {
       await tx.insert(watchRuns).values({ id, brandId, trigger, state: 'running', startedAt: new Date(), workflowId: id });
     } catch (e) {
-      if (isUnique(e)) throw new ConflictError(ACTIVE_MESSAGE);
+      if (isUniqueViolation(e)) throw new ConflictError(ACTIVE_MESSAGE);
       throw e;
     }
     if (trigger === 'weekly')
@@ -62,34 +62,10 @@ export async function confirmRun(brandId: string, runId: string): Promise<void> 
   await DBOS.send(run.workflowId ?? runId, 'confirmed', 'approval');
 }
 
-export async function cancelRun(brandId: string, runId: string): Promise<void> {
-  const run = await withBrand(brandId, async (tx) => {
-    const r = await getRun(tx, brandId, runId);
-    if (!(ACTIVE as readonly string[]).includes(r.state)) throw new ConflictError('This run has already finished');
-    await tx.update(watchRuns).set({ state: 'cancelled', finishedAt: new Date() }).where(eq(watchRuns.id, runId));
-    await audit(tx, { brandId, actor: 'operator', action: 'research.run.cancel', objectType: 'watch_run', objectId: runId, result: 'ok' });
-    return r;
-  });
-  await DBOS.cancelWorkflow(run.workflowId ?? runId);
-}
-
+const RUNS: RunTable = { table: watchRuns, get: getRun, action: 'research.run', objectType: 'watch_run' };
+export const cancelRun = (brandId: string, runId: string) => cancelRunIn(RUNS, brandId, runId);
 /** Restarts a failed run from its first failed step; earlier steps (and their paid calls) are not repeated. */
-export async function retryRun(brandId: string, runId: string): Promise<void> {
-  const run = await withBrand(brandId, async (tx) => {
-    const r = await getRun(tx, brandId, runId);
-    if (r.state !== 'failed_retryable') throw new ConflictError('Only a run that failed with a retryable error can be retried');
-    try {
-      await tx.update(watchRuns).set({ state: 'running', error: null, finishedAt: null }).where(eq(watchRuns.id, runId));
-    } catch (e) {
-      if (isUnique(e)) throw new ConflictError(ACTIVE_MESSAGE);
-      throw e;
-    }
-    await audit(tx, { brandId, actor: 'operator', action: 'research.run.retry', objectType: 'watch_run', objectId: runId, result: 'ok' });
-    return r;
-  });
-  const handle = await retryWorkflow(run.workflowId ?? runId);
-  await withBrand(brandId, (tx) => tx.update(watchRuns).set({ workflowId: handle.workflowID }).where(eq(watchRuns.id, runId)));
-}
+export const retryRun = (brandId: string, runId: string) => retryRunIn(RUNS, brandId, runId, ACTIVE_MESSAGE);
 
 const DEFAULT: Schedule = { enabled: false, weekday: 1, hour: 6, lastRunAt: null };
 

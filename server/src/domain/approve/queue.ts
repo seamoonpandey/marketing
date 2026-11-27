@@ -6,9 +6,9 @@ import type { ApprovedFact } from '../../contracts/common.ts';
 import { approvals, approvalViews } from '../../db/schema/approve.ts';
 import type { Tx } from '../../db/tenant.ts';
 import { NotFoundError } from '../../http/errors.ts';
-import { presignDownload } from '../../storage/index.ts';
-import { getSettings as getPlanSettings } from '../plan/index.ts';
-import { alreadyDecided, expiryFor, foreignRenders, history, recordView, refusal, riskOfDraft, ruleContext, stateOf, weekStartOf, type RuleContext } from './decisions.ts';
+import { presignDownload, underPrefix } from '../../storage/index.ts';
+import { getSettings as getPlanSettings, weekStartOf } from '../plan/index.ts';
+import { alreadyDecided, expiryFor, foreignRenders, history, recordView, refusal, riskOfDraft, ruleContext, stateOf, type RuleContext } from './decisions.ts';
 import { payloadHash, payloadOf } from './hash.ts';
 import type { Approval, ApprovalState } from './state.ts';
 import { draftOf, type ReadyDraft, type StudioReads } from './studio.ts';
@@ -44,7 +44,7 @@ function decidability(ctx: RuleContext, d: ReadyDraft, latest: Approval | null) 
   };
 }
 
-const firstImage = (ctx: RuleContext, d: ReadyDraft) => d.renders.find((r) => r.type !== 'video' && r.key.startsWith(ctx.keyPrefix));
+const firstImage = (ctx: RuleContext, d: ReadyDraft) => d.renders.find((r) => r.type !== 'video' && underPrefix(ctx.keyPrefix, r.key));
 
 /** Ready drafts and drafts with a decision, each with its state today; counts over all of them, items filtered by state. */
 export async function queue(tx: Tx, brandId: string, facts: ApprovedFact[], studio: StudioReads, filter: { state?: ApprovalState } = {}): Promise<z.infer<typeof C.Queue>> {
@@ -128,7 +128,7 @@ export async function preview(
         id: f.id, section: f.section, subjectName: f.subjectName, field: f.field, value: f.value, unit: f.unit, expiresAt: f.expiresAt,
       })),
       missingFactIds: d.factIds.filter((id) => !ctx.approvedFactIds.has(id)),
-      renders: await Promise.all(d.renders.filter((r) => r.key.startsWith(ctx.keyPrefix)).map(async (r, i) => ({
+      renders: await Promise.all(d.renders.filter((r) => underPrefix(ctx.keyPrefix, r.key)).map(async (r, i) => ({
         ratio: r.ratio, width: r.width, height: r.height, overflow: r.overflow, index: r.index ?? i, type: r.type ?? 'image', url: await presignDownload(r.key),
       }))),
       risk: x.risk.risk, riskReasons: x.risk.reasons, payloadHash: x.hash,

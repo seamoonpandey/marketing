@@ -2,6 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { bodyLimit } from 'hono/body-limit';
 import { HTTPException } from 'hono/http-exception';
 import { secureHeaders } from 'hono/secure-headers';
+import { isUniqueViolation } from './db/client.ts';
 import { routes as brandRoutes } from './domain/brands/index.ts';
 import { errorBody, HttpError } from './http/errors.ts';
 import { logger } from './log.ts';
@@ -27,7 +28,7 @@ export function createApp() {
     // Hono's own request errors: a body that is not JSON, or no JSON Content-Type.
     if (err instanceof HTTPException) return c.json(errorBody('validation', err.message), err.status);
     // A unique constraint the domain did not check first.
-    if ((err.cause as { code?: string } | undefined)?.code === '23505')
+    if (isUniqueViolation(err))
       return c.json(errorBody('conflict', 'That already exists'), 409);
     logger.error({ err, path: c.req.path }, 'unhandled error');
     return c.json(errorBody('internal', 'Something went wrong'), 500);

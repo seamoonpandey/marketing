@@ -1,12 +1,12 @@
 // Owned by the plan branch (docs/structure.md). Request and response schemas of
 // /api/brands/{brandId}/plan/…
 import { z } from '@hono/zod-openapi';
+import { namedMoney, orNull } from './common.ts';
 import { briefSections, campaignStatuses, channels, formats, funnels, intents, objectives, pillars } from '../domain/plan/enums.ts';
 
 const iso = z.string().openapi({ example: '2026-11-27T06:00:00.000Z', description: 'ISO 8601 timestamp' });
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).openapi({ example: '2026-11-29', description: 'A calendar date, YYYY-MM-DD' });
-// Money, restated here: the base Money schema carries a description that openapi-typescript turns into `Money & unknown`.
-const PlanMoney = z.object({ usd: z.string(), npr: z.string() }).openapi('PlanMoney', { description: 'Decimal strings: usd to 4 places, npr to 2.' });
+const PlanMoney = namedMoney('PlanMoney');
 
 export const Objective = z.enum(objectives).openapi('PlanObjective');
 export const Funnel = z.enum(funnels).openapi('PlanFunnel');
@@ -41,7 +41,7 @@ export const PlanRun = z
   .object({
     id: z.string(), kind: z.enum(['week', 'brief']), targetId: z.string().openapi({ description: 'The week start date or the campaign id.' }),
     state: RunState, error: z.string().nullable(), startedAt: iso.nullable(), finishedAt: iso.nullable(),
-    estimate: z.union([PlanMoney, z.null()]), actual: z.union([PlanMoney, z.null()]),
+    estimate: orNull(PlanMoney), actual: orNull(PlanMoney),
     counts: z
       .object({
         items: z.number().int().optional().openapi({ description: 'Items stored.' }),
@@ -96,9 +96,9 @@ export const Brief = z
 export const BriefView = z
   .object({
     campaign: Campaign,
-    approved: z.union([Brief, z.null()]), draft: z.union([Brief, z.null()]),
+    approved: orNull(Brief), draft: orNull(Brief),
     facts: z.array(FactRef).openapi({ description: 'The currently approved facts that the two versions cite.' }),
-    latestRun: z.union([PlanRun, z.null()]).openapi({ description: 'The newest brief run of this campaign, so a screen can resume RunProgress.' }),
+    latestRun: orNull(PlanRun).openapi({ description: 'The newest brief run of this campaign, so a screen can resume RunProgress.' }),
     ready: Ready,
   })
   .openapi('PlanBriefView', { description: 'Editing an approved brief retires it and leaves a new draft: approved becomes null.' });
@@ -118,7 +118,7 @@ export const WeekPlan = z
 export const PlanItem = z
   .object({
     id: z.string(), weekPlanId: z.string(), day, channel: Channel,
-    format: z.union([Format, z.null()]), pillar: z.union([Pillar, z.null()]), funnel: z.union([Funnel, z.null()]), intent: z.union([Intent, z.null()]),
+    format: orNull(Format), pillar: orNull(Pillar), funnel: orNull(Funnel), intent: orNull(Intent),
     segmentId: z.string().nullable(), campaignId: z.string().nullable(),
     idea: z.string(), cta: z.string(), factIds: z.array(z.string()), position: z.number().int(), origin: z.enum(['model', 'owner']),
   })
@@ -132,7 +132,7 @@ export const ItemCreate = z
   .openapi('PlanItemCreate', { description: 'day must fall inside the week. An incomplete item is allowed; it blocks approval until completed.' });
 export const ItemPatch = z
   .object({
-    day, channel: Channel, format: z.union([Format, z.null()]), pillar: z.union([Pillar, z.null()]), funnel: z.union([Funnel, z.null()]), intent: z.union([Intent, z.null()]),
+    day, channel: Channel, format: orNull(Format), pillar: orNull(Pillar), funnel: orNull(Funnel), intent: orNull(Intent),
     segmentId: z.string().nullable(), campaignId: z.string().nullable(),
     idea: z.string().max(2000), cta: z.string().max(500), factIds: z.array(z.string()),
   })
@@ -146,14 +146,14 @@ export const Violation = z
   .openapi('PlanViolation');
 export const WeekView = z
   .object({
-    weekStart: day, plan: z.union([WeekPlan, z.null()]).openapi({ description: 'The newest draft if there is one, else the approved plan; null when the week has no plan yet.' }),
+    weekStart: day, plan: orNull(WeekPlan).openapi({ description: 'The newest draft if there is one, else the approved plan; null when the week has no plan yet.' }),
     items: z.array(PlanItem).openapi({ description: 'Ordered by day, then position.' }),
     violations: z.array(Violation).openapi({ description: 'Blocking ones first.' }),
     blockingCount: z.number().int(),
     canApprove: z.boolean(), cannotApproveReason: z.string().nullable().openapi({ description: 'Why approval is disabled, or null.' }),
-    approvedPlan: z.union([WeekPlan, z.null()]).openapi({ description: 'The approval that still stands while a newer draft is shown in plan; null when plan is itself the approved one or nothing is approved.' }),
+    approvedPlan: orNull(WeekPlan).openapi({ description: 'The approval that still stands while a newer draft is shown in plan; null when plan is itself the approved one or nothing is approved.' }),
     facts: z.array(FactRef).openapi({ description: 'The currently approved facts that the items cite.' }),
-    latestRun: z.union([PlanRun, z.null()]).openapi({ description: 'The newest run for this week, so a screen can resume RunProgress.' }),
+    latestRun: orNull(PlanRun).openapi({ description: 'The newest run for this week, so a screen can resume RunProgress.' }),
     ready: Ready,
   })
   .openapi('PlanWeekView');
@@ -165,7 +165,7 @@ export const ItemRemoved = z.object({ plan: WeekPlan }).openapi('PlanItemRemoved
 
 // ---------- overview
 export const WeekCard = z
-  .object({ weekStart: day, status: z.enum(['none', 'draft', 'approved']), itemCount: z.number().int(), blockingCount: z.number().int(), latestRun: z.union([PlanRun, z.null()]) })
+  .object({ weekStart: day, status: z.enum(['none', 'draft', 'approved']), itemCount: z.number().int(), blockingCount: z.number().int(), latestRun: orNull(PlanRun) })
   .openapi('PlanWeekCard');
 export const OpportunityCard = z
   .object({ id: z.string(), title: z.string(), suggestedAction: z.string(), whyItMatters: z.string(), confidence: z.enum(['low', 'medium', 'high']) })

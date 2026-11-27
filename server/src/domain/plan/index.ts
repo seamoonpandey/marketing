@@ -9,3 +9,4 @@ export { cancelRun, estimateWeek, generateBrief, getRun, retryRun, startWeekDraf
 export { overview } from './overview.ts';
 export { currentPlans, getItem, getPlan, listItems } from './weeks.ts';
 export { latestRun } from './draft.ts';
+export { addDays, todayIn, weekStartOf } from './dates.ts';

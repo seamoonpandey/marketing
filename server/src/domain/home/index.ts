@@ -4,6 +4,7 @@ import { modules, type Home } from '../../contracts/home.ts';
 import { withBrand, type Tx } from '../../db/tenant.ts';
 import { queue, validApproval } from '../approve/index.ts';
 import { getBrand } from '../brands/index.ts';
+import { todayIn } from '../plan/index.ts';
 import { brandCosts } from '../costs/index.ts';
 import { summary as publishSummary } from '../publish/index.ts';
 import { getDraft, listDrafts } from '../studio/index.ts';
@@ -48,7 +49,7 @@ async function costs(brandId: string): Promise<HomeView['costs']> {
 /** Throws NotFoundError (404) for a brand outside the tenant. A module that fails is named in `partial` and its items are left out. */
 export async function home(brandId: string, now = new Date()): Promise<HomeView> {
   const brand = await withBrand(brandId, (tx) => getBrand(tx, brandId));
-  const ctx: collect.Ctx = { brandId, now, timezone: brand.timezone, today: collect.dayIn(brand.timezone, now), readers };
+  const ctx: collect.Ctx = { brandId, now, timezone: brand.timezone, today: todayIn(brand.timezone, now), readers };
   // One transaction per module: a failed statement aborts its transaction, and it must not take another module's reads down.
   const answers = await Promise.all(
     modules.map(async (m) => {

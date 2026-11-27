@@ -107,6 +107,17 @@ describe('approve API', () => {
     expect((await call('POST', `${p}/queue/${d.id}/approve`, { payloadHash: hashOf(d) })).status).toBe(409);
   });
 
+  it('treats a render key that climbs out of the brand with .. as foreign, as Publish does', async () => {
+    const brand = await t.makeBrand();
+    const other = await t.makeBrand();
+    const own = { ...studio.put(brand).renders[0]! };
+    const climbing = { ...own, key: own.key.replace(`/brand/${brand}/`, `/brand/${brand}/../${other}/`) };
+    const d = studio.put(brand, { renders: [climbing] });
+    const pv = (await call('GET', `/brands/${brand}/approve/queue/${d.id}`)).body;
+    expect(pv.draft.renders).toEqual([]);
+    expect(pv.draft).toMatchObject({ blockingCount: 1, canApprove: false });
+  });
+
   it('validates every body and query and answers 400 with the base error shape', async () => {
     const brand = await t.makeBrand();
     const d = studio.put(brand);
