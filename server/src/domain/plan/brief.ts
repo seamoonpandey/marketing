@@ -80,18 +80,24 @@ export async function estimateBrief(brandId: string, campaignId: string, facts: 
   return estimateCost(config.AI_MODEL, estimateTokens([{ type: 'text', text: SYSTEM }, ...prompt(c, facts)]), BRIEF_MAX_OUTPUT);
 }
 
-/** The model call and the new draft version. Run by the draft workflow; `runId` keys the cost row. */
-export async function draftBrief(brandId: string, runId: string, campaignId: string, facts: ApprovedFact[]): Promise<{ briefId: string; cost: Money }> {
+/** The model call. Run by the draft workflow as a step of its own, before storeBrief; `runId` keys the cost row. */
+export async function draftBrief(brandId: string, runId: string, campaignId: string, facts: ApprovedFact[]): Promise<{ draft: BriefBody; cost: Money }> {
   if (!facts.length) throw new ValidationError(NO_FACTS);
   const c = await context(brandId, campaignId);
   const { object, cost } = await extract({
     brandId, runType: 'plan_brief', runId, system: SYSTEM, parts: prompt(c, facts), schema: Answer, maxOutputTokens: BRIEF_MAX_OUTPUT,
   });
-  const { body, leftOut } = buildBrief({ draft: object as BriefBody, facts });
+  return { draft: object as BriefBody, cost };
+}
+
+/** The model's draft as a new draft version, keeping only cited claims. */
+export async function storeBrief(brandId: string, campaignId: string, draft: BriefBody, facts: ApprovedFact[]): Promise<{ briefId: string }> {
+  const { body, leftOut } = buildBrief({ draft, facts });
   return withBrand(brandId, async (tx) => {
+    await lockCampaign(tx, brandId, campaignId);
     const row = await insertVersion(tx, brandId, campaignId, body, leftOut);
     await audit(tx, { brandId, actor: 'system', action: 'plan.brief.generate', objectType: 'campaign_brief', objectId: row.id, objectVersion: row.version, result: 'ok' });
-    return { briefId: row.id, cost };
+    return { briefId: row.id };
   });
 }
 

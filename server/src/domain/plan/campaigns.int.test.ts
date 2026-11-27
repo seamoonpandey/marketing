@@ -3,7 +3,7 @@ import { F1, fact, facts } from '../../../test/fixtures/plan/facts.ts';
 import { testDb, type TestDb } from '../../../test/helpers.ts';
 import { mockAi } from '../../ai/index.ts';
 import { withBrand } from '../../db/tenant.ts';
-import { approveBrief, currentBrief, draftBrief, editBrief, estimateBrief, type BriefBody } from './brief.ts';
+import { approveBrief, currentBrief, draftBrief, editBrief, estimateBrief, storeBrief, type BriefBody } from './brief.ts';
 import { briefSections } from './enums.ts';
 import { createCampaign, updateCampaign } from './campaigns.ts';
 
@@ -49,7 +49,7 @@ describe('briefs', () => {
     const c = await newCampaign(brand);
     mockAi.queue({ audience: [{ text: 'Gift buyers', factIds: [F1] }], offer_message: [{ text: 'Free shipping', factIds: ['nope'] }], creative: [{ text: 'Video' }] });
     expect((await estimateBrief(brand, c.id, facts)).npr).toMatch(/^\d+\.\d\d$/);
-    await draftBrief(brand, c.id, c.id, facts);
+    await storeBrief(brand, c.id, (await draftBrief(brand, c.id, c.id, facts)).draft, facts);
     const { draft } = await withBrand(brand, (tx) => currentBrief(tx, brand, c.id));
     expect(draft).toMatchObject({ version: 1, status: 'draft' });
     expect((draft!.body as BriefBody).audience).toEqual([{ text: 'Gift buyers', factIds: [F1] }]);
@@ -123,7 +123,7 @@ describe('briefs', () => {
     expect(edited.leftOut).toHaveLength(1);
     await withBrand(brand, (tx) => approveBrief(tx, brand, c.id));
     mockAi.queue({ audience: [{ text: 'New', factIds: [F1] }] });
-    await draftBrief(brand, c.id, c.id, facts);
+    await storeBrief(brand, c.id, (await draftBrief(brand, c.id, c.id, facts)).draft, facts);
     await withBrand(brand, (tx) => approveBrief(tx, brand, c.id));
     const rows = await t.adminQuery(`select status from campaign_briefs where campaign_id = $1 order by version`, [c.id]);
     expect(rows.map((r) => r.status)).toEqual(['replaced', 'approved']);
