@@ -185,6 +185,16 @@ approvedFacts(tx: Tx, brandId: string, filter?: { section?: string }): Promise<A
 
 The research branch reads brand data only through `approvedFacts` and `listCompetitors`. Its own logic takes facts as an argument, so its tests pass facts in directly and never depend on the brand branch.
 
+How the base implements them (helpers beyond the signatures above):
+
+- Imports use `.ts` extensions; Node runs the TypeScript directly. `tenant_id` defaults from the transaction, so inserts set `brandId` only.
+- A `NotFoundError` thrown inside `withBrand` rolls back and leaves the `denied` audit event itself. `audit` with a `brandId` needs a transaction scoped to that brand; without one the event is tenant-level. `tenantOf(tx)` (db/tenant.ts) gives the tenant ID for `objectKey`.
+- Routers: `createRouter()`, `json()`, `errorResponse` (http/router.ts), `BrandParams` (http/brand.ts). Module routers are mounted at `/api` and declare full paths (`/brands/{brandId}/knowledge/…`). Pass the raw `brandId` to `withBrand`, which answers 404 for anything outside the tenant.
+- Workflows: `QUEUE`, `retryWorkflow(id)` (forks from the first failed step). Tests: `launchTestWorkflows(t)` in test/helpers.ts; `testDb()` also returns `url`, `adminUrl` and `adminQuery`. `mockAi.reset()` and `mockAi.refusal` (queue it to make the model refuse).
+- Tests that fetch from a local server swap `fetchGuard.resolve`, `isBlocked` and `minIntervalMs` (domain/sources/fetch.ts) and restore them after.
+- Never import `drizzle-kit/api` in a test worker: it patches Array and String prototypes, which breaks pdf.js. The schema SQL comes from test/global-setup.ts. `drizzle-kit push` drops RLS `USING` clauses; use `pnpm db:reset` for a dev database.
+- Web: shared components and the hooks `useBrandId`, `useBrand`, `useBrands` from `@/components/app`; `api` and `unwrap` from `@/lib/api/client`; the classes `btn btn-primary|secondary|quiet`, `field`, `label`, `input`, `panel`, `num` from app.css, which already scans `components/brand` and `components/research`. `pnpm e2e` starts the API (`server: pnpm e2e:server`, database `mkt_e2e_<port>`) and `next dev`, on `WEB_PORT` and `API_PORT`.
+
 ## 5. Shared web components (`components/app/`)
 
 The base branch builds these. Both modules use them and do not restyle them.
