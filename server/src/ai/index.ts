@@ -54,7 +54,8 @@ async function callModel(system: string, messages: ModelMessage[], maxOutputToke
     };
   } catch (e) {
     const retryable = APICallError.isInstance(e) ? e.isRetryable : true;
-    throw Object.assign(new AiError(`The model call failed: ${(e as Error).message}`, retryable), { cause: e });
+    // No cause: the SDK's error holds the whole request (prompt, facts, files), and DBOS stores a step's error with its causes.
+    throw new AiError(`The model call failed: ${(e as Error).message}`, retryable);
   }
 }
 

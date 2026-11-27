@@ -72,10 +72,21 @@ const ffmpegHere = (() => { try { execFileSync('ffmpeg', ['-version'], { stdio: 
 describe('renderVideo', () => {
   it.skipIf(!ffmpegHere)('joins frames into an H.264 MP4 of the right length', async () => {
     const frames = await Promise.all(['#ff0000', '#00ff00', '#0000ff'].map((c) => solid(320, 180, c)));
-    const before = readdirSync(tmpdir()).filter((f) => f.startsWith('render-')).length;
-    const { mp4, seconds } = await renderVideo({ frames, secondsEach: [2, 2, 2] });
+    // Its own temp root: the shared one also holds other renders running at the same time, so counting it races.
+    const root = mkdtempSync(join(tmpdir(), 'video-test-'));
+    const saved = process.env.TMPDIR;
+    process.env.TMPDIR = root;
+    let out: Awaited<ReturnType<typeof renderVideo>>;
+    try {
+      expect(tmpdir()).toBe(root);
+      out = await renderVideo({ frames, secondsEach: [2, 2, 2] });
+    } finally {
+      if (saved === undefined) delete process.env.TMPDIR;
+      else process.env.TMPDIR = saved;
+    }
+    const { mp4, seconds } = out;
     expect(seconds).toBe(6);
-    expect(readdirSync(tmpdir()).filter((f) => f.startsWith('render-')).length).toBe(before);
+    expect(readdirSync(root)).toEqual([]); // the render's working folder is gone
     const f = join(mkdtempSync(join(tmpdir(), 'probe-')), 'v.mp4');
     writeFileSync(f, mp4);
     const p = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name,width,height,pix_fmt,r_frame_rate:format=duration', '-of', 'json', f]).toString());

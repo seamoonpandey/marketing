@@ -7,6 +7,10 @@ import { ensureAppRole, POST_SCHEMA_SQL } from '../src/db/setup.ts';
 import { resetTenantCache } from '../src/db/tenant.ts';
 import { launchWorkflows, shutdownWorkflows } from '../src/workflows/index.ts';
 
+// Test files run in parallel against one Postgres that other worktrees' suites share (docs/structure.md section 6),
+// and its 100 connections ran out with the default pools (10 app and 10 DBOS per file). A file needs only a few.
+const POOL = 4;
+
 export type TestDb = {
   tenantId: string;
   makeBrand(name?: string): Promise<string>;
@@ -46,7 +50,7 @@ export async function testDb(): Promise<TestDb> {
   for (const statement of inject('schemaSql')) await admin.query(statement);
   await admin.query(POST_SCHEMA_SQL);
   const tenantId = await seedTenant(admin);
-  await useDatabase(appUrl);
+  await useDatabase(appUrl, POOL);
   resetTenantCache();
 
   let brands = 0;
@@ -80,6 +84,6 @@ export async function testDb(): Promise<TestDb> {
  * them too. Register test workflows before calling it. Returns the shutdown function.
  */
 export async function launchTestWorkflows(db: TestDb): Promise<() => Promise<void>> {
-  await launchWorkflows(db.adminUrl);
+  await launchWorkflows(db.adminUrl, POOL);
   return shutdownWorkflows;
 }

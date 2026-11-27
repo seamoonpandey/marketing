@@ -18,6 +18,10 @@ export default defineConfig({
   test: {
     env,
     globalSetup: ['test/global-setup.ts'],
+    // Every worktree's suite and e2e server share one Postgres of 100 connections (docker-compose.dev.yml). Four files
+    // at a time, each with pools of 4 (test/helpers.ts), keep one suite near 30 connections, so two suites and an e2e
+    // server fit; at the default worker count one suite used up to 80 and concurrent runs failed with 53300.
+    maxWorkers: 4,
     testTimeout: 30_000,
     hookTimeout: 60_000,
   },

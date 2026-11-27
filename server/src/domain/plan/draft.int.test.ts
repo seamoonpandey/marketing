@@ -172,7 +172,10 @@ describe('week draft', () => {
     await sleep(300);
     commit();
     await adding;
-    expect((await wait(b, runId)).state).toBe('failed_retryable');
+    const failed = await wait(b, runId);
+    expect(failed.state).toBe('failed_retryable');
+    // The run is what the screens show: an unexpected error is named plainly, never with its SQL.
+    expect(failed.error).not.toMatch(/Failed query|insert into|params:|duplicate key/i);
     await retryRun(b, runId);
     expect((await wait(b, runId)).state).toBe('completed');
     expect(mockAi.calls).toHaveLength(1);
