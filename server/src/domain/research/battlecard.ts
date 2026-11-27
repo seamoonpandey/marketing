@@ -91,6 +91,7 @@ export async function getBattlecards(tx: Tx, brandId: string, competitorId: stri
   if (!UUID.test(competitorId)) throw new NotFoundError('competitor', competitorId);
   const rows = await tx.select().from(battlecards)
     .where(and(eq(battlecards.brandId, brandId), eq(battlecards.competitorId, competitorId))).orderBy(desc(battlecards.version));
+  if (!rows.length && !(await listCompetitors(tx, brandId)).some((c) => c.id === competitorId)) throw new NotFoundError('competitor', competitorId);
   const approved = rows.find((r) => r.status === 'approved') ?? null;
   const draft = rows.find((r) => r.status === 'draft' && (!approved || r.version > approved.version)) ?? null;
   return { approved, draft };

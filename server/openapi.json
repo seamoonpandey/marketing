@@ -2356,16 +2356,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       },
@@ -2424,16 +2414,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -2474,16 +2454,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -2550,16 +2520,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -2610,16 +2570,6 @@
             }
           },
           "409": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -2686,16 +2636,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -2728,16 +2668,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -2796,16 +2726,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -2891,16 +2811,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -2941,16 +2851,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -3015,16 +2915,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -3065,16 +2955,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -3131,16 +3011,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -3189,16 +3059,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -3239,16 +3099,6 @@
             }
           },
           "404": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
@@ -3307,16 +3157,6 @@
             }
           },
           "409": {
-            "description": "Error: `{ error: { code, message } }`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "501": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {
