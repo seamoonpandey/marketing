@@ -7,7 +7,7 @@ import { getBrand, listCompetitors } from '../brands/index.ts';
 import { pickPages } from '../sources/index.ts';
 
 const MAX_TARGETS_PER_COMPETITOR = 5;
-const MAX_COMPETITORS = 10;
+export const MAX_COMPETITORS = 10;
 
 export type WatchTarget = typeof watchTargets.$inferSelect;
 
