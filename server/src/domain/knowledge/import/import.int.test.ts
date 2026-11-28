@@ -301,7 +301,7 @@ describe('brand import', () => {
   it('review focus 1: a website that cannot be read fails retryable; an import of uploads alone completes', async () => {
     const brand = await t.makeBrand();
     const { runId } = await startImport(brand, { websiteUrl: 'http://down.example:1/', sourceIds: [] });
-    expect(await settle(brand, runId)).toMatchObject({ state: 'failed_retryable', error: 'could not read the website' });
+    expect(await settle(brand, runId)).toMatchObject({ state: 'failed_retryable', error: 'could not read the website: the site refused the connection' });
 
     const txt = await upload(brand, 'about.txt', 'text/plain', new TextEncoder().encode('Ilam Leaf Co. sells green tea.'));
     const second = await startImport(brand, { sourceIds: [txt.id] });

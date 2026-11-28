@@ -11,7 +11,7 @@ import { logger } from '../../../log.ts';
 import { getObject } from '../../../storage/index.ts';
 import { audit } from '../../audit/index.ts';
 import { estimateCost, remainingMonthlyCap } from '../../costs/index.ts';
-import { fetchText, getSource, pickPages, savePageSource, saveSiteImage } from '../../sources/index.ts';
+import { fetchFailure, fetchText, getSource, pickPages, savePageSource, saveSiteImage } from '../../sources/index.ts';
 import { logoKeys } from '../assets.ts';
 import { proposeFacts, type ProposedFact } from '../facts/index.ts';
 import { addColours, cssColours, extractPalette } from '../palette/index.ts';
@@ -213,9 +213,11 @@ export async function fetchStage(brandId: string, runId: string): Promise<void> 
   );
   const pages: string[] = [];
   let failed = 0;
+  let reason = '';
   if (run.websiteUrl) {
     const urls = await pickPages(run.websiteUrl, 10).catch((err: unknown) => {
       logger.warn({ err, runId, url: run.websiteUrl }, 'website homepage could not be fetched');
+      reason = fetchFailure(err);
       return [] as string[];
     });
     if (!urls.length) failed++;
@@ -224,10 +226,11 @@ export async function fetchStage(brandId: string, runId: string): Promise<void> 
         pages.push((await withBrand(brandId, (tx) => savePageSource(tx, brandId, url, 'brand_site'))).id);
       } catch (err) {
         logger.warn({ err, runId, url }, 'website page could not be fetched');
+      reason ||= fetchFailure(err);
         failed++;
       }
     }
-    if (!pages.length) throw new ImportFailure('could not read the website');
+    if (!pages.length) throw new ImportFailure(`could not read the website: ${reason}`);
   }
   await updateRunning(brandId, runId, {
     sourceIds: [...pages, ...uploads], stage: 'estimate',

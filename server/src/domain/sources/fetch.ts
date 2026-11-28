@@ -190,6 +190,29 @@ export async function fetchFile(url: string): Promise<{ finalUrl: string; body: 
   return { finalUrl: answer.url.href, body: answer.body };
 }
 
+// Network failures arrive as Node errors with a code; these are the ones an owner can act on.
+const NETWORK: Record<string, string> = {
+  ENOTFOUND: 'the address was not found; check the spelling',
+  EAI_AGAIN: 'the address could not be looked up; try again',
+  ECONNREFUSED: 'the site refused the connection',
+  ECONNRESET: 'the site closed the connection',
+  ETIMEDOUT: 'the site did not answer',
+  EHOSTUNREACH: 'the site could not be reached',
+  ENETUNREACH: 'the site could not be reached',
+  CERT_HAS_EXPIRED: "the site's security certificate has expired",
+  ERR_TLS_CERT_ALTNAME_INVALID: "the site's security certificate is for a different address",
+  DEPTH_ZERO_SELF_SIGNED_CERT: "the site's security certificate could not be verified",
+  SELF_SIGNED_CERT_IN_CHAIN: "the site's security certificate could not be verified",
+  UNABLE_TO_VERIFY_LEAF_SIGNATURE: "the site's security certificate could not be verified",
+};
+
+/** Why a fetch failed, in words the brand's owner can act on. */
+export function fetchFailure(err: unknown): string {
+  if (err instanceof FetchError) return err.message;
+  const code = (err as { code?: unknown } | null)?.code;
+  return (typeof code === 'string' && NETWORK[code]) || 'the page could not be fetched';
+}
+
 /**
  * Fetches one HTML page under the guards: http(s) only; no private, loopback, link-local or metadata
  * address, checked at connect time and after every redirect; at most 5 redirects; 2 MB; 10 seconds;

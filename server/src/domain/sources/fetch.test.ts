@@ -2,7 +2,7 @@ import { createServer, type Server } from 'node:http';
 import { readFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { fetchGuard, fetchPage } from './fetch.ts';
+import { fetchFailure, fetchGuard, fetchPage } from './fetch.ts';
 import { pickPages } from './pick-pages.ts';
 
 const fixture = (name: string) => readFileSync(new URL(`../../../test/fixtures/base/site/${name}`, import.meta.url), 'utf8');
@@ -103,6 +103,19 @@ describe('fetchPage guards', () => {
     await expect(fetchPage(site('site.test', '/private'))).rejects.toThrow(/robots/i);
     await expect(fetchPage(site('bots.test', '/no-bots'))).rejects.toThrow(/robots/i);
     expect((await fetchPage(site('bots.test', '/private'))).title).toBe('secret');
+  });
+
+  it('says why a fetch failed in words the owner can act on', async () => {
+    fetchGuard.minIntervalMs = 0;
+    const why = (url: string) => fetchPage(url).then(() => 'fetched', fetchFailure);
+    expect(await why(`http://localhost:${port}/`)).toMatch(/private or reserved/);
+    localSites();
+    expect(await why(site('site.test', '/private'))).toMatch(/robots\.txt disallows/);
+    expect(await why(site('site.test', '/missing'))).toMatch(/answered 404/);
+    expect(fetchFailure(Object.assign(new Error('getaddrinfo ENOTFOUND nope.test'), { code: 'ENOTFOUND' }))).toBe(
+      'the address was not found; check the spelling',
+    );
+    expect(fetchFailure(Object.assign(new Error('duplicate key'), { code: '23505' }))).toBe('the page could not be fetched');
   });
 
   it('returns the final URL, HTML, text and title', async () => {

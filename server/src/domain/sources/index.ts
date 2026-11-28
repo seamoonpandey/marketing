@@ -9,7 +9,7 @@ import { extractText } from './extract-text.ts';
 import { fetchFile, fetchPage } from './fetch.ts';
 import { bytesMatch, MAX_UPLOAD_BYTES, sniff, UPLOAD_TYPES } from './uploads.ts';
 
-export { FetchError, fetchPage, fetchText } from './fetch.ts';
+export { FetchError, fetchFailure, fetchPage, fetchText } from './fetch.ts';
 export { pickPages } from './pick-pages.ts';
 export { htmlText } from './html-text.ts';
 export { verifyQuote, normalizeQuote } from './verify-quote.ts';
