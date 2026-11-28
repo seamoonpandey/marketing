@@ -5,7 +5,7 @@ Next.js (App Router). The landing page is `src/app/(marketing)/`; the product UI
 ```bash
 pnpm install
 pnpm dev                 # the web app; the API is proxied from API_PORT
-pnpm build && pnpm start -p 3040
+pnpm build && pnpm start -p 3000
 pnpm exec tsc --noEmit   # the type check (no lint is configured)
 pnpm api:types           # regenerate src/lib/api/schema.d.ts from ../server/openapi.json
 WEB_PORT=… API_PORT=… pnpm e2e                                   # the whole end-to-end suite

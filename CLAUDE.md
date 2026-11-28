@@ -18,11 +18,11 @@ Node 24 or later, pnpm 12.11.2. Run `pnpm install` in `server/` and in `web/`.
 | Containers: Postgres (pgvector, 127.0.0.1:5436) and SeaweedFS (S3, 127.0.0.1:8333) | `docker compose -f docker-compose.dev.yml up -d` in `server/` (`colima start` first on a Mac) |
 | Environment | `cp .env.example .env` in `server/`. The defaults match the containers and `AI_MODEL=mock`, which makes no paid call |
 | Database | `pnpm db:reset` in `server/` drops and recreates the database in `DATABASE_URL` from the schema, with grants and the tenant. `pnpm db:migrate` then `pnpm seed` applies the committed migrations instead |
-| API | `pnpm dev` in `server/`, port 3141 (`PORT`) |
-| Web | `pnpm dev -p 3140` in `web/`. It proxies `/api` to `API_PORT` (default 3141) |
+| API | `pnpm dev` in `server/`, port 8000 (`PORT`) |
+| Web | `pnpm dev -p 3000` in `web/`. It proxies `/api` to `API_PORT` (default 8000) |
 | Server tests | `pnpm test` in `server/`. Unit tests need nothing; `*.int.test.ts` need both containers and give every file its own database. `render.real.int.test.ts` and the video test also want `ffmpeg` on the PATH (the video test skips without it) |
 | Server checks | `pnpm typecheck`, `pnpm openapi:check` |
-| End to end | `pnpm e2e` in `web/`. It starts its own API (`server/scripts/e2e-server.ts`, database `mkt_e2e_<API_PORT>`, mock model) and `next dev` on `WEB_PORT` and `API_PORT` (3140 and 3141 by default), so stop your own dev servers or set other ports first. One worker. `pnpm exec playwright test e2e/*.stub.spec.ts` runs only the specs against a stubbed API, about a minute (`web/README.md`). The full suite's time has not been recorded |
+| End to end | `pnpm e2e` in `web/`. It starts its own API (`server/scripts/e2e-server.ts`, database `mkt_e2e_<API_PORT>`, mock model) and `next dev` on `WEB_PORT` and `API_PORT` (3000 and 8000 by default), so stop your own dev servers or set other ports first. One worker. `pnpm exec playwright test e2e/*.stub.spec.ts` runs only the specs against a stubbed API, about a minute (`web/README.md`). The full suite's time has not been recorded |
 | Web checks | `pnpm exec tsc --noEmit`, `pnpm build` |
 
 Tests never call a paid model: `vitest.config.ts` forces `AI_MODEL=mock`.
@@ -64,7 +64,7 @@ Tests never call a paid model: `vitest.config.ts` forces `AI_MODEL=mock`.
 
 ## The landing page
 
-Built with the taste skill's kit, copied to `web/public/assets` (unused families removed). Page CSS lives in `web/public/landing.css`, Tailwind for the React islands in `src/app/(marketing)/islands.css`, and the islands in `src/components/`. The finish gate runs against the built page: `pnpm build && pnpm start -p 3040`, then from `web/`: `node ../.claude/skills/design-taste-frontend/scripts/gate.mjs http://127.0.0.1:3040/` (the other checks are in the skill's SKILL.md, section 4).
+Built with the taste skill's kit, copied to `web/public/assets` (unused families removed). Page CSS lives in `web/public/landing.css`, Tailwind for the React islands in `src/app/(marketing)/islands.css`, and the islands in `src/components/`. The finish gate runs against the built page: `pnpm build && pnpm start -p 3000`, then from `web/`: `node ../.claude/skills/design-taste-frontend/scripts/gate.mjs http://127.0.0.1:3000/` (the other checks are in the skill's SKILL.md, section 4).
 
 ## Design and landing pages
 

@@ -1,5 +1,5 @@
 // Controls for the e2e API's fixture server, which listens on API_PORT + 1000 (server/scripts/e2e-control.ts).
-const API_PORT = Number(process.env.API_PORT ?? '3141');
+const API_PORT = Number(process.env.API_PORT ?? '8000');
 const CONTROL = `http://127.0.0.1:${API_PORT + 1000}`;
 
 async function call(method: string, path: string, body?: unknown): Promise<{ calls: number }> {

@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Ports come from the environment so branches can run their e2e at once (base 3140/3141).
-const WEB_PORT = process.env.WEB_PORT ?? '3140';
-const API_PORT = process.env.API_PORT ?? '3141';
+// Ports come from the environment so several e2e runs can share a machine (default 3000/8000).
+const WEB_PORT = process.env.WEB_PORT ?? '3000';
+const API_PORT = process.env.API_PORT ?? '8000';
 
 export default defineConfig({
   testDir: 'e2e',

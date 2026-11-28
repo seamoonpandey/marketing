@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 // It drops and recreates a database, answers from the mock model and lets the fetcher reach 127.0.0.1.
 if (process.env.NODE_ENV === 'production') throw new Error('The e2e harness never runs with NODE_ENV=production');
 
-const port = process.env.PORT ?? '3141';
+const port = process.env.PORT ?? '8000';
 const name = `mkt_e2e_${port}`;
 const admin = process.env.DATABASE_ADMIN_URL ?? 'postgres://marketing:marketing@127.0.0.1:5436/marketing';
 const app = process.env.DATABASE_URL ?? 'postgres://marketing_app:marketing_app@127.0.0.1:5436/marketing';

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const schema = z.object({
-  PORT: z.coerce.number().int().default(3141),
+  PORT: z.coerce.number().int().default(8000),
   DATABASE_URL: z.string().default('postgres://marketing_app:marketing_app@127.0.0.1:5436/marketing'),
   DATABASE_ADMIN_URL: z.string().default('postgres://marketing:marketing@127.0.0.1:5436/marketing'),
   DBOS_SYSTEM_DATABASE_URL: z.string().default('postgres://marketing:marketing@127.0.0.1:5436/marketing_dbos'),

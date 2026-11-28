@@ -4,8 +4,8 @@
 set -uo pipefail
 cd "$(dirname "$0")"
 ROOT=$PWD
-API_PORT=${API_PORT:-3141}
-WEB_PORT=${WEB_PORT:-3140}
+API_PORT=${API_PORT:-8000}
+WEB_PORT=${WEB_PORT:-3000}
 
 # Servers started by run.sh: each is its own process group, so one signal ends it with its children.
 for name in web api; do

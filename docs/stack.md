@@ -460,5 +460,5 @@ Where the built system differs from this document. The code and `docs/structure.
 | OpenTelemetry to OpenObserve, `@ai-sdk/otel` | Not installed. Logs are pino to stdout | Not part of the first build |
 | Whisper.cpp, Piper, Ollama, Nodemailer | Not installed | Not part of the first build; Studio leaves out voice and speech, Approve leaves out reminders (their designs) |
 | pgvector for brand-filtered retrieval | The pgvector image is used in `docker-compose.dev.yml`, but no table has a vector column | No module needed retrieval |
-| API on 127.0.0.1:3041, web on 3040 | Development defaults are API 3141 (`PORT`) and web 3140 (`web/playwright.config.ts`); production ports are set by `PORT` and `pnpm start -p` | Development only; production takes its port from `PORT` |
+| API on 127.0.0.1:3041, web on 3040 | Development defaults are API 8000 (`PORT`) and web 3000 (`web/playwright.config.ts`); production ports are set by `PORT` and `pnpm start -p` | Development only; production takes its port from `PORT` |
 | `deploy/vps/` with copies of what is installed on the box | Not in the repository yet | No deployment has been made |

@@ -7,7 +7,7 @@ pnpm install
 docker compose -f docker-compose.dev.yml up -d   # Postgres on 5436, SeaweedFS (S3) on 8333
 cp .env.example .env                             # defaults match the containers; AI_MODEL=mock
 pnpm db:reset                                    # development database from the schema, plus the tenant
-pnpm dev                                         # the API on http://127.0.0.1:3141
+pnpm dev                                         # the API on http://127.0.0.1:8000
 ```
 
 | Command | Does |

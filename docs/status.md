@@ -100,7 +100,7 @@ Read from `server/.env.example` and `server/src/config.ts`. With `NODE_ENV=produ
 | Variable | For | Production |
 |---|---|---|
 | `NODE_ENV` | `production` turns on the refusals above | Must set to `production` |
-| `PORT` | The API's port, bound on 127.0.0.1 (default 3141) | Set to the port nginx proxies to |
+| `PORT` | The API's port, bound on 127.0.0.1 (default 8000) | Set to the port nginx proxies to |
 | `DATABASE_URL` | The app role (`marketing_app`): no `BYPASSRLS`, no update or delete on `audit_events` or `approvals` | Must set; not a development password |
 | `DATABASE_ADMIN_URL` | The owner role: `pnpm db:migrate`, test databases | Must set; not a development password |
 | `DBOS_SYSTEM_DATABASE_URL` | Where DBOS keeps workflow state | Must set; not a development password |
