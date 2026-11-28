@@ -4,3 +4,4 @@ node_modules/
 .impeccable/
 .claude/settings.local.json
 .claude/worktrees/
+.run/
