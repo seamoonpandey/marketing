@@ -138,6 +138,17 @@ test('the Maps listing a run stored among the channels shows once, as the Map ch
   await expect(hut.getByRole('link', { name: /google|Map/ })).toHaveCount(1);
 });
 
+test('a watched business whose site could not be read links to its competitor page', async ({ page }) => {
+  await stub(page, { cands: FOUND(), runs: [run({ ...DONE })], unreadable: ['cand-1'] });
+  await page.goto(`/app/b/${B}/research/discover`);
+  const hut = page.getByRole('table', { name: 'Competitors found' }).locator('tbody tr').filter({ hasText: 'Momo Hut' });
+  await hut.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Watch selected' }).click();
+  await expect(hut).toContainText('Watching');
+  await expect(hut).toContainText('Couldn’t read the site');
+  await expect(hut.getByRole('link', { name: 'the competitor’s page' })).toHaveAttribute('href', `/app/b/${B}/research/competitors/comp-cand-1`);
+});
+
 test('blocks ticking more competitors with a website than free slots', async ({ page }) => {
   const targets = Array.from({ length: 9 }, (_, i) => ({ id: `t-${i}`, competitorId: `c-${i}`, url: `https://c${i}.example`, label: null, status: 'active', failCount: 0, lastError: null, lastSourceId: null, createdAt: NOW }));
   await stub(page, { cands: FOUND(), runs: [run({ ...DONE })], targets });
@@ -155,5 +166,24 @@ test('the page does not scroll sideways at 375px', async ({ page }) => {
   await stub(page, { cands: FOUND(), runs: [run({ ...DONE })] });
   await page.goto(`/app/b/${B}/research/discover`);
   await expect(page.getByRole('table', { name: 'Competitors found' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+});
+
+test('a long Devanagari keyword and a Devanagari quote fit at 375px', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  const quote = 'काठमाडौंको सबैभन्दा मिठो र ताजा मःमः, हरेक दिन बिहानै बनाइन्छ';
+  await stub(page, { cands: [cand({ name: 'दाइको मोमो पसल', cells: { kind: inferred('direct'), pitch: quoted(quote) } })], runs: [run({ ...DONE })] });
+  await page.goto(`/app/b/${B}/research/discover`);
+  const keyword = 'काठमाडौंमाघरघरैमामःमःडेलिभरीगर्नेरेस्टुरेन्टहरूकोसूचीरमूल्यतुलना';
+  await page.getByLabel('Add a keyword').fill(keyword);
+  await page.getByRole('button', { name: 'Add keyword' }).click();
+  await expect(page.getByRole('list', { name: 'Keywords' })).toContainText(keyword);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+  await page.getByRole('button', { name: new RegExp(`^${quote.slice(0, 12)}`) }).click();
+  const pop = page.locator('[popover]:popover-open');
+  await expect(pop).toContainText(quote);
+  const box = (await pop.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(375);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
 });
