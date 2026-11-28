@@ -73,9 +73,11 @@ function CellButton({ cell, c, sources, brandId }: { cell?: Cell; c: Candidate; 
 }
 
 function Channels({ c }: { c: Candidate }) {
-  const links = [httpUrl(c.site) ? ['Web', httpUrl(c.site)!] : null, ...c.channels.map((u) => (httpUrl(u) ? [channelLabel(httpUrl(u)!), httpUrl(u)!] : null))].filter((x): x is string[] => !!x);
   const map = c.place ? `Map${c.place.rating != null ? ` ${c.place.rating.toFixed(1)}★` : ''}` : null;
   const mapHref = c.place?.cid ? `https://maps.google.com/?cid=${encodeURIComponent(c.place.cid)}` : null;
+  // A run stores the Maps listing among the channels too; the Map chip is its link, so it is not shown twice.
+  const listing = (href: string) => !!mapHref && /^https:\/\/(www\.)?google\.com\/maps\?cid=/.test(href);
+  const links = [httpUrl(c.site) ? ['Web', httpUrl(c.site)!] : null, ...c.channels.map((u) => (httpUrl(u) && !listing(httpUrl(u)!) ? [channelLabel(httpUrl(u)!), httpUrl(u)!] : null))].filter((x): x is string[] => !!x);
   if (!links.length && !map) return DASH;
   return (
     <span className="flex flex-wrap gap-1">

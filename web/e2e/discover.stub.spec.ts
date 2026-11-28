@@ -16,10 +16,10 @@ const FOUND = () => [
 const run = (o: object = {}) => ({ id: 'd-1', keywords: ['momo Lalitpur'], state: 'awaiting_approval', error: null, startedAt: NOW, finishedAt: null, estimate: money('300'), actual: null, counts: {}, ownRow: null, createdAt: NOW, ...o });
 const DONE = { state: 'completed', finishedAt: NOW, estimate: money('300'), actual: money('120'), counts: { queries: 4, results: 40, found: 3, skipped: 2, profiled: 3, dropped: 1 }, ownRow: { sells: { value: 'Steamed and frozen momo', factIds: ['fact-1'] }, where: { value: 'Kathmandu', factIds: ['fact-2'] } } };
 
-type World = { calls: string[]; bodies: any[]; runs: any[]; cands: any[]; found: any[]; targets: any[] };
+type World = { calls: string[]; bodies: any[]; runs: any[]; cands: any[]; found: any[]; targets: any[]; unreadable: string[] };
 
 async function stub(page: Page, init: Partial<World> = {}) {
-  const w: World = { calls: [], bodies: [], runs: [], cands: [], found: FOUND(), targets: [], ...init };
+  const w: World = { calls: [], bodies: [], runs: [], cands: [], found: FOUND(), targets: [], unreadable: [], ...init };
   await page.route('**/api/**', async (route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -47,7 +47,7 @@ async function stub(page: Page, init: Partial<World> = {}) {
     if (path === '/research/candidates' && m === 'GET') return send(w.cands.filter((c: any) => (url.searchParams.get('status') ? c.status === url.searchParams.get('status') : c.status !== 'dismissed')));
     if (path === '/research/candidates/watch') {
       const watched = w.cands.filter((c: any) => body.ids.includes(c.id)).map((c: any) => Object.assign(c, { status: 'watched', competitorId: `comp-${c.id}` }));
-      return send({ watched, unreadable: [] });
+      return send({ watched, unreadable: w.unreadable });
     }
     if ((x = path.match(/^\/research\/candidates\/([\w-]+)\/(dismiss|restore)$/))) {
       const c = w.cands.find((c: any) => c.id === x![1]);
@@ -126,6 +126,16 @@ test('a candidate without a website says so, and a javascript: channel is not a 
   await expect(hut.getByRole('link', { name: /FB/ })).toHaveAttribute('href', 'https://facebook.com/momohut');
   await expect(hut.getByRole('link', { name: /Map 4\.4/ })).toBeVisible();
   await expect(page.locator('a[href^="javascript:"]')).toHaveCount(0);
+});
+
+test('the Maps listing a run stored among the channels shows once, as the Map chip', async ({ page }) => {
+  const listed = cand({ channels: ['https://www.google.com/maps?cid=c1', 'https://facebook.com/momohut'] });
+  await stub(page, { cands: [listed], runs: [run({ ...DONE })] });
+  await page.goto(`/app/b/${B}/research/discover`);
+  const hut = page.getByRole('table', { name: 'Competitors found' }).locator('tbody tr').filter({ hasText: 'Momo Hut' });
+  await expect(hut.getByRole('link', { name: /Map 4\.4/ })).toHaveAttribute('href', 'https://maps.google.com/?cid=c1');
+  await expect(hut.getByRole('link', { name: /FB/ })).toBeVisible();
+  await expect(hut.getByRole('link', { name: /google|Map/ })).toHaveCount(1);
 });
 
 test('blocks ticking more competitors with a website than free slots', async ({ page }) => {
