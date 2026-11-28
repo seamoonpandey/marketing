@@ -3,6 +3,9 @@ type ModelEntry = { provider: string; modelId: string; inUsdPerM: string; outUsd
 
 const models: Record<string, ModelEntry> = {
   'anthropic:claude-opus-5-5': { provider: 'anthropic', modelId: 'claude-opus-5-5', inUsdPerM: '4', outUsdPerM: '20' },
+  // Through OpenRouter's Anthropic-compatible endpoint, with OPENROUTER_API_KEY. The free model is for local testing.
+  'openrouter:nvidia/nemotron-3.5-super-vl:free': { provider: 'openrouter', modelId: 'nvidia/nemotron-3.5-super-vl:free', inUsdPerM: '0', outUsdPerM: '0' },
+  'openrouter:anthropic/claude-opus-5.5': { provider: 'openrouter', modelId: 'anthropic/claude-opus-5.5', inUsdPerM: '4', outUsdPerM: '20' },
   // AI_MODEL=mock: answers from ai/mock.ts, priced like the default model so budget checks behave the same.
   mock: { provider: 'mock', modelId: 'mock', inUsdPerM: '4', outUsdPerM: '20' },
 };

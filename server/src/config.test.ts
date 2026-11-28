@@ -26,5 +26,6 @@ describe('config', () => {
     expect(() => parseConfig({ ...prod, DATABASE_ADMIN_URL: 'postgres://marketing:marketing@10.0.0.5:5432/marketing' })).toThrow('set DATABASE_ADMIN_URL ');
     expect(() => parseConfig({ ...prod, S3_SECRET_ACCESS_KEY: 'dev' })).toThrow('set S3_SECRET_ACCESS_KEY ');
     expect(() => parseConfig({ ...prod, AI_MODEL: 'mock' })).toThrow('set AI_MODEL ');
+    expect(() => parseConfig({ ...prod, AI_MODEL: 'openrouter:anthropic/claude-opus-5.5' })).toThrow('set OPENROUTER_API_KEY ');
   });
 });

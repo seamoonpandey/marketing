@@ -30,6 +30,7 @@ function languageModel(): LanguageModel {
   if (config.AI_MODEL === 'mock') return mockModel;
   const m = modelEntry(config.AI_MODEL);
   if (m.provider === 'anthropic') return createAnthropic({ apiKey: config.ANTHROPIC_API_KEY })(m.modelId);
+  if (m.provider === 'openrouter') return createAnthropic({ baseURL: 'https://openrouter.ai/api/v1', apiKey: config.OPENROUTER_API_KEY })(m.modelId);
   throw new Error(`No provider for ${config.AI_MODEL}`);
 }
 

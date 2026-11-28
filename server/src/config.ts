@@ -11,6 +11,7 @@ const schema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().default('dev'),
   AI_MODEL: z.string().default('anthropic:claude-opus-5-5'),
   ANTHROPIC_API_KEY: z.string().optional(),
+  OPENROUTER_API_KEY: z.string().optional(),
   AI_MONTHLY_CAP_NPR: z.string().regex(/^\d+(\.\d+)?$/).default('5000'),
   // A research run estimated above this waits for the owner's confirmation.
   RESEARCH_RUN_CAP_NPR: z.string().regex(/^\d+(\.\d+)?$/).default('150'),
@@ -36,6 +37,7 @@ export function parseConfig(env: Record<string, string | undefined>): Config {
     if (env[k] && !unsafe.includes(k) && DEV_PASSWORDS.has(decodeURIComponent(URL.parse(env[k]!)?.password ?? ''))) unsafe.push(k);
   if (c.AI_MODEL === 'mock') unsafe.push('AI_MODEL');
   if (c.AI_MODEL.startsWith('anthropic:') && !c.ANTHROPIC_API_KEY) unsafe.push('ANTHROPIC_API_KEY');
+  if (c.AI_MODEL.startsWith('openrouter:') && !c.OPENROUTER_API_KEY) unsafe.push('OPENROUTER_API_KEY');
   if (unsafe.length) throw new Error(`NODE_ENV=production: set ${unsafe.join(', ')} (unset, a development value, or a development password)`);
   return c;
 }
