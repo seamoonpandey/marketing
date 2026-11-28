@@ -40,7 +40,8 @@ Rules:
 4. Balance pillars, funnel stages and formats across the week; never put two items on one channel on one day; do not repeat a recent idea.
 5. Every item needs channel, format, pillar, funnel, intent, a one-sentence idea and a call to action. Ideas and calls to action may be in Nepali when the brand writes in Nepali.
 6. Give campaignId only for a campaign listed with its brief; otherwise leave it out.
-7. If the data is not enough, plan fewer items instead of guessing.`;
+7. If the data is not enough, plan fewer items instead of guessing.
+8. Use these values exactly as written; any other value is discarded. format: ${formats.join(', ')}. pillar: ${pillars.join(', ')}. funnel: ${funnels.join(', ')}. intent: ${intents.join(', ')}.`;
 
 // A `<` inside data could close a block early; JSON keeps it as an escape.
 export const data = (tag: string, v: unknown) => `<${tag}>\n${JSON.stringify(v).replaceAll('<', '\\u003c')}\n</${tag}>`;
