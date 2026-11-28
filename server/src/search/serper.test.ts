@@ -21,6 +21,11 @@ describe('serperSearch', () => {
     expect(hits).toEqual([{ title: 'Momo Hut', url: 'https://momohut.com.np/', snippet: 'Best momo in Lalitpur', place: null }]);
   });
 
+  it('keeps at most the 10 web results it asked for', async () => {
+    const organic = Array.from({ length: 14 }, (_, i) => ({ title: `Momo ${i}`, link: `https://m${i}.example/`, snippet: 's' }));
+    expect(await serperSearch('q', 'web', 'NP', 'k', answer({ organic }))).toHaveLength(10);
+  });
+
   it('maps Maps listings to hits with their place, keeping at most 20', async () => {
     const listing = (i: number) => ({
       title: `Cafe ${i}`, address: 'Jhamsikhel', category: 'Cafe', rating: 4.4, ratingCount: 120, phoneNumber: '+977 1', website: i === 0 ? undefined : 'https://c.example/', cid: '123',

@@ -13,6 +13,7 @@ const num = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) ? n : n
 
 const TITLE_MAX = 200;
 const SNIPPET_MAX = 400;
+const WEB_MAX = 10; // the discovery estimate prices 10 web results and 20 listings a keyword
 const PLACES_MAX = 20;
 const PLACE_MAX = 300;
 
@@ -28,13 +29,13 @@ export async function serperSearch(
   const res = await fetchFn(`https://google.serper.dev/${kind === 'web' ? 'search' : 'places'}`, {
     method: 'POST',
     headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify(kind === 'web' ? { q: query, gl, num: 10 } : { q: query, gl }),
+    body: JSON.stringify(kind === 'web' ? { q: query, gl, num: WEB_MAX } : { q: query, gl }),
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new Error(`Serper answered ${res.status}`);
   const body = (await res.json()) as { organic?: Organic[]; places?: Listing[] };
   if (kind === 'web')
-    return (body.organic ?? []).map((o) => ({
+    return (body.organic ?? []).slice(0, WEB_MAX).map((o) => ({
       title: cut(o.title, TITLE_MAX),
       url: o.link ?? null,
       snippet: cut(o.snippet, SNIPPET_MAX),
