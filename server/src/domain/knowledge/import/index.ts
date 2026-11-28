@@ -214,12 +214,16 @@ export async function fetchStage(brandId: string, runId: string): Promise<void> 
   const pages: string[] = [];
   let failed = 0;
   if (run.websiteUrl) {
-    const urls = await pickPages(run.websiteUrl, 10).catch(() => [] as string[]);
+    const urls = await pickPages(run.websiteUrl, 10).catch((err: unknown) => {
+      logger.warn({ err, runId, url: run.websiteUrl }, 'website homepage could not be fetched');
+      return [] as string[];
+    });
     if (!urls.length) failed++;
     for (const url of urls) {
       try {
         pages.push((await withBrand(brandId, (tx) => savePageSource(tx, brandId, url, 'brand_site'))).id);
-      } catch {
+      } catch (err) {
+        logger.warn({ err, runId, url }, 'website page could not be fetched');
         failed++;
       }
     }
