@@ -12,7 +12,7 @@ import { withBrand } from '../../../db/tenant.ts';
 import { BudgetError, ConflictError, ValidationError } from '../../../http/errors.ts';
 import { mockSearch, type SearchHit } from '../../../search/index.ts';
 import { createCompetitor } from '../../brands/index.ts';
-import { cancelRun } from '../../../workflows/index.ts';
+import { cancelRun, retryRun } from '../../../workflows/index.ts';
 import { recordCost, remainingMonthlyCap } from '../../costs/index.ts';
 import { approveFact, approvedFacts, enterFact } from '../../knowledge/index.ts';
 import { fetchGuard } from '../../sources/fetch.ts';
@@ -193,6 +193,17 @@ describe('discovery run', () => {
     const stale = { table: discoveryRuns, get: async () => ({ state: 'running' as const, workflowId: runId }), action: 'research.discovery', objectType: 'discovery_run' };
     await expect(cancelRun(stale, brand, runId)).rejects.toBeInstanceOf(ConflictError);
     expect((await withBrand(brand, (tx) => getDiscovery(tx, brand, runId))).state).toBe('completed');
+  });
+
+  it('refuses a retry that read the run as failed just before another retry restarted it', async () => {
+    const brand = await factBrand();
+    const { runId } = await createDiscovery(brand, ['momo kathmandu']);
+    await cancelDiscovery(brand, runId);
+    // The first retry has already set it running; the second still holds the failed state it read.
+    await t.adminQuery(`update discovery_runs set state = 'running' where id = $1`, [runId]);
+    const stale = { table: discoveryRuns, get: async () => ({ state: 'failed_retryable' as const, workflowId: runId }), action: 'research.discovery', objectType: 'discovery_run' };
+    await expect(retryRun(stale, brand, runId, 'busy')).rejects.toBeInstanceOf(ConflictError);
+    expect(await t.adminQuery(`select 1 from audit_events where action = 'research.discovery.retry' and object_id = $1`, [runId])).toHaveLength(0);
   });
 
   it('answers 503 and creates no run when Serper has no key', async () => {

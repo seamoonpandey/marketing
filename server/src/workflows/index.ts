@@ -114,14 +114,21 @@ export async function cancelRun(t: RunTable, brandId: string, runId: string): Pr
  */
 export async function retryRun(t: RunTable, brandId: string, runId: string, busy: string): Promise<void> {
   const run = await withBrand(brandId, async (tx) => {
+    const refused = new ConflictError('Only a run that failed with a retryable error can be retried');
     const r = await t.get(tx, brandId, runId);
-    if (r.state !== 'failed_retryable') throw new ConflictError('Only a run that failed with a retryable error can be retried');
+    if (r.state !== 'failed_retryable') throw refused;
+    let rows: { id: string }[];
     try {
-      await tx.update(t.table).set({ state: 'running', error: null, finishedAt: null }).where(eq(t.table.id, runId));
+      // Only from failed_retryable, so two retries at once start one workflow, not two that each pay for the failed step.
+      rows = await tx
+        .update(t.table).set({ state: 'running', error: null, finishedAt: null })
+        .where(and(eq(t.table.id, runId), eq(t.table.state, 'failed_retryable')))
+        .returning({ id: t.table.id });
     } catch (e) {
       if (isUniqueViolation(e)) throw new ConflictError(busy);
       throw e;
     }
+    if (!rows.length) throw refused;
     await audit(tx, { brandId, actor: 'operator', action: `${t.action}.retry`, objectType: t.objectType, objectId: runId, result: 'ok' });
     return r;
   });
