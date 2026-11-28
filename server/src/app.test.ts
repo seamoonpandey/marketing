@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { AiError } from './ai/index.ts';
 import { createApp, MAX_BODY_BYTES } from './app.ts';
 
 describe('app', () => {
@@ -22,5 +23,15 @@ describe('app', () => {
     const health = await createApp().request('/api/health');
     expect(health.headers.get('x-content-type-options')).toBe('nosniff');
     expect(health.headers.get('x-frame-options')).toBe('SAMEORIGIN');
+  });
+
+  it('says why when the model fails, instead of "Something went wrong"', async () => {
+    const app = createApp();
+    app.get('/api/boom', () => {
+      throw new AiError('The model call failed: Rate limit exceeded', true);
+    });
+    const res = await app.request('/api/boom');
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: { code: 'ai', message: 'The model call failed: Rate limit exceeded' } });
   });
 });

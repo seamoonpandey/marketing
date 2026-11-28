@@ -2,6 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { bodyLimit } from 'hono/body-limit';
 import { HTTPException } from 'hono/http-exception';
 import { secureHeaders } from 'hono/secure-headers';
+import { AiError } from './ai/index.ts';
 import { isUniqueViolation } from './db/client.ts';
 import { routes as brandRoutes } from './domain/brands/index.ts';
 import { errorBody, HttpError } from './http/errors.ts';
@@ -30,6 +31,8 @@ export function createApp() {
     // A unique constraint the domain did not check first.
     if (isUniqueViolation(err))
       return c.json(errorBody('conflict', 'That already exists'), 409);
+    // The model or its provider failed (a rate limit, an outage, a refusal): say so, as a failed run does (workflows runError).
+    if (err instanceof AiError) return c.json(errorBody('ai', err.message), 502);
     logger.error({ err, path: c.req.path }, 'unhandled error');
     return c.json(errorBody('internal', 'Something went wrong'), 500);
   });
