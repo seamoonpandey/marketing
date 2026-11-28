@@ -98,7 +98,8 @@ describe('candidates', () => {
     const brand = await watching(9);
     const hosts = ['twin1.example', 'twin2.example', 'twin3.example'];
     for (const h of hosts) Object.assign(pages, { [`${h}/`]: pages['rival.example/'], [`${h}/pricing`]: pages['rival.example/pricing'] });
-    const ids = await Promise.all(hosts.map((h) => candidate(brand, { name: h, site: site(h) })));
+    const ids: string[] = [];
+    for (const h of hosts) ids.push(await candidate(brand, { name: h, site: site(h) }));
     const settled = await Promise.allSettled(ids.map((id) => watchCandidates(brand, [id])));
     expect(settled.map((s) => s.status).sort()).toEqual(['fulfilled', 'rejected', 'rejected']);
     for (const s of settled) if (s.status === 'rejected') expect(s.reason).toBeInstanceOf(ValidationError);
