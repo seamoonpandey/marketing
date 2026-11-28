@@ -60,7 +60,7 @@ type CostRecord = {
   ok: boolean;
 };
 
-/** Writes one cost_events row with its rate snapshot. Used by ai.extract, not by modules. */
+/** Writes one cost_events row with its rate snapshot. Used by ai.extract and search, not by modules. */
 export async function recordCost(tx: Tx, c: CostRecord): Promise<Money> {
   const { m, usd12, npr14 } = price(c.model, c.inputTokens, c.outputTokens);
   const row = {

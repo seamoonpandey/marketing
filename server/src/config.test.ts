@@ -28,4 +28,8 @@ describe('config', () => {
     expect(() => parseConfig({ ...prod, AI_MODEL: 'mock' })).toThrow('set AI_MODEL ');
     expect(() => parseConfig({ ...prod, AI_MODEL: 'openrouter:anthropic/claude-opus-5.5' })).toThrow('set OPENROUTER_API_KEY ');
   });
+
+  it('refuses the mock search provider in production', () => {
+    expect(() => parseConfig({ ...prod, SEARCH_PROVIDER: 'mock' })).toThrow('SEARCH_PROVIDER');
+  });
 });

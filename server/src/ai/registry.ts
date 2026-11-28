@@ -8,6 +8,11 @@ const models: Record<string, ModelEntry> = {
   'openrouter:anthropic/claude-opus-5.5': { provider: 'openrouter', modelId: 'anthropic/claude-opus-5.5', inUsdPerM: '4', outUsdPerM: '20' },
   // AI_MODEL=mock: answers from ai/mock.ts, priced like the default model so budget checks behave the same.
   mock: { provider: 'mock', modelId: 'mock', inUsdPerM: '4', outUsdPerM: '20' },
+  // One input "token" is one query: USD 1 per 1,000 queries. Set each endpoint from the account's actual rate (a Maps query may cost more credits).
+  'serper:web': { provider: 'serper', modelId: 'web', inUsdPerM: '1000', outUsdPerM: '0' },
+  'serper:places': { provider: 'serper', modelId: 'places', inUsdPerM: '1000', outUsdPerM: '0' },
+  'mock:web': { provider: 'mock', modelId: 'web', inUsdPerM: '1000', outUsdPerM: '0' },
+  'mock:places': { provider: 'mock', modelId: 'places', inUsdPerM: '1000', outUsdPerM: '0' },
 };
 
 export function modelEntry(model: string): ModelEntry {

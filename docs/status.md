@@ -109,6 +109,8 @@ Read from `server/.env.example` and `server/src/config.ts`. With `NODE_ENV=produ
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Storage credentials | Must set; `dev` is refused |
 | `AI_MODEL` | `mock`, or a model in `ai/registry.ts` (default `anthropic:claude-opus-5-5`) | `mock` is refused |
 | `ANTHROPIC_API_KEY` | The provider key | Must set while `AI_MODEL` starts with `anthropic:` |
+| `SEARCH_PROVIDER` | `serper` or `mock` (default `serper`) | `serper`; `mock` is refused |
+| `SERPER_API_KEY` | Serper.dev key for competitor search | Needed to find competitors; without it Find competitors answers 503 |
 | `AI_MONTHLY_CAP_NPR` | The tenant's AI spend cap per calendar month (UTC); default 5000 | Set deliberately |
 | `USD_NPR` | The exchange rate used to price calls; default 155.08 | Set to the current rate |
 | `TENANT_SLUG` | The one tenant (default `xenextech`); `pnpm seed` creates it | Seed it once with `pnpm seed` |

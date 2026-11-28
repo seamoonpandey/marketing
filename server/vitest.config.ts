@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config';
 const env = {
   LOG_LEVEL: 'silent',
   AI_MODEL: 'mock',
+  SEARCH_PROVIDER: 'mock',
   DATABASE_URL: 'postgres://marketing_app:marketing_app@127.0.0.1:5436/marketing',
   DATABASE_ADMIN_URL: 'postgres://marketing:marketing@127.0.0.1:5436/marketing',
   DBOS_SYSTEM_DATABASE_URL: 'postgres://marketing:marketing@127.0.0.1:5436/marketing_dbos',
@@ -14,6 +15,7 @@ const env = {
   ...process.env,
 };
 env.AI_MODEL = 'mock'; // tests never make a paid model call
+env.SEARCH_PROVIDER = 'mock'; // nor a paid search
 
 export default defineConfig({
   test: {
