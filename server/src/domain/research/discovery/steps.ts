@@ -20,6 +20,7 @@ import {
 } from './prompts.ts';
 
 const RUN_TYPE = 'research_discovery';
+const MAX_CHANNELS = 12;
 
 export type Query = { query: string; kind: SearchKind };
 export type Searched = { hits: SearchHit[]; failed: boolean };
@@ -112,8 +113,9 @@ export async function profileBusiness(
   const mine = results.filter((r) => b.resultIds.includes(r.id)).slice(0, RESULTS_PER_BUSINESS);
   // A site that cannot be read (robots.txt, unreachable, not HTML) leaves the business its search results alone.
   const page = b.site ? await withBrand(brandId, (tx) => savePageSource(tx, brandId, b.site!, 'external')).catch(() => null) : null;
-  const channels = new Set([...b.channels, ...(page ? await socialLinks(page) : [])]);
-  if (b.placeCid) channels.add(`https://www.google.com/maps?cid=${encodeURIComponent(b.placeCid)}`);
+  const maps = b.placeCid ? [`https://www.google.com/maps?cid=${encodeURIComponent(b.placeCid)}`] : [];
+  // A page can link to thousands of profiles; the row keeps a handful of links to show, the Maps listing first.
+  const channels = [...new Set([...maps, ...b.channels, ...(page ? await socialLinks(page) : [])])].slice(0, MAX_CHANNELS);
   const { listing, facts } = await withBrand(brandId, async (tx) => ({
     listing: await saveTextSource(tx, brandId, `search:${runId}:${key}`, mine.map(resultText).join('\n\n')),
     facts: await approvedFacts(tx, brandId),
@@ -139,7 +141,7 @@ export async function profileBusiness(
     if (c) cells[col] = c.basis === 'quoted' ? { ...c, sourceId: id(c.sourceId) } : { ...c, evidence: c.evidence.map(id) };
   }
   const row = {
-    name: b.name, site: b.site, channels: [...channels], placeCid: b.placeCid, cells, sourceIds: [...stored.values()], rank: b.rank,
+    name: b.name, site: b.site, channels, placeCid: b.placeCid, cells, sourceIds: [...stored.values()], rank: b.rank,
     place: mine.find((r) => r.kind === 'places' && r.place)?.place ?? null, lastRunId: runId, lastFoundAt: new Date(),
   };
   await withBrand(brandId, (tx) =>

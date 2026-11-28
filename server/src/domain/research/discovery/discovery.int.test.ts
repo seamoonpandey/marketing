@@ -433,6 +433,17 @@ describe('what a run finds', () => {
     expect(userText(profileCalls()[0]!).match(/Momo Hut \d+ serves momo/g)).toHaveLength(20);
   });
 
+  it('keeps a handful of the social links on a page that has thousands', async () => {
+    const brand = await factBrand();
+    const links = Array.from({ length: 5000 }, (_, i) => `<a href="https://www.instagram.com/fan${i}">fan</a>`).join('');
+    pages = { 'linky.example/': `<title>Linky Momo</title><p>Momo in Patan</p>${links}` };
+    mockSearch.set('places', 'momo patan', [{ ...hit('Linky Momo', site('linky.example')), place: { address: null, category: null, rating: null, ratingCount: null, phone: null, cid: '7' } }]);
+    await discover(brand, ['momo patan'], group({ name: 'Linky Momo', site: site('linky.example'), placeCid: '7', resultIds: ['r1'] }), {}, {});
+    const [c] = await candidates(brand);
+    expect(c!.channels).toHaveLength(12);
+    expect(c!.channels[0]).toBe('https://www.google.com/maps?cid=7');
+  });
+
   it('drops a business the model names with no valid result id', async () => {
     const brand = await factBrand();
     await momoHut(brand);
