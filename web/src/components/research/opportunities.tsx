@@ -86,10 +86,11 @@ export function Opportunities() {
                     <div className="grid gap-1">
                       <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">Based on</h3>
                       <ul className="grid gap-2 text-sm">
-                        {o.evidence.map((e) => {
+                        {o.evidence.map((e, i) => {
                           const source = e.sourceId ? sources.data?.find((s) => s.id === e.sourceId) : undefined;
                           return (
-                            <li key={`${e.type}-${e.id}`} className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1.5 [overflow-wrap:anywhere]">
+                            // By position: two cells of one business share a type and an ID.
+                            <li key={i} className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1.5 [overflow-wrap:anywhere]">
                               <span><span className="font-medium">{e.label}</span>: {e.detail}</span>
                               {e.quote ? source ? <SourceQuote quote={e.quote} source={source} /> : <span className="text-muted">“{e.quote}”</span> : null}
                             </li>

@@ -164,6 +164,21 @@ test('Find opportunities adds ranked cards with their evidence', async ({ page }
   await expect(page.getByRole('button', { name: /^New 1/ })).toBeVisible();
 });
 
+test('an opportunity that cites two cells of one business lists both', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  const two = { ...gap, evidence: [
+    { type: 'candidate', id: 'cand-1', label: 'Momo Hut', detail: 'Sells to: Offices' },
+    { type: 'candidate', id: 'cand-1', label: 'Momo Hut', detail: 'Price level: low' },
+  ] };
+  await stub(page, { opportunities: [two] });
+  await page.goto(`/app/b/${B}/research/opportunities`);
+  const o = page.getByRole('article', { name: two.title });
+  await expect(o.getByText('Sells to: Offices')).toBeVisible();
+  await expect(o.getByText('Price level: low')).toBeVisible();
+  expect(errors.filter((e) => e.includes('same key'))).toEqual([]);
+});
+
 test('restores a dismissed opportunity and links an accepted one to Plan', async ({ page }) => {
   const w = await stub(page, { opportunities: [{ ...opp, status: 'dismissed' }, { ...gap, status: 'accepted' }] });
   await page.goto(`/app/b/${B}/research/opportunities`);
