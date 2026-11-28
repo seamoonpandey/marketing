@@ -47,26 +47,35 @@ export const cleanUrl = (url: string): string | null => {
   return u ? cleanCut(u.href, MAX_URL) : null;
 };
 
+type Result = { url: string | null; place: { cid: string | null } | null };
+
 /**
  * The businesses worth profiling, in this order: real result IDs only, social and directory sites moved off `site`, the
- * brand's own site dropped, duplicates merged, hidden and watched ones skipped (counted), the best MAX_CANDIDATES kept.
+ * brand's own site dropped, a site or Maps listing ID none of the business's results carries removed, duplicates merged,
+ * hidden and watched ones skipped (counted), the best MAX_CANDIDATES kept.
  */
 export function tidyBusinesses(
-  raw: Business[], o: { ownSite: string | null; skipKeys: Set<string>; resultIds: Set<string> },
+  raw: Business[], o: { ownSite: string | null; skipKeys: Set<string>; results: Map<string, Result> },
 ): { kept: Business[]; skipped: number } {
   const own = o.ownSite && siteHost(o.ownSite);
   const merged = new Map<string, Business>();
   for (const r of raw) {
-    const resultIds = r.resultIds.filter((id) => o.resultIds.has(id));
+    const resultIds = r.resultIds.filter((id) => o.results.has(id));
     const name = cleanCut(r.name, 200);
     if (!resultIds.length || !name) continue;
+    const mine = resultIds.map((id) => o.results.get(id)!);
     const channels = r.channels.map(cleanUrl).filter((c): c is string => !!c);
     let site = r.site && cleanUrl(r.site);
     if (site && linkKind(site) === 'social') channels.push(site);
     if (site && linkKind(site) !== 'site') site = null;
     const host = site && siteHost(site);
     if (own && host && (host === own || host.endsWith(`.${own}`))) continue;
-    const b: Business = { name, site, channels, placeCid: (r.placeCid && cleanCut(r.placeCid, 200)) || null, resultIds, rank: r.rank };
+    // The model wrote both keys, so a snippet could point a business at another one's site or listing and have it merged
+    // into that one or skipped as hidden; each is kept only when one of the business's own results carries it.
+    if (host && !mine.some((x) => x.url && siteHost(x.url) === host)) site = null;
+    const cid = r.placeCid && cleanCut(r.placeCid, 200);
+    const placeCid = cid && mine.some((x) => x.place?.cid === cid) ? cid : null;
+    const b: Business = { name, site, channels, placeCid, resultIds, rank: r.rank };
     const key = matchKey(b);
     const prev = merged.get(key);
     merged.set(key, prev ? {

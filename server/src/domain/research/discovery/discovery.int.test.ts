@@ -385,6 +385,24 @@ describe('what a run finds', () => {
     expect(all[0].cells.pitch.value).toBe('Family packs for office lunches and parties');
   });
 
+  it("keeps a business off another one's Maps listing ID when none of its own results carries it", async () => {
+    const brand = await factBrand();
+    const listing = (title: string, cid: string): SearchHit => ({
+      title, url: null, snippet: `${title} serves momo`, place: { address: 'Patan', category: 'Momo', rating: 4.5, ratingCount: 10, phone: null, cid },
+    });
+    const sells = (name: string) => ({ sells: { value: 'Momo', basis: 'quoted', quote: `${name} serves momo`, sourceId: 'results' } });
+    mockSearch.set('places', 'momo patan', [listing('Real Momo', '42')]);
+    await discover(brand, ['momo patan'], group({ name: 'Real Momo', placeCid: '42', resultIds: ['r1'] }), sells('Real Momo'), {});
+    // The next run finds only a web snippet, which talks the model into giving it Real Momo's listing ID.
+    mockSearch.reset();
+    mockSearch.set('web', 'momo patan', [hit('Evil Momo', null)]);
+    await discover(brand, ['momo patan'], group({ name: 'Evil Momo', placeCid: '42', resultIds: ['r1'] }), sells('Evil Momo'), {});
+    const all = await candidates(brand);
+    expect(all.map((c) => [c.name, c.placeCid, c.channels]).sort()).toEqual([
+      ['Evil Momo', null, []], ['Real Momo', '42', ['https://www.google.com/maps?cid=42']],
+    ]);
+  });
+
   it('drops a business the model names with no valid result id', async () => {
     const brand = await factBrand();
     await momoHut(brand);

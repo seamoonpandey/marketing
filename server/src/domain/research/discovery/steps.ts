@@ -79,7 +79,7 @@ export async function groupResults(brandId: string, runId: string, results: Sear
   });
   const { kept, skipped } = tidyBusinesses(
     object.businesses.map((b) => ({ name: b.name, site: b.site, channels: b.socials, placeCid: b.placeCid, resultIds: b.resultIds, rank: b.rank })),
-    { ownSite, skipKeys, resultIds: new Set(results.map((r) => r.id)) },
+    { ownSite, skipKeys, results: new Map(results.map((r) => [r.id, r])) },
   );
   // The stored rank is the place in this run, so a model's 0.5 or 1e12 never reaches the integer column.
   return { businesses: kept.map((b, i) => ({ ...b, rank: i + 1 })), skipped };
