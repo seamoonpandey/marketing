@@ -83,6 +83,10 @@ export const useCandidates = (b: string, status?: 'dismissed') =>
     queryFn: () => unwrap(api.GET('/api/brands/{brandId}/research/candidates', { params: { ...p(b), query: { status } } })),
   });
 
+/** The brand's saved sources, under this module's key: a run saves new ones, and its end must refresh them with the rows that cite them. */
+export const useSources = (b: string) =>
+  useQuery({ queryKey: [...root(b), 'sources'], queryFn: () => unwrap(api.GET('/api/brands/{brandId}/sources', { params: p(b) })) });
+
 export const useProfile = (b: string, competitorId: string) =>
   useQuery({
     queryKey: [...root(b), 'profile', competitorId],

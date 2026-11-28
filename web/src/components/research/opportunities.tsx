@@ -3,9 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Async, LiveStatus, MutationError, PageHeader, SourceQuote, StateBlock, useBrandId } from '@/components/app';
-import { useSources } from '@/components/brand/data';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
-import { useAct, useCandidates, useCompetitors, useOpportunities } from './lib';
+import { useAct, useCandidates, useCompetitors, useOpportunities, useSources } from './lib';
 
 type Status = Schemas['Opportunity']['status'];
 type Opportunity = Schemas['Opportunity'];

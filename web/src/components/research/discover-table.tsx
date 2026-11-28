@@ -3,10 +3,9 @@
 import Link from 'next/link';
 import { useId, useState } from 'react';
 import { MutationError, SourceQuote, StatusBadge } from '@/components/app';
-import { useSources } from '@/components/brand/data';
 import { api, unwrap, type Schemas } from '@/lib/api/client';
 import { httpUrl } from '@/lib/url';
-import { useAct, useCandidates, useTargets, type Candidate } from './lib';
+import { useAct, useCandidates, useSources, useTargets, type Candidate } from './lib';
 
 type Cell = Schemas['DiscoveryCell'];
 type Source = Schemas['Source'];

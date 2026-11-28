@@ -34,7 +34,8 @@ async function stub(page: Page, init: Partial<World> = {}) {
     if (path === '/') return send(brand);
     if (path === '/competitors') return send([]);
     if (path === '/costs') return send({ month: '2026-11', total: money('0'), cap: money('1000'), remaining: money('1000'), runs: [] });
-    if (path === '/sources') return send([{ id: 'src-1', brandId: B, kind: 'page', uri: 'https://momohut.example/', mime: 'text/html', checksum: 'x', capturedAt: NOW, trust: 'external', meta: { title: 'Momo Hut home' }, hasText: true, downloadUrl: '' }]);
+    // A run saves its sources: none exist before it has found a business.
+    if (path === '/sources') return send(!w.cands.length ? [] : [{ id: 'src-1', brandId: B, kind: 'page', uri: 'https://momohut.example/', mime: 'text/html', checksum: 'x', capturedAt: NOW, trust: 'external', meta: { title: 'Momo Hut home' }, hasText: true, downloadUrl: '' }]);
     if (path === '/research/targets') return send(w.targets);
     if (path === '/research/discovery/keywords') return send({ keywords: ['momo restaurant Kathmandu', 'frozen momo Nepal'] });
     if (path === '/research/discoveries' && m === 'GET') return send(w.runs);
