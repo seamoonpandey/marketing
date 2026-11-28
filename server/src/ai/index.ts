@@ -13,6 +13,7 @@ import { mockModel } from './mock.ts';
 import { modelEntry } from './registry.ts';
 
 export { estimateTokens, type AiPart } from './estimate.ts';
+export { dataBlock, dataJson } from './blocks.ts';
 export { mockAi } from './mock.ts';
 
 export class AiError extends Error {

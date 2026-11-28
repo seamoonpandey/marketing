@@ -1,6 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { extract } from '../../ai/index.ts';
+import { dataJson, extract } from '../../ai/index.ts';
 import type { ApprovedFact } from '../../contracts/common.ts';
 import { battlecards, competitorProfiles, observations } from '../../db/schema/research.ts';
 import { isUuid, withBrand, type Tx } from '../../db/tenant.ts';
@@ -68,9 +68,9 @@ export async function generateBattlecard(brandId: string, competitorId: string, 
     parts: [{
       type: 'text',
       text:
-        `<observations>\n${JSON.stringify(ctx.obs.map((o) => ({ id: o.id, type: o.type, summary: o.summary, after: o.after.quote })))}\n</observations>\n` +
-        `<competitor_profile>\n${JSON.stringify(ctx.entries.map((e) => ({ kind: e.kind, text: e.text, price: e.price, quote: e.quote })))}\n</competitor_profile>\n` +
-        `<approved_facts>\n${JSON.stringify(facts.map((f) => ({ id: f.id, field: f.field, value: f.value, unit: f.unit })))}\n</approved_facts>`,
+        `<observations>\n${dataJson(ctx.obs.map((o) => ({ id: o.id, type: o.type, summary: o.summary, after: o.after.quote })))}\n</observations>\n` +
+        `<competitor_profile>\n${dataJson(ctx.entries.map((e) => ({ kind: e.kind, text: e.text, price: e.price, quote: e.quote })))}\n</competitor_profile>\n` +
+        `<approved_facts>\n${dataJson(facts.map((f) => ({ id: f.id, field: f.field, value: f.value, unit: f.unit })))}\n</approved_facts>`,
     }],
   });
   const { body, leftOut } = buildBattlecard({

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { observationTypes } from '../../../db/schema/research.ts';
-import type { AiPart } from '../../../ai/index.ts';
+import { dataBlock, dataJson, type AiPart } from '../../../ai/index.ts';
 
 export const MAX_OUTPUT_TOKENS = 4096;
 const MAX_PAGE_CHARS = 40_000; // shortcut: a longer page is cut for the model; the quote check still reads the whole text
@@ -45,7 +45,7 @@ export const ObservationAnswer = z.object({
 
 /** The user message for one page: its URL and text, and the changed blocks as data. */
 export function pageParts(url: string, text: string, blocks: { before: string; after: string }[] | null): AiPart[] {
-  const parts: AiPart[] = [{ type: 'text', text: `<page_url>${url}</page_url>\n<page_text>\n${text.slice(0, MAX_PAGE_CHARS)}\n</page_text>` }];
-  if (blocks) parts.push({ type: 'text', text: `<changed_blocks>\n${JSON.stringify(blocks)}\n</changed_blocks>` });
+  const parts: AiPart[] = [{ type: 'text', text: `<page_url>${url}</page_url>\n${dataBlock('page_text', text.slice(0, MAX_PAGE_CHARS))}` }];
+  if (blocks) parts.push({ type: 'text', text: `<changed_blocks>\n${dataJson(blocks)}\n</changed_blocks>` });
   return parts;
 }

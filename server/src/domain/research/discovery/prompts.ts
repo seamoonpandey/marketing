@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { AiPart } from '../../../ai/index.ts';
+import { dataBlock as block, dataJson, type AiPart } from '../../../ai/index.ts';
 import type { ApprovedFact } from '../../../contracts/common.ts';
 import type { SearchResult } from '../../../db/schema/research.ts';
 import { cleanCut } from '../../../text/normalise.ts';
@@ -55,12 +55,9 @@ export const GroupAnswer = z.object({
 export const RESULTS = 'results';
 export const PAGE = 'page';
 
-/** A block of untrusted data; its own closing tag is broken inside it, so the data cannot end the block early. */
-const block = (tag: string, text: string, attrs = '') => `<${tag}${attrs}>\n${text.replace(new RegExp(`</(${tag})`, 'gi'), '<\\/$1')}\n</${tag}>`;
-
-/** The approved facts as the model reads them, with their IDs for citations (as battlecard.ts); "</" as "<\/", so a fact cannot close the block. */
+/** The approved facts as the model reads them, with their IDs for citations (as battlecard.ts). */
 export const factsBlock = (facts: ApprovedFact[]) =>
-  `<approved_facts>\n${JSON.stringify(facts.map((f) => ({ id: f.id, field: f.field, value: f.value, unit: f.unit }))).replace(/<\//g, '<\\/')}\n</approved_facts>`;
+  `<approved_facts>\n${dataJson(facts.map((f) => ({ id: f.id, field: f.field, value: f.value, unit: f.unit })))}\n</approved_facts>`;
 
 export function keywordParts(country: string, facts: ApprovedFact[]): AiPart[] {
   return [{ type: 'text', text: `<brand_country>${country}</brand_country>\n${factsBlock(facts)}` }];
