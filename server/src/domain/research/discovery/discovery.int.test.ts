@@ -138,6 +138,16 @@ describe('discovery run', () => {
     expect((await withBrand(brand, (tx) => getDiscovery(tx, brand, runId))).state).toBe('awaiting_approval');
   });
 
+  it('accepts one of several simultaneous confirms and refuses the others', async () => {
+    const brand = await factBrand();
+    const { runId } = await createDiscovery(brand, ['momo nowhere']);
+    const settled = await Promise.allSettled([1, 2, 3].map(() => confirmDiscovery(brand, runId)));
+    expect(settled.map((s) => s.status).sort()).toEqual(['fulfilled', 'rejected', 'rejected']);
+    for (const s of settled) if (s.status === 'rejected') expect(s.reason).toBeInstanceOf(ConflictError);
+    expect(await t.adminQuery(`select 1 from audit_events where action = 'research.discovery.confirm' and object_id = $1`, [runId])).toHaveLength(1);
+    expect((await settle(brand, runId)).state).toBe('completed');
+  });
+
   it('answers 503 and creates no run when Serper has no key', async () => {
     const brand = await factBrand();
     config.SEARCH_PROVIDER = 'serper';
