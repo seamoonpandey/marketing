@@ -15,6 +15,13 @@ export type FieldDef = {
   options?: string[];
   /** What a typical value looks like: shown to the owner as a typing hint, never sent to the model. */
   example?: string;
+  /** The field asked as a plain question, with why Prachaar needs it: for owners who do not know the term. */
+  question?: string;
+  why?: string;
+  /** An answer that means "we have none", offered as one button (it still counts as answered). */
+  none?: { label: string; value: string | string[] };
+  /** What the model writes when the owner asks for a draft; only fields with this can be drafted. Never sent to the web. */
+  draft?: string;
   type: 'text' | 'longtext' | 'number' | 'money' | 'enum' | 'list' | 'url' | 'date';
 };
 
@@ -66,14 +73,23 @@ export const CATALOGUE: SectionDef[] = [
     key: 'products', label: 'Products and services', subject: 'product',
     fields: [
       f('sku', 'SKU or service ID', 'text', { example: 'ILG-250' }),
-      f('name', 'Name', 'text', { example: 'Ilam Green Tea 250 g' }),
+      f('name', 'Name', 'text', {
+        example: 'Ilam Green Tea 250 g', question: 'What do you sell? Name one product or service.',
+        why: 'Prachaar writes only about products you have named, never made-up ones.',
+      }),
       f('category', 'Category', 'text', { example: 'Loose-leaf tea' }),
-      f('description', 'Description', 'longtext', { example: 'Hand-rolled green tea from Ilam, packed in a 250 g resealable tin.' }),
+      f('description', 'Description', 'longtext', {
+        example: 'Hand-rolled green tea from Ilam, packed in a 250 g resealable tin.', question: 'Describe it in a sentence or two.',
+        why: 'Posts and ads describe the product only in the words you approve.',
+      }),
       f('features', 'Features', 'text', { ...many, example: 'Hand-rolled leaf' }),
       f('benefits', 'Benefits', 'text', { ...many, example: 'Smooth, light taste with no bitterness' }),
       f('eligibility', 'Eligibility', 'text', { example: 'Available to customers in Nepal' }),
       f('exclusions', 'Exclusions', 'text', { example: 'Not sold outside Nepal' }),
-      f('price', 'Price', 'money', { asksExpiry: true, example: 'NPR 1,200' }),
+      f('price', 'Price', 'money', {
+        asksExpiry: true, example: '1200', question: 'What does it cost?',
+        why: 'Prachaar never guesses a price; it quotes only the one you give.',
+      }),
       f('billing_unit', 'Billing unit', 'text', { example: 'Per tin' }),
       f('variants', 'Variants', 'list', { example: '100 g, 250 g, 500 g' }),
       f('availability', 'Availability', 'text', { example: 'In stock, ships in 1 to 2 days' }),
@@ -90,8 +106,14 @@ export const CATALOGUE: SectionDef[] = [
     fields: [
       f('geography', 'Geography', 'text', { example: 'Kathmandu Valley' }),
       f('language', 'Language', 'text', { example: 'Nepali' }),
-      f('problem', 'Problem', 'longtext', { example: 'Tea lovers in Kathmandu cannot find fresh, honest loose-leaf tea.' }),
-      f('desired_outcome', 'Desired outcome', 'longtext', { example: 'A good cup of tea at home, delivered fresh.' }),
+      f('problem', 'Problem', 'longtext', {
+        example: 'Tea lovers in Kathmandu cannot find fresh, honest loose-leaf tea.', question: 'What problem do these customers have that you solve?',
+        why: 'Good marketing starts from the customer\'s problem, not the product.',
+      }),
+      f('desired_outcome', 'Desired outcome', 'longtext', {
+        example: 'A good cup of tea at home, delivered fresh.', question: 'What do they want instead?',
+        why: 'Posts show customers the result they are hoping for.',
+      }),
       f('trigger', 'Trigger', 'text', { example: 'A gift for Dashain or Tihar' }),
       f('objections', 'Objections', 'text', { ...many, example: 'It costs more than supermarket tea' }),
       f('alternatives', 'Alternatives', 'list', { example: 'Supermarket tea bags, Darjeeling tea' }),
@@ -111,17 +133,34 @@ export const CATALOGUE: SectionDef[] = [
       f('vision', 'Vision', 'longtext', { example: 'Ilam tea on every table in Nepal.' }),
       f('promise', 'Promise', 'longtext', { example: 'Fresh tea from Ilam, rolled by hand, delivered to your door.' }),
       f('positioning', 'Positioning', 'longtext', { example: 'For tea lovers in Nepal, Ilam Leaf Co. is the hand-rolled tea that comes straight from the farm.' }),
-      f('value_proposition', 'Value proposition', 'longtext', { example: 'Fresher tea at a fair price, with the farm named on every tin.' }),
-      f('differentiators', 'Differentiators', 'text', { ...many, example: 'No middlemen between the farm and you' }),
+      f('value_proposition', 'Value proposition', 'longtext', {
+        example: 'Fresher tea at a fair price, with the farm named on every tin.', question: 'In one sentence, why should someone buy from you?',
+        why: 'This line shapes every headline Prachaar writes.',
+        draft: 'One sentence: what the customer gets from this brand and why it is worth choosing.',
+      }),
+      f('differentiators', 'Differentiators', 'text', {
+        ...many, example: 'No middlemen between the farm and you', question: 'What makes you different from others who sell the same thing?',
+        why: 'Prachaar leads with these so your posts stand out from competitors.',
+        draft: 'Up to three short statements, one per value, of what sets this brand apart from others selling the same thing.',
+      }),
       f('proof', 'Proof', 'text', { ...many, example: 'Selling tea since 2009' }),
       f('narrative', 'Narrative', 'longtext', { example: 'Ilam Leaf Co. began in 2009 with one family farm and now ships across Nepal.' }),
-      f('prohibited_claims', 'Prohibited claims', 'list', { example: 'Cures illness, the best tea in the world' }),
+      f('prohibited_claims', 'Prohibited claims', 'list', {
+        example: 'Cures illness', question: 'Is there anything Prachaar must never claim about you?',
+        why: 'Some claims are untrue or against the law, such as health cures or "the best in Nepal" without proof. Prachaar will never write them.',
+        none: { label: 'Nothing to rule out', value: [] },
+        draft: 'Up to six short claims this brand must never make: claims the material does not support, and claims that are risky for its category (health cures, guarantees, "best" or "number one" without proof).',
+      }),
     ],
   },
   {
     key: 'voice', label: 'Voice', subject: 'brand',
     fields: [
-      f('traits', 'Traits', 'list', { example: 'Warm, plain, proud of the farm' }),
+      f('traits', 'Traits', 'list', {
+        example: 'Warm', question: 'How should your brand sound? Pick three or four words.',
+        why: 'Every caption Prachaar writes uses this voice.',
+        draft: 'Three or four single words, one per value, for how this brand\'s writing should sound.',
+      }),
       f('channel_tone', 'Channel tone', 'longtext', { example: 'Friendly and short on Facebook, a little more detail on the website.' }),
       f('sentence_length', 'Sentence length', 'text', { example: 'Short, under 20 words' }),
       f('vocabulary', 'Vocabulary', 'list', { example: 'tea garden, hand-rolled, fresh leaf' }),
@@ -159,9 +198,17 @@ export const CATALOGUE: SectionDef[] = [
       f('licences', 'Licences', 'text', { ...many, asksExpiry: true, example: 'Food Technology and Quality Control licence' }),
       f('certifications', 'Certifications', 'text', { ...many, asksExpiry: true, example: 'Organic certificate from a recognised certifier' }),
       f('disclaimers', 'Disclaimers', 'longtext', { ...many, example: 'Tea is not a medicine and does not treat any illness.' }),
-      f('privacy_url', 'Privacy policy', 'url', { example: 'https://ilamleaf.com.np/privacy' }),
+      f('privacy_url', 'Privacy policy', 'url', {
+        example: 'https://ilamleaf.com.np/privacy', question: 'Where is your privacy policy or terms page?',
+        why: 'Facebook and Google lead forms need a link to one before they run.',
+      }),
       f('terms_url', 'Terms', 'url', { example: 'https://ilamleaf.com.np/terms' }),
-      f('refund', 'Refund terms', 'longtext', { example: 'Refund or replacement within 7 days if the tin is damaged.' }),
+      f('refund', 'Refund terms', 'longtext', {
+        example: 'Refund or replacement within 7 days if the tin is damaged.', question: 'What is your refund or return policy?',
+        why: 'Customers ask before they buy; Prachaar answers only with your real terms.',
+        none: { label: 'We do not give refunds', value: 'We do not give refunds.' },
+        draft: 'The brand\'s refund or return terms, restated plainly from the material. If the material states no refund or return terms, return no values.',
+      }),
       f('warranty', 'Warranty', 'longtext', { example: 'We replace any tin that arrives damaged or leaks.' }),
       f('claim_evidence', 'Claim evidence', 'longtext', { ...many, example: 'Organic certificate on file, issued for the 2025 harvest.' }),
       f('approval_owner', 'Approval owner', 'text', { example: 'Sunita Rai' }),
@@ -170,7 +217,10 @@ export const CATALOGUE: SectionDef[] = [
   {
     key: 'goals', label: 'Goals and economics', subject: 'brand',
     fields: [
-      f('primary_objective', 'Primary objective', 'text', { example: 'Grow online orders' }),
+      f('primary_objective', 'Primary objective', 'text', {
+        example: 'Grow online orders', question: 'What should marketing achieve first?',
+        why: 'Prachaar plans every week of posts toward this goal.',
+      }),
       f('secondary_objective', 'Secondary objective', 'text', { example: 'Build a list of repeat customers' }),
       f('baseline', 'Baseline', 'text', { example: '120 online orders a month' }),
       f('target', 'Target', 'text', { example: '200 online orders a month' }),
@@ -179,12 +229,18 @@ export const CATALOGUE: SectionDef[] = [
       f('monthly_budget', 'Monthly budget', 'money', { example: 'NPR 60,000' }),
       f('channel_budgets', 'Channel budgets', 'longtext', { example: 'Facebook NPR 30,000, Instagram NPR 20,000, Google NPR 10,000.' }),
       f('asset_budgets', 'Asset budgets', 'longtext', { example: 'Photos NPR 10,000, videos NPR 15,000 a month.' }),
-      f('max_ai_spend', 'Maximum AI spend', 'money', { example: 'NPR 5,000' }),
+      f('max_ai_spend', 'Maximum AI spend', 'money', {
+        example: '5000', question: 'How much may Prachaar spend on AI each month?',
+        why: 'Prachaar stops before it goes over this amount.',
+      }),
       f('cost_per_video_target', 'Cost per video target', 'money', { example: 'NPR 800' }),
       f('cpl_target', 'Cost per lead target', 'money', { example: 'NPR 150' }),
       f('margin_floor', 'Margin floor', 'text', { example: '30%' }),
       f('approval_thresholds', 'Approval thresholds', 'text', { example: 'Any spend over NPR 10,000 needs the owner' }),
-      f('approvers', 'Approvers', 'list', { example: 'Sunita Rai, Bikash Rai' }),
+      f('approvers', 'Approvers', 'list', {
+        example: 'Sunita Rai', question: 'Who approves posts before they go out?',
+        why: 'Nothing is published until one of these people says yes.',
+      }),
     ],
   },
 ];

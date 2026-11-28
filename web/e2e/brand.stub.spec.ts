@@ -32,7 +32,23 @@ const catalogue = [
       { key: 'features', label: 'Features', type: 'list', multi: true },
     ],
   },
-  { key: 'positioning', label: 'Positioning', subject: 'brand', fields: [{ key: 'value_proposition', label: 'Value proposition', type: 'longtext', multi: false }] },
+  {
+    key: 'positioning', label: 'Positioning', subject: 'brand',
+    fields: [
+      { key: 'value_proposition', label: 'Value proposition', type: 'longtext', multi: false },
+      {
+        key: 'differentiators', label: 'Differentiators', type: 'text', multi: true, example: 'No middlemen', draftable: true,
+        question: 'What makes you different from others who sell the same thing?', why: 'Prachaar leads with these so your posts stand out.',
+      },
+    ],
+  },
+  {
+    key: 'legal', label: 'Legal and trust', subject: 'brand',
+    fields: [{
+      key: 'refund', label: 'Refund terms', type: 'longtext', multi: false, example: 'Refund within 7 days if damaged.', draftable: true,
+      question: 'What is your refund or return policy?', why: 'Customers ask before they buy.', none: { label: 'We do not give refunds', value: 'We do not give refunds.' },
+    }],
+  },
   {
     key: 'goals', label: 'Goals and economics', subject: 'brand',
     fields: [
@@ -74,17 +90,21 @@ const brand = { id: B, name: 'Himal Pashmina', slug: 'himal-pashmina', website: 
 
 const counts = { pages: 6, pagesFailed: 0, files: 1, batches: 1, unverified: 5, inferred: 1, conflicts: 1, unchanged: 0, dropped: 0, colours: 3 };
 
-function readiness() {
+function readiness(st: State) {
   const c = (label: string, pass: boolean) => ({ label, pass, fixPath: `/app/b/${B}/brand/review?section=products` });
+  const has = (section: string, field: string) => st.facts.some((f) => f.section === section && f.field === field && f.status === 'approved');
+  const asked = (label: string, section: string, field: string) => ({
+    label, pass: has(section, field), fixPath: `/app/b/${B}/brand/review?section=${section}`, ask: { section, fields: [field], subjectId: null, subjectName: null },
+  });
   const later = (key: string, label: string, note: string) => ({ key, label, weight: 10, earned: 0, note, criteria: [] });
   return {
     score: 42, band: 'blocked',
     gates: [{ label: 'The price of Pashmina Shawl is in conflict', fixPath: `/app/b/${B}/brand/review?section=products` }],
     dimensions: [
       { key: 'product_truth', label: 'Product truth', weight: 15, earned: 5, criteria: [c('At least one product', true), c('Every product has an approved price', false)] },
-      { key: 'positioning_audience', label: 'Positioning and audience', weight: 15, earned: 15, criteria: [c('An approved value proposition', true)] },
+      { key: 'positioning_audience', label: 'Positioning and audience', weight: 15, earned: 15, criteria: [c('An approved value proposition', true), asked('Approved differentiators', 'positioning', 'differentiators')] },
       { key: 'voice_visual', label: 'Voice and visual', weight: 10, earned: 3, criteria: [c('A logo asset', true), c('Palette roles assigned', false)] },
-      { key: 'legal_trust_rights', label: 'Legal, trust and rights', weight: 15, earned: 5, criteria: [c('Approved refund terms', false)] },
+      { key: 'legal_trust_rights', label: 'Legal, trust and rights', weight: 15, earned: 5, criteria: [asked('Approved refund terms', 'legal', 'refund')] },
       { key: 'goals_budget_approval', label: 'Goals, budget and approval', weight: 10, earned: 4, criteria: [c('An approved primary objective', true)] },
       { key: 'competitor_baseline', label: 'Competitor baseline', weight: 5, earned: 0, criteria: [c('Three competitors, each with a site', false)] },
       later('channels', 'Channels', 'Set up with Publish'),
@@ -129,6 +149,7 @@ async function stubApi(page: Page, st: State) {
     };
 
     if (rel === '/knowledge/catalogue') return ok(catalogue);
+    if (rel === '/knowledge/drafts') return ok({ values: ['Exchange within 7 days if the shawl is unused.'], cost: money('0.0031', '0.42') });
     if (rel === '/knowledge/facts' && method === 'GET') {
       // Pages like the server: at most `limit` (500) facts, and a cursor (the offset) for the next page.
       const limit = Math.min(Number(url.searchParams.get('limit') ?? 100), 500);
@@ -181,7 +202,7 @@ async function stubApi(page: Page, st: State) {
       const approved = st.facts.filter((f) => f.status === 'approved');
       return ok({
         sections: catalogue.map((s) => ({ key: s.key, label: s.label, facts: approved.filter((f) => f.section === s.key) })),
-        palette: pal(st), competitors: st.competitors, readiness: readiness(),
+        palette: pal(st), competitors: st.competitors, readiness: readiness(st),
         assets: [{ id: 'logo-1', sourceId: 'lf', kind: 'logo', variant: 'full colour', rights: {}, licensed: true, source: { id: 'lf', kind: 'upload', uri: 'logo.png', meta: { filename: 'logo.png' }, downloadUrl: '/stub-storage/logo.png' }, createdAt: '2026-11-20T10:00:00Z' }],
       });
     }
@@ -487,6 +508,41 @@ test.describe('brand book', () => {
     await gate.getByRole('link', { name: 'Fix this' }).click();
     await expect(page).toHaveURL(/review\?section=products/);
   });
+});
+
+test('asks each missing readiness item in place: a draft to check and save, then what the website found, one after the other', async ({ page }) => {
+  const st = await open(page, '', (s) => {
+    s.facts.push(fact({
+      id: 'f-diff', section: 'positioning', subjectType: 'brand', subjectId: null, subjectName: null, field: 'differentiators', fieldLabel: 'Differentiators',
+      value: 'Woven by hand in Kathmandu', status: 'inferred', origin: 'inferred', confidence: 0.6, source: null, quote: null,
+    }));
+  });
+  await page.getByRole('button', { name: 'Answer the next question' }).click();
+  const answer = page.getByLabel('What makes you different from others who sell the same thing?');
+  await expect(answer).toBeVisible();
+  await expect(page.getByText('Prachaar leads with these so your posts stand out.')).toBeVisible();
+  await page.getByRole('button', { name: 'Close Approved differentiators' }).click();
+
+  await page.getByRole('button', { name: 'Answer Approved refund terms' }).click();
+  const refund = page.getByLabel('What is your refund or return policy?');
+  await expect(refund).toHaveAccessibleDescription(/Customers ask before they buy\..*Example: Refund within 7 days if damaged\./);
+  await expect(page.getByRole('button', { name: 'We do not give refunds' })).toBeVisible();
+  await page.getByRole('button', { name: 'Draft it for me' }).click();
+  await expect(refund).toHaveValue('Exchange within 7 days if the shawl is unused.');
+  await expect(page.getByText(/drafted this from your website and approved facts \(cost NPR 0\.42\)/)).toBeVisible();
+  expect(st.calls.find((c) => c.path === '/knowledge/drafts')?.body).toEqual({ section: 'legal', field: 'refund' });
+  await refund.fill('Exchange within 7 days if unused.');
+  await page.getByRole('button', { name: 'Save and approve' }).click();
+  await expect.poll(() => st.calls.find((c) => c.path === '/knowledge/facts')?.body).toEqual({ section: 'legal', subjectId: null, field: 'refund', value: 'Exchange within 7 days if unused.', language: 'en' });
+
+  // Refund terms now pass, so the next missing item opens by itself, with the differentiator the website gave.
+  await expect(refund).toHaveCount(0);
+  await expect(answer).toBeVisible();
+  await expect(page.getByText('Prachaar found this on your website')).toBeVisible();
+  await page.getByRole('button', { name: 'Use this' }).click();
+  await expect.poll(() => st.calls.some((c) => c.path === '/knowledge/facts/f-diff/approve')).toBe(true);
+  await expect(answer).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Answer / })).toHaveCount(0);
 });
 
 test('shows the error state when the API fails', async ({ page }) => {

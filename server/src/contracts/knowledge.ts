@@ -23,6 +23,13 @@ export const FieldDef = z
     asksExpiry: z.boolean().optional().openapi({ description: 'Ask the owner for an expiry date (prices, offers).' }),
     options: z.array(z.string()).optional().openapi({ description: 'The allowed values of an enum field.' }),
     example: z.string().optional().openapi({ description: 'What a typical value looks like, shown to the owner as a hint.' }),
+    question: z.string().optional().openapi({ description: 'The field asked as a plain question, for owners who do not know the term.' }),
+    why: z.string().optional().openapi({ description: 'Why Prachaar needs the answer, in one line.' }),
+    none: z
+      .object({ label: z.string(), value: z.union([z.string(), z.array(z.string())]) })
+      .optional()
+      .openapi({ description: 'An answer meaning "we have none": a button with this label saves this value as the owner\'s.' }),
+    draftable: z.boolean().optional().openapi({ description: 'POST knowledge/drafts can write a first draft of this field.' }),
   })
   .openapi('FieldDef');
 
@@ -281,6 +288,15 @@ export const ImportCreate = z
 
 const FixLink = z.string().openapi({ description: 'App path that fixes it, e.g. /app/b/{brandId}/brand/review?section=products' });
 
+export const ReadinessAsk = z
+  .object({
+    section: SectionKey,
+    fields: z.array(z.string()).min(1).openapi({ description: 'The fields still missing, in the order to ask them.' }),
+    subjectId: z.string().nullable().openapi({ description: 'The product or segment to complete; null for the brand, or to create a new one.' }),
+    subjectName: z.string().nullable(),
+  })
+  .openapi('ReadinessAsk', { description: 'What to ask the owner so this criterion passes, answered in place.' });
+
 export const Readiness = z
   .object({
     score: z.number().int().openapi({ description: '0 to 100. Not rescaled: 70 is the most this sprint can reach.' }),
@@ -293,11 +309,24 @@ export const Readiness = z
         weight: z.number().int(),
         earned: z.number(),
         note: z.string().optional().openapi({ example: 'Set up with Publish' }),
-        criteria: z.array(z.object({ label: z.string(), pass: z.boolean(), fixPath: FixLink })),
+        criteria: z.array(z.object({ label: z.string(), pass: z.boolean(), fixPath: FixLink, ask: orNull(ReadinessAsk) })),
       }),
     ),
   })
   .openapi('Readiness');
+
+export const DraftCreate = z
+  .object({ section: SectionKey, field: z.string().min(1).max(100) })
+  .openapi('DraftCreate');
+
+export const Draft = z
+  .object({
+    values: z.array(z.string()).openapi({
+      description: 'One item for a single text field; one per value or list item otherwise. Empty when the material holds nothing to draft from.',
+    }),
+    cost: Money,
+  })
+  .openapi('Draft', { description: 'A suggestion only: nothing is saved until the owner adds it as a fact.' });
 
 export const BrandBook = z
   .object({

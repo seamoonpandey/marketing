@@ -8,7 +8,12 @@ import { listCompetitors } from '../brands/index.ts';
 import { fieldDef } from './catalogue.ts';
 import { approvedFacts } from './facts/index.ts';
 
-type Criterion = { label: string; pass: boolean; fixPath: string };
+type Ask = ReadinessOut['dimensions'][number]['criteria'][number]['ask'];
+type Criterion = { label: string; pass: boolean; fixPath: string; ask: Ask };
+
+/** Ask the owner for these brand fields, in place. */
+const ask = (section: NonNullable<Ask>['section'], ...fields: string[]): Ask =>
+  ({ section, fields, subjectId: null, subjectName: null });
 
 /** Sections whose conflicts are a gate: prices and product, legal and trust claims (§5.1). */
 const GATED_SECTIONS = ['products', 'legal'];
@@ -36,7 +41,7 @@ export async function readiness(tx: Tx, brandId: string): Promise<ReadinessOut> 
     .from(facts)
     .leftJoin(subjects, eq(subjects.id, facts.subjectId))
     .where(and(eq(facts.brandId, brandId), eq(facts.isCurrent, true), ne(facts.status, 'rejected')));
-  const subjectRows = await tx.select({ id: subjects.id, type: subjects.type }).from(subjects).where(eq(subjects.brandId, brandId));
+  const subjectRows = await tx.select({ id: subjects.id, type: subjects.type, name: subjects.name }).from(subjects).where(eq(subjects.brandId, brandId));
   const assetRows = await tx
     .select({ kind: assets.kind, rights: assets.rights, variant: assets.variant, meta: sources.meta })
     .from(assets)
@@ -59,6 +64,15 @@ export async function readiness(tx: Tx, brandId: string): Promise<ReadinessOut> 
   const segments = subjectRows.filter((s) => s.type === 'segment');
   const conflicts = live.filter((f) => f.status === 'conflicting');
   const licensed = (r: (typeof assetRows)[number]) => typeof r.rights.licence === 'string' && r.rights.licence.trim() !== '';
+  /** The first subject missing any of these fields, asked for what it lacks; a new subject when there is none. */
+  const completeOne = (section: 'products' | 'audience', list: typeof subjectRows, fields: string[]): Ask => {
+    for (const s of list) {
+      const missing = fields.filter((f) => !has(section, f, s.id));
+      if (missing.length) return { section, fields: missing, subjectId: s.id, subjectName: s.name };
+    }
+    return ask(section, ...fields);
+  };
+  const productFields = ['name', 'description', 'price'];
 
   const dimension = (key: string, label: string, weight: number, criteria: Criterion[], note?: string) => ({
     key, label, weight, criteria, ...(note ? { note } : {}),
@@ -68,16 +82,18 @@ export async function readiness(tx: Tx, brandId: string): Promise<ReadinessOut> 
 
   const dimensions = [
     dimension('product_truth', 'Product truth', 15, [
-      { label: 'At least one product', pass: products.length > 0, fixPath: review('products') },
+      { label: 'At least one product', pass: products.length > 0, fixPath: review('products'), ask: ask('products', ...productFields) },
       {
         label: 'Every product has an approved name, description and price',
-        pass: products.length > 0 && products.every((p) => ['name', 'description', 'price'].every((f) => has('products', f, p.id))),
+        pass: products.length > 0 && products.every((p) => productFields.every((f) => has('products', f, p.id))),
         fixPath: review('products'),
+        ask: completeOne('products', products, productFields),
       },
       {
         label: 'No conflicting product fact',
         pass: products.length > 0 && !conflicts.some((f) => f.section === 'products'),
         fixPath: at('review?section=products&status=conflicting'),
+        ask: null,
       },
     ]),
     dimension('positioning_audience', 'Positioning and audience', 15, [
@@ -85,32 +101,37 @@ export async function readiness(tx: Tx, brandId: string): Promise<ReadinessOut> 
         label: 'A segment with an approved problem and desired outcome',
         pass: segments.some((s) => has('audience', 'problem', s.id) && has('audience', 'desired_outcome', s.id)),
         fixPath: review('audience'),
+        ask: completeOne('audience', segments, ['problem', 'desired_outcome']),
       },
-      { label: 'An approved value proposition', pass: has('positioning', 'value_proposition'), fixPath: review('positioning') },
-      { label: 'Approved differentiators', pass: has('positioning', 'differentiators'), fixPath: review('positioning') },
+      { label: 'An approved value proposition', pass: has('positioning', 'value_proposition'), fixPath: review('positioning'), ask: ask('positioning', 'value_proposition') },
+      { label: 'Approved differentiators', pass: has('positioning', 'differentiators'), fixPath: review('positioning'), ask: ask('positioning', 'differentiators') },
     ]),
     dimension('voice_visual', 'Voice and visual', 10, [
-      { label: 'Approved voice traits', pass: filledList('voice', 'traits'), fixPath: review('voice') },
-      { label: 'A logo', pass: assetRows.some((a) => a.kind === 'logo'), fixPath: at('sources') },
+      { label: 'Approved voice traits', pass: filledList('voice', 'traits'), fixPath: review('voice'), ask: ask('voice', 'traits') },
+      { label: 'A logo', pass: assetRows.some((a) => a.kind === 'logo'), fixPath: at('visual'), ask: null },
       {
         label: 'Palette roles primary, text and background assigned',
         pass: ['primary', 'text', 'background'].every((r) => roles.has(r)),
         fixPath: at('visual'),
+        ask: null,
       },
     ]),
     dimension('legal_trust_rights', 'Legal, trust and rights', 15, [
-      { label: 'Approved refund terms', pass: has('legal', 'refund'), fixPath: review('legal') },
-      { label: 'An approved privacy policy or terms link', pass: has('legal', 'privacy_url') || has('legal', 'terms_url'), fixPath: review('legal') },
-      { label: 'Every asset has a licence', pass: assetRows.length > 0 && assetRows.every(licensed), fixPath: at('sources') },
-      { label: 'Prohibited claims answered', pass: has('positioning', 'prohibited_claims'), fixPath: review('positioning') },
+      { label: 'Approved refund terms', pass: has('legal', 'refund'), fixPath: review('legal'), ask: ask('legal', 'refund') },
+      {
+        label: 'An approved privacy policy or terms link', pass: has('legal', 'privacy_url') || has('legal', 'terms_url'), fixPath: review('legal'),
+        ask: ask('legal', 'privacy_url'),
+      },
+      { label: 'Every asset has a licence', pass: assetRows.length > 0 && assetRows.every(licensed), fixPath: at('sources'), ask: null },
+      { label: 'Prohibited claims answered', pass: has('positioning', 'prohibited_claims'), fixPath: review('positioning'), ask: ask('positioning', 'prohibited_claims') },
     ]),
     dimension('goals_budget_approval', 'Goals, budget and approval', 10, [
-      { label: 'An approved primary objective', pass: has('goals', 'primary_objective'), fixPath: review('goals') },
-      { label: 'An approved maximum AI spend', pass: has('goals', 'max_ai_spend'), fixPath: review('goals') },
-      { label: 'At least one approver', pass: filledList('goals', 'approvers'), fixPath: review('goals') },
+      { label: 'An approved primary objective', pass: has('goals', 'primary_objective'), fixPath: review('goals'), ask: ask('goals', 'primary_objective') },
+      { label: 'An approved maximum AI spend', pass: has('goals', 'max_ai_spend'), fixPath: review('goals'), ask: ask('goals', 'max_ai_spend') },
+      { label: 'At least one approver', pass: filledList('goals', 'approvers'), fixPath: review('goals'), ask: ask('goals', 'approvers') },
     ]),
     dimension('competitor_baseline', 'Competitor baseline', 5, [
-      { label: 'Three competitors, each with a site', pass: competitors.filter((c) => c.site).length >= 3, fixPath: review('competitors') },
+      { label: 'Three competitors, each with a site', pass: competitors.filter((c) => c.site).length >= 3, fixPath: review('competitors'), ask: null },
     ]),
     later('channels', 'Channels', 'Publish'),
     later('website_analytics', 'Website, SEO and analytics', 'Results'),

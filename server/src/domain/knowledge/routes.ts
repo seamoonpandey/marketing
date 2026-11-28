@@ -1,6 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import {
-  ApproveBatch, Asset, AssetCreate, AssetUpdate, BrandBook, ConflictResolve, Fact, FactCreate, FactList, FactPatch,
+  ApproveBatch, Asset, AssetCreate, AssetUpdate, BrandBook, ConflictResolve, Draft, DraftCreate, Fact, FactCreate, FactList, FactPatch,
   FactQuery, FactReject, ImportCreate, ImportRun, Palette, PaletteUpdate, Readiness, SectionDef, Subject, SubjectCreate,
   SubjectQuery,
 } from '../../contracts/knowledge.ts';
@@ -11,6 +11,7 @@ import { cancelImport, confirmImport, getImport, listImports, retryImport, start
 import { createAsset, listAssets, updateAsset } from './assets.ts';
 import { brandBook } from './book.ts';
 import { CATALOGUE } from './catalogue.ts';
+import { draftField } from './drafts.ts';
 import {
   approveBatch, approveFact, editFact, enterFact, factHistory, findOrCreateSubject, listFacts, listSubjects, rejectFact,
   resolveConflict,
@@ -19,6 +20,8 @@ import { getPalette, setPalette } from './palette/index.ts';
 import { readiness } from './readiness.ts';
 
 const P = '/brands/{brandId}/knowledge';
+// The model's draft instruction stays on the server; the web only learns that a field can be drafted.
+const SHOWN = CATALOGUE.map((s) => ({ ...s, fields: s.fields.map(({ draft, ...f }) => (draft ? { ...f, draftable: true } : f)) }));
 const RunParams = BrandParams.extend({ runId: z.string().openapi({ param: { name: 'runId', in: 'path' } }) });
 
 const body = <T extends z.ZodType>(schema: T, required = true) => ({
@@ -34,7 +37,19 @@ export const routes = createRouter()
     }),
     async (c) => {
       const { brandId } = c.req.valid('param');
-      return c.json(await withBrand(brandId, async () => CATALOGUE), 200);
+      return c.json(await withBrand(brandId, async () => SHOWN), 200);
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post', path: `${P}/drafts`, tags: ['knowledge'], request: { params: BrandParams, ...body(DraftCreate) },
+      description: 'A first draft of a field the catalogue marks draftable, from approved facts and the website text. One model call; nothing is saved.',
+      responses: { 200: json(Draft), 400: errorResponse, 402: errorResponse, 404: errorResponse, 502: errorResponse },
+    }),
+    async (c) => {
+      const { brandId } = c.req.valid('param');
+      const { section, field } = c.req.valid('json');
+      return c.json(await draftField(brandId, section, field), 200);
     },
   )
   // Imports

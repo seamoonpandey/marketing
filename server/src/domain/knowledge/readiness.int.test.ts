@@ -65,6 +65,32 @@ describe('readiness', () => {
     expect(r.dimensions.map((d) => d.weight).reduce((a, b) => a + b)).toBe(100);
   });
 
+  it('says what to ask for each missing criterion: a new product first, then only what that product lacks', async () => {
+    const brand = await t.makeBrand();
+    const asks = async () => Object.fromEntries((await score(brand)).dimensions.flatMap((d) => d.criteria).map((c) => [c.label, c.ask]));
+    let a = await asks();
+    expect(a['At least one product']).toEqual({ section: 'products', fields: ['name', 'description', 'price'], subjectId: null, subjectName: null });
+    expect(a['A segment with an approved problem and desired outcome']).toEqual({
+      section: 'audience', fields: ['problem', 'desired_outcome'], subjectId: null, subjectName: null,
+    });
+    expect(a['An approved privacy policy or terms link']).toMatchObject({ section: 'legal', fields: ['privacy_url'] });
+    expect([a['A logo'], a['No conflicting product fact'], a['Three competitors, each with a site']]).toEqual([null, null, null]);
+
+    const tea = await withBrand(brand, async (tx) => {
+      const p = await findOrCreateSubject(tx, brand, 'product', 'Ilam Green Tea');
+      await enterFact(tx, brand, { section: 'products', subjectId: p.id, field: 'name', value: 'Ilam Green Tea', language: 'en' });
+      await enterFact(tx, brand, { section: 'positioning', field: 'prohibited_claims', value: [], language: 'en' }); // "nothing to rule out"
+      return p;
+    });
+    a = await asks();
+    expect(a['Every product has an approved name, description and price']).toEqual({
+      section: 'products', fields: ['description', 'price'], subjectId: tea.id, subjectName: 'Ilam Green Tea',
+    });
+    const criteria = (await score(brand)).dimensions.flatMap((d) => d.criteria);
+    expect(criteria.find((c) => c.label === 'Prohibited claims answered')!.pass).toBe(true);
+    expect(criteria.find((c) => c.label === 'A logo')!.fixPath).toBe(`/app/b/${brand}/brand/visual`);
+  });
+
   it('scores nothing for product facts the owner has not approved', async () => {
     const brand = await t.makeBrand();
     await withBrand(brand, (tx) =>

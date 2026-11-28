@@ -257,7 +257,7 @@ describe('each kind appears from seeded data and goes when it is dealt with', ()
     const h = await by();
     expect(h.facts_conflicts).toMatchObject({ module: 'brand', urgency: 'soon', count: 2 });
     expect(h.readiness_gates).toMatchObject({ urgency: 'later' });
-    expect(h.readiness_missing).toMatchObject({ urgency: 'later' });
+    expect(h.readiness_missing).toMatchObject({ urgency: 'later', href: `/app/b/${b}/brand` }); // answered in place on the brand book
     const keep = (await withBrand(b, (tx) => listFacts(tx, b, { status: 'conflicting' }))).items.find((f) => f.value === 4500)!;
     await withBrand(b, (tx) => resolveConflict(tx, b, { keepFactId: keep.id }));
     const after = await by();

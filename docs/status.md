@@ -10,7 +10,7 @@ Everything runs against the mock model. The API and the screens exist for each m
 |---|---|---|---|---|
 | Brands, sources, costs, audit (base) | `brands`, `sources`, `costs`, `audit` | 5 / 4 | brand list, new brand | `base.spec.ts` |
 | Search gateway (base) | `server/src/search/` (Serper, and a mock for tests) | 1 / 1 | none | none |
-| Brand | `knowledge` | 2 / 5 | `brand/` (facts, review, sources, visual identity) | `brand.spec.ts`, `brand.stub.spec.ts` |
+| Brand | `knowledge` | 4 / 6 | `brand/` (facts, review, sources, visual identity, brand book with readiness answered in place and drafts of the hard fields) | `brand.spec.ts`, `brand.stub.spec.ts` |
 | Research | `research` (with `discovery/`) | 8 / 7 | `research/` (competitors, find competitors, opportunities, battlecards) | `research.spec.ts`, `research.stub.spec.ts`, `discover.stub.spec.ts` |
 | Plan | `plan` | 2 / 5 | `plan/` (calendar, campaigns, settings) | `plan.spec.ts`, `plan.stub.spec.ts` |
 | Studio | `studio`, `render/` | 2 / 4, plus 1 render test | `studio/` (dashboard, draft editor) | `studio.spec.ts`, `studio.stub.spec.ts` |

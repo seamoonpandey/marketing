@@ -15,14 +15,14 @@ export function toInput(v: FactValue | undefined): string {
 }
 
 /** The control that fits a catalogue field type, with its visible label. */
-export function ValueInput({ id, field, label, value, onChange }: { id: string; field: FieldDef | undefined; label: string; value: string; onChange: (v: string) => void }) {
+export function ValueInput({ id, field, label, value, onChange, why }: { id: string; field: FieldDef | undefined; label: string; value: string; onChange: (v: string) => void; why?: string }) {
   const t = field?.type ?? 'text';
   const example = t === 'enum' || t === 'date' ? undefined : field?.example;
-  const describedBy = [t === 'list' || t === 'longtext' ? `${id}-hint` : null, example ? `${id}-example` : null].filter(Boolean).join(' ') || undefined;
+  const describedBy = [why ? `${id}-why` : null, t === 'list' || t === 'longtext' ? `${id}-hint` : null, example ? `${id}-example` : null].filter(Boolean).join(' ') || undefined;
   let control;
   if (t === 'enum') {
     control = (
-      <select id={id} className="input" value={value} onChange={(e) => onChange(e.target.value)}>
+      <select id={id} className="input" value={value} aria-describedby={describedBy} onChange={(e) => onChange(e.target.value)}>
         <option value="">Choose…</option>
         {field?.options?.map((o) => <option key={o} value={o}>{o.replaceAll('_', ' ')}</option>)}
       </select>
@@ -40,6 +40,7 @@ export function ValueInput({ id, field, label, value, onChange }: { id: string; 
   return (
     <div className="field">
       <label htmlFor={id} className="label">{label}</label>
+      {why ? <p id={`${id}-why`} className="hint">{why}</p> : null}
       {control}
       {t === 'list' ? <p id={`${id}-hint`} className="hint">One item per line. Ctrl+Enter saves.</p> : t === 'longtext' ? <p id={`${id}-hint`} className="hint">Ctrl+Enter saves.</p> : null}
       {example ? <p id={`${id}-example`} className="hint">Example: {example}</p> : null}
