@@ -1,6 +1,7 @@
 // Test controls for the e2e API process: a fixture-page server with an AI queue, and the one fetch-guard exception.
 import http from 'node:http';
 import { mockAi } from '../src/ai/mock.ts';
+import { mockSearch } from '../src/search/mock.ts';
 import { fetchGuard } from '../src/domain/sources/fetch.ts';
 
 /** Lets the fetcher reach 127.0.0.1 (every other address stays blocked) and drops the per-host delay. */
@@ -39,6 +40,12 @@ export function startControlServer(port: number): Promise<http.Server> {
         else if (req.method === 'DELETE') mockAi.reset();
         else if (req.method !== 'GET') return send(405, { error: 'method' });
         return send(200, { calls: mockAi.calls.length });
+      }
+      if (path === '/__e2e/search') {
+        if (req.method === 'PUT') mockSearch.set(body.kind, body.query, body.hits);
+        else if (req.method === 'DELETE') mockSearch.reset();
+        else return send(405, { error: 'method' });
+        return send(200, { calls: mockSearch.calls.length });
       }
       if (req.method === 'GET' && pages.has(path)) return send(200, pages.get(path)!, 'text/html; charset=utf-8');
       if (req.method === 'GET' && path === '/robots.txt') return send(200, ALLOW_ALL, 'text/plain');

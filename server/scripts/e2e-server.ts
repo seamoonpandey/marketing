@@ -22,6 +22,7 @@ if (reset.status !== 0) process.exit(reset.status ?? 1);
 Object.assign(process.env, {
   PORT: port,
   AI_MODEL: 'mock',
+  SEARCH_PROVIDER: 'mock',
   DATABASE_ADMIN_URL: inDb(admin),
   DATABASE_URL: inDb(app),
   DBOS_SYSTEM_DATABASE_URL: inDb(admin),

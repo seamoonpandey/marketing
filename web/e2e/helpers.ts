@@ -14,3 +14,5 @@ export const clearPages = async (): Promise<void> => void (await call('DELETE', 
 export const queueAi = async (...objects: unknown[]): Promise<void> => void (await call('POST', '/__e2e/ai', { objects }));
 export const resetAi = async (): Promise<void> => void (await call('DELETE', '/__e2e/ai'));
 export const aiCalls = async (): Promise<number> => (await call('GET', '/__e2e/ai')).calls;
+export const setSearch = async (kind: 'web' | 'places', query: string, hits: unknown[]): Promise<void> => void (await call('PUT', '/__e2e/search', { kind, query, hits }));
+export const resetSearch = async (): Promise<void> => void (await call('DELETE', '/__e2e/search'));
