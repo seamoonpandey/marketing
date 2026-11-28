@@ -225,7 +225,7 @@ describe('each kind appears from seeded data and goes when it is dealt with', ()
     const [o] = await t.adminQuery(
       `insert into observations (tenant_id, brand_id, competitor_id, run_id, type, summary, after, url, confidence)
        values ($1, $2, $3, $4, 'price_change', 'Price dropped', '{"quote":"Rs 4,500","sourceId":"x"}', 'https://r.example/', 'high') returning id`, [t.tenantId, b, comp.id, run]);
-    mockAi.queue({ opportunities: [{ title: 'Answer the price cut', hypothesis: 'h', suggestedAction: 'a', whyItMatters: 'w', observationIds: [o.id], confidence: 'medium' }] });
+    mockAi.queue({ opportunities: [{ kind: 'change', title: 'Answer the price cut', hypothesis: 'h', suggestedAction: 'a', whyItMatters: 'w', evidence: ['e1'], impact: 'medium', effort: 'medium', confidence: 'medium' }] });
     const [opp] = await generateOpportunities(b, run, []);
     const by = async () => Object.fromEntries((await home(b)).items.map((i) => [i.kind, i]));
     expect(await by()).toMatchObject({ observations_new: { module: 'research', urgency: 'later' }, opportunities_new: { urgency: 'later', href: `/app/b/${b}/research/opportunities` } });
@@ -233,6 +233,15 @@ describe('each kind appears from seeded data and goes when it is dealt with', ()
     await t.adminQuery(`update observations set observed_at = now() - interval '8 days' where id = $1`, [o.id]);
     expect(Object.keys(await by())).not.toEqual(expect.arrayContaining(['observations_new']));
     expect(Object.keys(await by())).not.toEqual(expect.arrayContaining(['opportunities_new']));
+  });
+
+  it('Home points a brand with facts and channels but no competitor to Find competitors', async () => {
+    use();
+    const { b } = await readyBrand();
+    expect(await item(b, 'setup_competitor')).toMatchObject({
+      module: 'research', urgency: 'later', title: 'Find your competitors',
+      detail: 'Prachaar can search for them; you pick the ones to watch.', href: `/app/b/${b}/research/discover`,
+    });
   });
 
   it('brand: conflicting facts, a readiness gate and missing criteria, until the conflict is resolved', async () => {

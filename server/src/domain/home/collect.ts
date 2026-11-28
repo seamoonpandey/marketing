@@ -141,7 +141,7 @@ export async function research(tx: Tx, c: Ctx): Promise<Collected> {
   const hasFacts = (await approvedFacts(tx, c.brandId)).length > 0;
   const competitors = await listCompetitors(tx, c.brandId);
   if (hasFacts && channels && !competitors.length)
-    items.push(make('setup_competitor', 'research', 'later', 'Add a competitor to watch', 'Research needs at least one competitor before it can watch for changes.', app(c, '/research')));
+    items.push(make('setup_competitor', 'research', 'later', 'Find your competitors', 'Prachaar can search for them; you pick the ones to watch.', app(c, '/research/discover')));
   return { items, status: opps.length ? `${plural(opps.length, 'opportunity', 'opportunities')} to decide` : competitors.length ? `${plural(competitors.length, 'competitor', 'competitors')} watched` : 'No competitor yet' };
 }
 
