@@ -106,18 +106,20 @@ async function getCandidate(tx: Tx, brandId: string, id: string): Promise<Candid
 
 /** Moves a candidate between new and dismissed; its cells and dates stay. */
 async function move(tx: Tx, brandId: string, id: string, to: 'new' | 'dismissed'): Promise<Candidate> {
-  const c = await getCandidate(tx, brandId, id);
-  if (c.status !== (to === 'new' ? 'dismissed' : 'new'))
-    throw new ConflictError(to === 'new' ? 'This candidate is not hidden' : 'Already watched or hidden');
+  const from = to === 'new' ? 'dismissed' : 'new';
+  const refused = new ConflictError(to === 'new' ? 'This candidate is not hidden' : 'Already watched or hidden');
+  if ((await getCandidate(tx, brandId, id)).status !== from) throw refused;
+  // Only from the status just read, so a watch request that commits in between is not overwritten.
   const [row] = await tx
     .update(discoveryCandidates).set({ status: to, dismissedAt: to === 'dismissed' ? new Date() : null })
-    .where(eq(discoveryCandidates.id, id))
+    .where(and(eq(discoveryCandidates.id, id), eq(discoveryCandidates.status, from)))
     .returning();
+  if (!row) throw refused;
   await audit(tx, {
     brandId, actor: 'operator', action: `research.candidate.${to === 'new' ? 'restore' : 'dismiss'}`, objectType: 'discovery_candidate',
     objectId: id, result: 'ok',
   });
-  return row!;
+  return row;
 }
 
 /** "Not a competitor": hides a new candidate. */

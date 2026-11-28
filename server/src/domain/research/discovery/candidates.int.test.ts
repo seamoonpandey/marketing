@@ -170,4 +170,17 @@ describe('candidates', () => {
     expect((await withBrand(brand, (tx) => listCandidates(tx, brand))).map((c) => c.id)).toEqual([id]);
     await expect(withBrand(brand, (tx) => restoreCandidate(tx, brand, id))).rejects.toThrow(ConflictError);
   });
+
+  it('refuses to hide a candidate that a watch request took while the hide was waiting for it', async () => {
+    const brand = await t.makeBrand();
+    const id = await candidate(brand, { name: 'Momo Cart' });
+    // Another request has marked it watched and not committed yet: the hide still reads it as new, then waits for the row.
+    await t.adminQuery('begin');
+    await t.adminQuery(`update discovery_candidates set status = 'watched' where id = $1`, [id]);
+    const hide = withBrand(brand, (tx) => dismissCandidate(tx, brand, id)).then(() => 'hidden', (e) => e);
+    await new Promise((r) => setTimeout(r, 300));
+    await t.adminQuery('commit');
+    expect(await hide).toBeInstanceOf(ConflictError);
+    expect(await status(id)).toBe('watched');
+  });
 });
