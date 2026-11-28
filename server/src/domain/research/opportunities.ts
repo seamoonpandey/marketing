@@ -145,14 +145,19 @@ export async function scanOpportunities(brandId: string): Promise<{ created: Opp
   );
 }
 
-/** Best first (impact, confidence, effort), newest first within a rank. A row from before evidence gets it from its observations. */
+/** A row from before evidence was stored gets it from its observations. */
+async function withEvidence(tx: Tx, brandId: string, rows: Opportunity[]): Promise<Opportunity[]> {
+  const old = await observationEvidence(tx, brandId, rows.filter((r) => !r.evidence.length).flatMap((r) => r.observationIds));
+  return rows.map((r) => (r.evidence.length ? r : { ...r, evidence: r.observationIds.flatMap((id) => old.get(id) ?? []) }));
+}
+
+/** Best first (impact, confidence, effort), newest first within a rank. */
 export async function listOpportunities(tx: Tx, brandId: string, status?: string): Promise<Opportunity[]> {
   const rows = await tx
     .select().from(opportunities)
     .where(and(eq(opportunities.brandId, brandId), status ? eq(opportunities.status, status as Opportunity['status']) : undefined))
     .orderBy(desc(opportunities.createdAt));
-  const old = await observationEvidence(tx, brandId, rows.filter((r) => !r.evidence.length).flatMap((r) => r.observationIds));
-  return rows.sort(byRank).map((r) => (r.evidence.length ? r : { ...r, evidence: r.observationIds.flatMap((id) => old.get(id) ?? []) }));
+  return withEvidence(tx, brandId, rows.sort(byRank));
 }
 
 export async function decideOpportunity(tx: Tx, brandId: string, id: string, decision: 'accepted' | 'dismissed'): Promise<Opportunity> {
@@ -163,7 +168,7 @@ export async function decideOpportunity(tx: Tx, brandId: string, id: string, dec
     : [];
   if (!row) throw new NotFoundError('opportunity', id);
   await audit(tx, { brandId, actor: 'operator', action: `research.opportunity.${decision}`, objectType: 'opportunity', objectId: id, result: 'ok' });
-  return row;
+  return (await withEvidence(tx, brandId, [row]))[0]!;
 }
 
 /** A dismissed opportunity back to new; 409 unless it is dismissed. */
@@ -177,5 +182,5 @@ export async function restoreOpportunity(tx: Tx, brandId: string, id: string): P
     throw new ConflictError(`The opportunity is ${found.status}; only a dismissed one can be restored`);
   }
   await audit(tx, { brandId, actor: 'operator', action: 'research.opportunity.restore', objectType: 'opportunity', objectId: id, result: 'ok' });
-  return row;
+  return (await withEvidence(tx, brandId, [row]))[0]!;
 }

@@ -256,7 +256,11 @@ describe('the backlog', () => {
     const obs = await withObservation(brand);
     await withOpportunity(brand, 'new', 'Old row', [obs]);
     const [row] = await withBrand(brand, (tx) => listOpportunities(tx, brand));
-    expect(row!.evidence).toEqual([{ type: 'observation', id: obs, label: 'Removed competitor', detail: 'Price dropped', quote: 'Rs 4,500 for a classic shawl', sourceId: 'x' }]);
+    const evidence = [{ type: 'observation', id: obs, label: 'Removed competitor', detail: 'Price dropped', quote: 'Rs 4,500 for a classic shawl', sourceId: 'x' }];
+    expect(row!.evidence).toEqual(evidence);
+    // The answer to a decision is the same row the list shows.
+    expect((await withBrand(brand, (tx) => decideOpportunity(tx, brand, row!.id, 'dismissed'))).evidence).toEqual(evidence);
+    expect((await withBrand(brand, (tx) => restoreOpportunity(tx, brand, row!.id))).evidence).toEqual(evidence);
   });
 
   it('lists by rank: impact, then confidence, then effort', async () => {
