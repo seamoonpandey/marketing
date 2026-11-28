@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { discoveryCandidates } from '../../../db/schema/research.ts';
 import { isUuid, withBrand, type Tx } from '../../../db/tenant.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../../http/errors.ts';
@@ -68,6 +68,8 @@ export async function watchCandidates(brandId: string, ids: string[]): Promise<{
   const unreadable = [...pages].filter(([, urls]) => !urls.length).map(([id]) => id);
 
   const watched = await withBrand(brandId, async (tx) => {
+    // addTarget's lock, taken before counting, so simultaneous requests cannot each count the same free slot.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`watch-targets:${brandId}`}, 0))`);
     const free = MAX_COMPETITORS - new Set((await listTargets(tx, brandId)).map((t) => t.competitorId)).size;
     if (picked.filter((c) => pages.get(c.id)?.length).length > free)
       throw new ValidationError(`You can watch ${Math.max(free, 0)} more competitors with a website; untick some`);
@@ -81,8 +83,7 @@ export async function watchCandidates(brandId: string, ids: string[]): Promise<{
         .where(and(eq(discoveryCandidates.id, c.id), eq(discoveryCandidates.status, 'new')))
         .returning();
       if (!row) throw new ConflictError('Already watched or hidden'); // changed while its site was read
-      // shortcut: a page addTarget refuses (the brand's own site, already watched, or a slot a simultaneous request took) is
-      // skipped, so a competitor can end up with fewer pages; lock the targets before counting if that ever shows up.
+      // A page addTarget refuses (on the brand's own site, or already watched for another competitor) is skipped.
       for (const url of pages.get(c.id) ?? [])
         await addTarget(tx, brandId, { competitorId: competitor.id, url }).catch((e) => {
           if (!(e instanceof ValidationError || e instanceof ConflictError)) throw e;

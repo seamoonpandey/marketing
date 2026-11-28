@@ -94,6 +94,21 @@ describe('candidates', () => {
     expect([await status(a), await status(b)]).toEqual(['new', 'new']);
   });
 
+  it('gives the last free watch slot to one of several simultaneous requests and refuses the others', async () => {
+    const brand = await watching(9);
+    const hosts = ['twin1.example', 'twin2.example', 'twin3.example'];
+    for (const h of hosts) Object.assign(pages, { [`${h}/`]: pages['rival.example/'], [`${h}/pricing`]: pages['rival.example/pricing'] });
+    const ids = await Promise.all(hosts.map((h) => candidate(brand, { name: h, site: site(h) })));
+    const settled = await Promise.allSettled(ids.map((id) => watchCandidates(brand, [id])));
+    expect(settled.map((s) => s.status).sort()).toEqual(['fulfilled', 'rejected', 'rejected']);
+    for (const s of settled) if (s.status === 'rejected') expect(s.reason).toBeInstanceOf(ValidationError);
+    // No competitor was created without the pages its readable site gave.
+    const all = await competitors(brand);
+    expect(all).toHaveLength(10);
+    const targets = await withBrand(brand, (tx) => listTargets(tx, brand));
+    expect(all.every((c) => targets.some((x) => x.competitorId === c.id))).toBe(true);
+  });
+
   it('adds a business with no site with no pages and takes no slot', async () => {
     const brand = await watching(10);
     const id = await candidate(brand, { name: 'Momo Cart', channels: ['https://www.facebook.com/momocart'] });
