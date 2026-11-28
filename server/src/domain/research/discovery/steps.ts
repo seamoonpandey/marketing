@@ -149,15 +149,20 @@ export async function profileBusiness(
   return { dropped };
 }
 
-/** The brand's own row, from its approved facts only (one model call; none without facts). */
+/** The brand's own row, from its approved facts only (one model call; none without facts). A refusal leaves it empty. */
 export async function fillOwnRow(brandId: string, runId: string): Promise<void> {
   const facts = await withBrand(brandId, (tx) => approvedFacts(tx, brandId));
   let ownRow: OwnRow = {};
   if (facts.length) {
-    const { object } = await extract({
-      brandId, runType: RUN_TYPE, runId, system: OWN_SYSTEM, parts: ownParts(facts), schema: OwnRowAnswer, maxOutputTokens: OWN_MAX_OUTPUT,
-    });
-    ownRow = checkOwnRow(object, new Set(facts.map((f) => f.id)));
+    try {
+      const { object } = await extract({
+        brandId, runType: RUN_TYPE, runId, system: OWN_SYSTEM, parts: ownParts(facts), schema: OwnRowAnswer, maxOutputTokens: OWN_MAX_OUTPUT,
+      });
+      ownRow = checkOwnRow(object, new Set(facts.map((f) => f.id)));
+    } catch (e) {
+      if (!(e instanceof AiError && !e.retryable)) throw e;
+      logger.warn({ err: e, runId }, 'discovery own row refused');
+    }
   }
   await withBrand(brandId, (tx) => tx.update(discoveryRuns).set({ ownRow }).where(eq(discoveryRuns.id, runId)));
 }

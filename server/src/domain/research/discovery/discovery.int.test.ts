@@ -185,6 +185,30 @@ describe('discovery run', () => {
     expect(mockSearch.calls).toHaveLength(2);
     expect(run.counts).toMatchObject({ queries: 2, failedQueries: 0, results: 1 });
   });
+
+  it('ends failed_final when the model refuses the group call, so no retry pays for the same refusal', async () => {
+    const brand = await factBrand();
+    mockSearch.set('web', 'momo kathmandu', [hit('Momo Hut', 'https://momohut.com.np/')]);
+    mockAi.queue(mockAi.refusal);
+    const { runId } = await createDiscovery(brand, ['momo kathmandu']);
+    await confirmDiscovery(brand, runId);
+    const run = await settle(brand, runId);
+    expect(run.state).toBe('failed_final');
+    expect(run.error).toBe('The model declined to answer');
+    await expect(retryDiscovery(brand, runId)).rejects.toThrow(ConflictError);
+  });
+
+  it('completes with an empty own row when the model refuses it', async () => {
+    const brand = await factBrand();
+    mockSearch.set('web', 'momo kathmandu', [hit('Momo Hut', 'https://momohut.com.np/')]);
+    mockAi.queue({ businesses: [] }, mockAi.refusal);
+    const { runId } = await createDiscovery(brand, ['momo kathmandu']);
+    await confirmDiscovery(brand, runId);
+    const run = await settle(brand, runId);
+    expect(run.state).toBe('completed');
+    expect(run.ownRow).toEqual({});
+    expect(run.counts).toMatchObject({ queries: 2, results: 1 });
+  });
 });
 
 describe('what a run finds', () => {
