@@ -41,6 +41,7 @@ export function searchPrice(kind: SearchKind): Money {
 export async function search(o: {
   brandId: string; runType: string; runId: string; query: string; kind: SearchKind; country: string;
 }): Promise<SearchHit[]> {
+  searchReady(); // a recovered workflow in a process without the key fails here, not with an undefined key
   const model = `${config.SEARCH_PROVIDER}:${o.kind}`;
   const estimate = searchPrice(o.kind);
   const cost = { id: randomUUID(), brandId: o.brandId, runType: o.runType, runId: o.runId, model };
@@ -52,11 +53,16 @@ export async function search(o: {
       throw new BudgetError(`This search may cost NPR ${estimate.npr}; NPR ${remaining.npr} of this month's AI budget is left`);
     await recordCost(tx, { ...cost, inputTokens: 1, outputTokens: 0, ok: false });
   });
-  // A throw leaves the reserved row as is (ok false, still priced: the provider may have billed it).
-  const hits =
-    config.SEARCH_PROVIDER === 'mock'
-      ? await mockSearch.run(o.kind, o.query, o.country)
-      : await serperSearch(o.query, o.kind, o.country, config.SERPER_API_KEY!);
+  let hits: SearchHit[];
+  try {
+    hits =
+      config.SEARCH_PROVIDER === 'mock'
+        ? await mockSearch.run(o.kind, o.query, o.country)
+        : await serperSearch(o.query, o.kind, o.country, config.SERPER_API_KEY!);
+  } catch (e) {
+    await withBrand(o.brandId, (tx) => recordCost(tx, { ...cost, inputTokens: 0, outputTokens: 0, ok: false }));
+    throw e;
+  }
   await withBrand(o.brandId, (tx) => recordCost(tx, { ...cost, inputTokens: 1, outputTokens: 0, ok: true }));
   return hits;
 }

@@ -96,7 +96,7 @@ Every comment of the form `shortcut:` in the code.
 
 ## 6. What a deployment must set
 
-Read from `server/.env.example` and `server/src/config.ts`. With `NODE_ENV=production` the API refuses to start while a database URL, an S3 value or the model key is unset or a development value, or `AI_MODEL` is `mock`.
+Read from `server/.env.example` and `server/src/config.ts`. With `NODE_ENV=production` the API refuses to start while a database URL, an S3 value or the model key is unset or a development value, or `AI_MODEL` or `SEARCH_PROVIDER` is `mock`.
 
 | Variable | For | Production |
 |---|---|---|

@@ -33,12 +33,14 @@ describe('search', () => {
     const rows = await t.adminQuery('select * from cost_events');
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ provider: 'mock', model: 'web', input_tokens: 1, output_tokens: 0, ok: true });
+    expect(Number(rows[0]!.cost_usd)).toBe(0.001);
   });
 
   it('refuses a query over the monthly cap and calls no provider', async () => {
     config.AI_MONTHLY_CAP_NPR = '0';
     await expect(run('x')).rejects.toBeInstanceOf(BudgetError);
     expect(mockSearch.calls).toEqual([]);
+    expect(await t.adminQuery('select * from cost_events')).toHaveLength(0);
   });
 
   it('records a failed query as not ok and rethrows', async () => {
@@ -46,7 +48,8 @@ describe('search', () => {
     await expect(run('x')).rejects.toThrow();
     const rows = await t.adminQuery('select * from cost_events');
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ ok: false });
+    expect(rows[0]).toMatchObject({ ok: false, input_tokens: 0 });
+    expect(Number(rows[0]!.cost_npr)).toBe(0);
   });
 
   it('searchReady throws 503 when Serper has no key', () => {

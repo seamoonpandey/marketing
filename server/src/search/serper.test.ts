@@ -46,6 +46,18 @@ describe('serperSearch', () => {
     expect(h!.snippet).toHaveLength(400);
   });
 
+  it('keeps a cut title well-formed and drops control characters', async () => {
+    const title = `${'t'.repeat(199)}\u{1F600}tail`; // the 200th unit is the emoji's first half
+    const [h] = await serperSearch('q', 'web', 'NP', 'k', answer({ organic: [{ title, link: 'https://a.example/', snippet: 'a\u0000b' }] }));
+    expect(h!.title.isWellFormed()).toBe(true);
+    expect(h!.snippet).toBe('ab');
+  });
+
+  it('cleans place strings and keeps only finite numbers', async () => {
+    const [h] = await serperSearch('q', 'places', 'NP', 'k', answer({ places: [{ title: 'x', address: 'a\u0000b', rating: 'high', ratingCount: Infinity }] }));
+    expect(h!.place).toMatchObject({ address: 'ab', rating: null, ratingCount: null });
+  });
+
   it('throws with the status on a non-2xx answer', async () => {
     await expect(serperSearch('q', 'web', 'NP', 'k', answer({}, 401))).rejects.toThrow('401');
   });

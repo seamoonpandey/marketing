@@ -31,7 +31,7 @@ type Config = z.infer<typeof schema>;
 const DEV_ONLY = ['DATABASE_URL', 'DATABASE_ADMIN_URL', 'DBOS_SYSTEM_DATABASE_URL', 'S3_ENDPOINT', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const;
 const DEV_PASSWORDS = new Set(['', 'marketing', 'marketing_app', 'dev']);
 
-/** Parses the environment. With NODE_ENV=production it refuses the development defaults, the mock model and a missing key. */
+/** Parses the environment. With NODE_ENV=production it refuses the development defaults, the mock model, the mock search provider and a missing key. */
 export function parseConfig(env: Record<string, string | undefined>): Config {
   const c = schema.parse(env);
   if (env.NODE_ENV !== 'production') return c;
