@@ -362,6 +362,7 @@ test.describe('review', () => {
     await expect(page.locator('[data-fact-row]')).toContainText('sales');
 
     await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Competitors' }).click();
+    await expect(page.getByRole('link', { name: 'Find competitors' })).toHaveAttribute('href', `/app/b/${B}/research/discover`);
     await page.getByLabel('Name', { exact: true }).fill('Kashmir Looms');
     await page.getByLabel('Website').fill('kashmirlooms.example');
     await page.getByRole('button', { name: 'Add competitor' }).click();

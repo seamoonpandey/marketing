@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Async, LiveStatus, MutationError, StateBlock, StatusBadge } from '@/components/app';
 import { api, unwrap } from '@/lib/api/client';
+import { httpUrl } from '@/lib/url';
 import { useAct, useTargets } from './lib';
 
 const LIMIT = 5;
@@ -40,9 +41,13 @@ export function WatchList({ brandId, competitorId, site }: { brandId: string; co
                       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                         <div className="grid min-w-0 gap-0.5">
                           {t.label ? <span className="font-semibold break-words">{t.label}</span> : null}
-                          <a href={t.url} target="_blank" rel="noopener noreferrer" className="text-sm break-all text-action underline decoration-line-strong hover:decoration-current">
-                            {t.url}<span className="sr-only"> (opens in a new tab)</span>
-                          </a>
+                          {httpUrl(t.url) ? (
+                            <a href={httpUrl(t.url)!} target="_blank" rel="noopener noreferrer" className="text-sm break-all text-action underline decoration-line-strong hover:decoration-current">
+                              {t.url}<span className="sr-only"> (opens in a new tab)</span>
+                            </a>
+                          ) : (
+                            <span className="text-sm break-all text-muted">{t.url}</span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <StatusBadge status={t.status} />

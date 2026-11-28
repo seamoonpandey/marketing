@@ -26,6 +26,7 @@ const STATUSES: Record<string, { label: string; tone: Tone; icon: LucideIcon }> 
   draft: { label: 'Draft', tone: 'neutral', icon: CircleDashed },
   paused: { label: 'Paused', tone: 'neutral', icon: CircleDashed },
   not_drafted: { label: 'Not drafted', tone: 'neutral', icon: CircleDashed },
+  watching: { label: 'Watching', tone: 'success', icon: CircleCheck },
   active: { label: 'Active', tone: 'success', icon: CircleCheck },
   archived: { label: 'Archived', tone: 'neutral', icon: CircleDashed },
 };

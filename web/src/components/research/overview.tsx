@@ -20,9 +20,14 @@ export function Overview() {
             <StateBlock
               state="empty"
               title="No competitors to watch yet"
-              action={<Link href={`/app/b/${brandId}/brand/review`} className="btn btn-primary">Review the brand</Link>}
+              action={
+                <span className="flex flex-wrap gap-2">
+                  <Link href={`/app/b/${brandId}/research/discover`} className="btn btn-primary">Find competitors</Link>
+                  <Link href={`/app/b/${brandId}/brand/review`} className="btn btn-secondary">Add one by hand</Link>
+                </span>
+              }
             >
-              Competitors are named while the brand is reviewed. Add them there, then come back to choose the pages to watch.
+              Prachaar can search the web and the map for businesses like yours. Choose the ones to watch, then pick the pages to read.
             </StateBlock>
           ) : (
             <Body brandId={brandId} competitors={list} />
@@ -57,7 +62,10 @@ function Body({ brandId, competitors }: { brandId: string; competitors: { id: st
               </li>
             ))}
           </ul>
-          <Link href={`/app/b/${brandId}/research/opportunities`} className="btn btn-secondary justify-self-start">See opportunities</Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/app/b/${brandId}/research/discover`} className="btn btn-secondary">Find more competitors</Link>
+            <Link href={`/app/b/${brandId}/research/opportunities`} className="btn btn-secondary">See opportunities</Link>
+          </div>
         </section>
         <SchedulePanel brandId={brandId} />
       </aside>

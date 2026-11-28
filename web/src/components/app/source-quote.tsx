@@ -1,5 +1,6 @@
 import { ExternalLink, FileText } from 'lucide-react';
 import type { Schemas } from '@/lib/api/client';
+import { httpUrl } from '@/lib/url';
 
 type QuoteSource = Pick<Schemas['Source'], 'kind' | 'uri' | 'meta'> & { downloadUrl?: string };
 
@@ -20,7 +21,7 @@ function pageLabel(uri: string, title: unknown): string {
 export function SourceQuote({ quote, source, page }: { quote: string; source: QuoteSource; page?: number }) {
   const isPage = source.kind === 'page';
   const label = isPage ? pageLabel(source.uri, source.meta.title) : String(source.meta.filename ?? 'Uploaded file');
-  const href = isPage ? source.uri : source.downloadUrl;
+  const href = isPage ? httpUrl(source.uri) : source.downloadUrl;
   const Icon = isPage ? ExternalLink : FileText;
   return (
     <figure className="grid gap-2 rounded-md bg-[color-mix(in_oklab,var(--theme-ink)_4%,transparent)] px-3.5 py-3">
