@@ -217,7 +217,7 @@ describe('after a watch run', () => {
     const brand = await t.makeBrand();
     const id = await withObservation(brand);
     mockAi.queue({ opportunities: [p({ kind: 'change', title: 'Answer the price cut' }), p({ title: 'Other', evidence: ['e9'] }), p({ title: 'None', evidence: [] })] });
-    const made = await generateOpportunities(brand, RUN, []);
+    const made = await generateOpportunities(brand, RUN);
     expect(made).toHaveLength(1);
     expect(made[0]).toMatchObject({ status: 'new', runId: RUN, observationIds: [id] });
     expect(made[0]!.evidence).toEqual([{ type: 'observation', id, label: 'Removed competitor', detail: 'Price dropped', quote: 'Rs 4,500 for a classic shawl', sourceId: 'x' }]);
@@ -233,7 +233,7 @@ describe('after a watch run', () => {
     for (let i = 0; i < 50; i++) await withOpportunity(brand, 'dismissed', `${i} ${'"'.repeat(117)}`.slice(0, 120));
     const facts = await withBrand(brand, (tx) => approvedFacts(tx, brand));
     mockAi.queue({ opportunities: [p({ kind: 'change', evidence: ['e1', 'e3'] })] });
-    const made = await generateOpportunities(brand, RUN, facts);
+    const made = await generateOpportunities(brand, RUN);
     expect(made.map((o) => o.evidence.map((e) => e.id))).toEqual([[fresh]]);
     expect(promptOf(0)).not.toContain(QUOTE);
     expect(promptOf(0).split('Price dropped')).toHaveLength(2);
@@ -245,7 +245,7 @@ describe('after a watch run', () => {
   it('makes no model call when the run has no observation', async () => {
     const brand = await t.makeBrand();
     await withCandidate(brand);
-    expect(await generateOpportunities(brand, RUN, [])).toEqual([]);
+    expect(await generateOpportunities(brand, RUN)).toEqual([]);
     expect(mockAi.calls).toHaveLength(0);
   });
 });

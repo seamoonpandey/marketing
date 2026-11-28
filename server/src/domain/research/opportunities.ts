@@ -125,11 +125,8 @@ async function propose(brandId: string, runId: string, ctx: Awaited<ReturnType<t
   });
 }
 
-/**
- * Proposes opportunities from a run's observations and the facts. No observation in the run: no model call.
- * The evidence reads the approved facts itself, so `_facts` (the workflow's copy) is not used.
- */
-export async function generateOpportunities(brandId: string, runId: string, _facts: ApprovedFact[]): Promise<Opportunity[]> {
+/** Proposes opportunities from a run's observations and the approved facts. No observation in the run: no model call. */
+export async function generateOpportunities(brandId: string, runId: string): Promise<Opportunity[]> {
   const ctx = await withBrand(brandId, (tx) => context(tx, brandId, { runId }));
   if (!ctx.items.some((i) => i.type === 'observation')) return [];
   return (await propose(brandId, runId, ctx)).created;

@@ -226,7 +226,7 @@ describe('each kind appears from seeded data and goes when it is dealt with', ()
       `insert into observations (tenant_id, brand_id, competitor_id, run_id, type, summary, after, url, confidence)
        values ($1, $2, $3, $4, 'price_change', 'Price dropped', '{"quote":"Rs 4,500","sourceId":"x"}', 'https://r.example/', 'high') returning id`, [t.tenantId, b, comp.id, run]);
     mockAi.queue({ opportunities: [{ kind: 'change', title: 'Answer the price cut', hypothesis: 'h', suggestedAction: 'a', whyItMatters: 'w', evidence: ['e1'], impact: 'medium', effort: 'medium', confidence: 'medium' }] });
-    const [opp] = await generateOpportunities(b, run, []);
+    const [opp] = await generateOpportunities(b, run);
     const by = async () => Object.fromEntries((await home(b)).items.map((i) => [i.kind, i]));
     expect(await by()).toMatchObject({ observations_new: { module: 'research', urgency: 'later' }, opportunities_new: { urgency: 'later', href: `/app/b/${b}/research/opportunities` } });
     await withBrand(b, (tx) => decideOpportunity(tx, b, opp!.id, 'dismissed'));

@@ -1,9 +1,7 @@
 // The watch run (WF-002): snapshot each watched page, diff it, and send only changed pages to the
 // model. The run ID is the DBOS workflow ID.
 import { DBOS } from '@dbos-inc/dbos-sdk';
-import { withBrand } from '../db/tenant.ts';
 import { ConflictError } from '../http/errors.ts';
-import { approvedFacts } from '../domain/knowledge/index.ts';
 import { generateOpportunities } from '../domain/research/opportunities.ts';
 import { dueBrands, startRun } from '../domain/research/watch/run.ts';
 import { capture, estimateRun, extractPage, loadRun, setRunState, type Captured } from '../domain/research/watch/steps.ts';
@@ -38,10 +36,7 @@ export const watchWorkflow = DBOS.registerWorkflow(
       }
 
       const opportunities = observations
-        ? await DBOS.runStep(async () => {
-            const facts = await withBrand(brandId, (tx) => approvedFacts(tx, brandId));
-            return (await generateOpportunities(brandId, runId, facts)).length;
-          }, { name: 'opportunities' })
+        ? await DBOS.runStep(async () => (await generateOpportunities(brandId, runId)).length, { name: 'opportunities' })
         : 0;
 
       const failed = captured.filter((c) => c.error).length;
