@@ -17,7 +17,7 @@ import { fetchGuard } from '../../sources/fetch.ts';
 import { getSource } from '../../sources/index.ts';
 import { listCandidates } from './candidates.ts';
 import { suggestKeywords } from './keywords.ts';
-import { GROUP_SYSTEM, PROFILE_SYSTEM } from './prompts.ts';
+import { GROUP_SYSTEM, PROFILE_SYSTEM, RESULT_CHARS } from './prompts.ts';
 import { cancelDiscovery, confirmDiscovery, createDiscovery, getDiscovery, retryDiscovery } from './run.ts';
 import { searchAgain } from './steps.ts';
 
@@ -472,6 +472,19 @@ describe('what a run finds', () => {
     const all = Array.from({ length: 30 }, (_, i) => `r${i + 1}`);
     await discover(brand, ['momo patan'], group({ name: 'Momo Hut', resultIds: all }), {}, {});
     expect(userText(profileCalls()[0]!).match(/Momo Hut \d+ serves momo/g)).toHaveLength(20);
+  });
+
+  it('gives the model no more of each search result than the estimate prices, and costs no more than the estimate', async () => {
+    const brand = await factBrand();
+    // A provider's own cut is shorter; the mock has none, so these stand for a result of any length.
+    mockSearch.set('web', 'momo patan', Array.from({ length: 20 }, (_, i) => ({ ...hit(`Momo Hut ${i + 1}`, null), snippet: 'steamed "momo" '.repeat(200) })));
+    const all = Array.from({ length: 20 }, (_, i) => `r${i + 1}`);
+    const run = await discover(brand, ['momo patan'], group({ name: 'Momo Hut', resultIds: all }), {}, {});
+    expect(run.state).toBe('completed');
+    const results = (c: (typeof mockAi.calls)[number]) => userText(c).split(/<search_results[^>]*>\n/)[1]!.split('\n</search_results>')[0]!;
+    expect(results(mockAi.calls.find((c) => c.system.startsWith(GROUP_SYSTEM))!).length).toBeLessThanOrEqual(20 * RESULT_CHARS);
+    expect(results(profileCalls()[0]!).length).toBeLessThanOrEqual(20 * RESULT_CHARS);
+    expect(Number(run.actual!.npr)).toBeLessThanOrEqual(Number(run.estimate!.npr));
   });
 
   it('keeps a handful of the social links on a page that has thousands', async () => {

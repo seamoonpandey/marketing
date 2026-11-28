@@ -15,7 +15,7 @@ import { savePageSource, saveTextSource, type Source } from '../../sources/index
 import { checkCells, checkOwnRow, COLUMNS, OwnRowAnswer, RowAnswer, type OwnRow } from './cells.ts';
 import { cleanUrl, linkKind, matchKey, tidyBusinesses, type Business } from './match.ts';
 import {
-  GROUP_MAX_OUTPUT, GROUP_SYSTEM, GroupAnswer, groupParts, OWN_MAX_OUTPUT, OWN_SYSTEM, ownParts, PAGE, PROFILE_MAX_OUTPUT, PROFILE_SYSTEM,
+  cutResult, GROUP_MAX_OUTPUT, GROUP_SYSTEM, GroupAnswer, groupParts, OWN_MAX_OUTPUT, OWN_SYSTEM, ownParts, PAGE, PROFILE_MAX_OUTPUT, PROFILE_SYSTEM,
   profileParts, RESULTS, RESULTS_PER_BUSINESS,
 } from './prompts.ts';
 
@@ -98,10 +98,12 @@ export async function groupResults(brandId: string, runId: string, results: Sear
   return { businesses: kept.map((b, i) => ({ ...b, rank: i + 1 })), skipped };
 }
 
-/** One result as the business's text source holds it: title, link, snippet and each Maps field, one per line. */
+/** One result as the business's text source holds it: title, link, snippet and each Maps field, one per line, cut to size. */
 const resultText = (r: SearchResult) =>
-  [r.title, r.url, r.snippet, ...Object.entries(r.place ?? {}).filter(([k, v]) => k !== 'cid' && v !== null).map(([k, v]) => `${k}: ${v}`)]
-    .filter(Boolean).join('\n');
+  cutResult(
+    [r.title, r.url, r.snippet, ...Object.entries(r.place ?? {}).filter(([k, v]) => k !== 'cid' && v !== null).map(([k, v]) => `${k}: ${v}`)]
+      .filter(Boolean).join('\n'),
+  );
 
 /** The social links on a saved page's snapshot, resolved against the page and kept only when http(s). */
 async function socialLinks(page: Source): Promise<string[]> {

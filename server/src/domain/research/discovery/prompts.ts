@@ -10,8 +10,10 @@ export const PROFILE_MAX_OUTPUT = 2048;
 export const OWN_MAX_OUTPUT = 1024;
 /** The page text a profile call reads; the quote check still reads the whole page. */
 export const MAX_PAGE_CHARS = 12_000;
-/** The most one search result takes in a prompt, for the estimate. */
+/** The most one search result takes in a prompt, as the estimate prices it. */
 export const RESULT_CHARS = 700;
+/** One search result as a prompt holds it: with the break after it, at most RESULT_CHARS. */
+export const cutResult = (s: string): string => cleanCut(s, RESULT_CHARS - 2);
 /** The most search results one profile call reads, as the estimate prices it. */
 export const RESULTS_PER_BUSINESS = 20;
 
@@ -63,9 +65,9 @@ export function keywordParts(country: string, facts: ApprovedFact[]): AiPart[] {
   return [{ type: 'text', text: `<brand_country>${country}</brand_country>\n${factsBlock(facts)}` }];
 }
 
-/** Every search result of the run, one JSON object per line, with the ID the group answer cites. */
+/** Every search result of the run, one JSON object per line (cut to size, the snippet last so the cut takes its end), with the ID the group answer cites. */
 export function groupParts(results: SearchResult[]): AiPart[] {
-  const lines = results.map((r) => JSON.stringify({ id: r.id, kind: r.kind, title: r.title, url: r.url, snippet: r.snippet, place: r.place }));
+  const lines = results.map((r) => cutResult(JSON.stringify({ id: r.id, kind: r.kind, title: r.title, url: r.url, place: r.place, snippet: r.snippet })));
   return [{ type: 'text', text: block('search_results', lines.join('\n')) }];
 }
 
