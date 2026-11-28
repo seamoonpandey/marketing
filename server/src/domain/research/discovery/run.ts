@@ -18,13 +18,13 @@ import { cleanKeywords } from './keywords.ts';
 import { MAX_CANDIDATES } from './match.ts';
 import {
   factsBlock, GROUP_MAX_OUTPUT, GROUP_SYSTEM, MAX_PAGE_CHARS, OWN_MAX_OUTPUT, OWN_SYSTEM, PROFILE_MAX_OUTPUT, PROFILE_SYSTEM, RESULT_CHARS,
+  RESULTS_PER_BUSINESS,
 } from './prompts.ts';
 
 export type DiscoveryRun = typeof discoveryRuns.$inferSelect;
 
 const ACTIVE_MESSAGE = 'A discovery run is already in progress for this brand';
 const RESULTS_PER_KEYWORD = 30; // 10 web results and up to 20 Maps listings
-const RESULTS_PER_BUSINESS = 20;
 
 /**
  * The most a run can cost (spec §5.2): two queries per keyword, the group call over every result, MAX_CANDIDATES profile
@@ -84,7 +84,12 @@ export async function confirmDiscovery(brandId: string, runId: string): Promise<
     const npr = r.estimate?.npr ?? '0';
     if (Number(npr) > Number(remaining.npr))
       throw new BudgetError(`This run may cost up to NPR ${npr}; NPR ${remaining.npr} of this month's AI budget is left`);
-    await tx.update(discoveryRuns).set({ state: 'running', startedAt: new Date() }).where(eq(discoveryRuns.id, runId));
+    // Only from awaiting_approval, so a confirm racing another, a cancel or the expiry cannot revive the run as running.
+    const [moved] = await tx
+      .update(discoveryRuns).set({ state: 'running', startedAt: new Date() })
+      .where(and(eq(discoveryRuns.id, runId), eq(discoveryRuns.state, 'awaiting_approval')))
+      .returning({ id: discoveryRuns.id });
+    if (!moved) throw new ConflictError('This run is not waiting for approval');
     await audit(tx, { brandId, actor: 'operator', action: 'research.discovery.confirm', objectType: 'discovery_run', objectId: runId, result: 'ok' });
     return r;
   });

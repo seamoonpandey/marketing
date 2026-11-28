@@ -16,10 +16,11 @@ import { checkCells, checkOwnRow, COLUMNS, OwnRowAnswer, RowAnswer, type OwnRow 
 import { cleanUrl, linkKind, matchKey, tidyBusinesses, type Business } from './match.ts';
 import {
   GROUP_MAX_OUTPUT, GROUP_SYSTEM, GroupAnswer, groupParts, OWN_MAX_OUTPUT, OWN_SYSTEM, ownParts, PAGE, PROFILE_MAX_OUTPUT, PROFILE_SYSTEM,
-  profileParts, RESULTS,
+  profileParts, RESULTS, RESULTS_PER_BUSINESS,
 } from './prompts.ts';
 
 const RUN_TYPE = 'research_discovery';
+const MAX_CHANNELS = 12;
 
 export type Query = { query: string; kind: SearchKind };
 export type Searched = { hits: SearchHit[]; failed: boolean };
@@ -50,7 +51,17 @@ export async function runSearch(brandId: string, runId: string, query: string, k
  */
 export async function searchAgain(brandId: string, runId: string, queries: Query[], country: string): Promise<Searched[]> {
   const answers: Searched[] = [];
-  for (const q of queries) answers.push(await runSearch(brandId, runId, q.query, q.kind, country));
+  for (const q of queries) {
+    try {
+      answers.push(await runSearch(brandId, runId, q.query, q.kind, country));
+    } catch (e) {
+      // Over the cap partway: a retry would rerun this step and pay again for the queries before, so they are kept and the
+      // rest count as failed; the run's next paid call meets the cap and fails there.
+      if (!(e instanceof BudgetError) || answers.every((a) => a.failed)) throw e;
+      while (answers.length < queries.length) answers.push({ hits: [], failed: true });
+      break;
+    }
+  }
   if (answers.every((a) => a.failed)) throw new HttpError(503, 'search_failed', 'Every search failed; retry the run');
   return answers;
 }
@@ -66,12 +77,14 @@ export async function saveResults(brandId: string, runId: string, results: Searc
 export async function groupResults(brandId: string, runId: string, results: SearchResult[]): Promise<{ businesses: Business[]; skipped: number }> {
   const { ownSite, skipKeys } = await withBrand(brandId, async (tx) => {
     const held = await tx
-      .select({ key: discoveryCandidates.matchKey }).from(discoveryCandidates)
+      .select({ key: discoveryCandidates.matchKey, name: discoveryCandidates.name, site: discoveryCandidates.site }).from(discoveryCandidates)
       .where(and(eq(discoveryCandidates.brandId, brandId), inArray(discoveryCandidates.status, ['dismissed', 'watched'])));
     const competitors = await listCompetitors(tx, brandId);
+    // One with no site also matches by its folded name (spec §5.4), so a business keyed by a Maps listing finds it.
+    const nameKey = (x: { site: string | null; name: string }) => (x.site ? [] : [matchKey({ site: null, name: x.name })]);
     return {
       ownSite: (await getBrand(tx, brandId)).website,
-      skipKeys: new Set([...held.map((h) => h.key), ...competitors.map((c) => matchKey({ site: c.site, name: c.name }))]),
+      skipKeys: new Set([...held.flatMap((h) => [h.key, ...nameKey(h)]), ...competitors.map((c) => matchKey({ site: c.site, name: c.name }))]),
     };
   });
   const { object } = await extract({
@@ -79,7 +92,7 @@ export async function groupResults(brandId: string, runId: string, results: Sear
   });
   const { kept, skipped } = tidyBusinesses(
     object.businesses.map((b) => ({ name: b.name, site: b.site, channels: b.socials, placeCid: b.placeCid, resultIds: b.resultIds, rank: b.rank })),
-    { ownSite, skipKeys, resultIds: new Set(results.map((r) => r.id)) },
+    { ownSite, skipKeys, results: new Map(results.map((r) => [r.id, r])) },
   );
   // The stored rank is the place in this run, so a model's 0.5 or 1e12 never reaches the integer column.
   return { businesses: kept.map((b, i) => ({ ...b, rank: i + 1 })), skipped };
@@ -108,11 +121,13 @@ export async function profileBusiness(
   brandId: string, runId: string, b: Business, results: SearchResult[],
 ): Promise<{ dropped: number } | { failed: string }> {
   const key = matchKey(b);
-  const mine = results.filter((r) => b.resultIds.includes(r.id));
+  // The model picks which results are this business's, so the count is held to what the estimate priced.
+  const mine = results.filter((r) => b.resultIds.includes(r.id)).slice(0, RESULTS_PER_BUSINESS);
   // A site that cannot be read (robots.txt, unreachable, not HTML) leaves the business its search results alone.
   const page = b.site ? await withBrand(brandId, (tx) => savePageSource(tx, brandId, b.site!, 'external')).catch(() => null) : null;
-  const channels = new Set([...b.channels, ...(page ? await socialLinks(page) : [])]);
-  if (b.placeCid) channels.add(`https://www.google.com/maps?cid=${encodeURIComponent(b.placeCid)}`);
+  const maps = b.placeCid ? [`https://www.google.com/maps?cid=${encodeURIComponent(b.placeCid)}`] : [];
+  // A page can link to thousands of profiles; the row keeps a handful of links to show, the Maps listing first.
+  const channels = [...new Set([...maps, ...b.channels, ...(page ? await socialLinks(page) : [])])].slice(0, MAX_CHANNELS);
   const { listing, facts } = await withBrand(brandId, async (tx) => ({
     listing: await saveTextSource(tx, brandId, `search:${runId}:${key}`, mine.map(resultText).join('\n\n')),
     facts: await approvedFacts(tx, brandId),
@@ -138,7 +153,7 @@ export async function profileBusiness(
     if (c) cells[col] = c.basis === 'quoted' ? { ...c, sourceId: id(c.sourceId) } : { ...c, evidence: c.evidence.map(id) };
   }
   const row = {
-    name: b.name, site: b.site, channels: [...channels], placeCid: b.placeCid, cells, sourceIds: [...stored.values()], rank: b.rank,
+    name: b.name, site: b.site, channels, placeCid: b.placeCid, cells, sourceIds: [...stored.values()], rank: b.rank,
     place: mine.find((r) => r.kind === 'places' && r.place)?.place ?? null, lastRunId: runId, lastFoundAt: new Date(),
   };
   await withBrand(brandId, (tx) =>
@@ -149,15 +164,20 @@ export async function profileBusiness(
   return { dropped };
 }
 
-/** The brand's own row, from its approved facts only (one model call; none without facts). */
+/** The brand's own row, from its approved facts only (one model call; none without facts). A refusal leaves it empty. */
 export async function fillOwnRow(brandId: string, runId: string): Promise<void> {
   const facts = await withBrand(brandId, (tx) => approvedFacts(tx, brandId));
   let ownRow: OwnRow = {};
   if (facts.length) {
-    const { object } = await extract({
-      brandId, runType: RUN_TYPE, runId, system: OWN_SYSTEM, parts: ownParts(facts), schema: OwnRowAnswer, maxOutputTokens: OWN_MAX_OUTPUT,
-    });
-    ownRow = checkOwnRow(object, new Set(facts.map((f) => f.id)));
+    try {
+      const { object } = await extract({
+        brandId, runType: RUN_TYPE, runId, system: OWN_SYSTEM, parts: ownParts(facts), schema: OwnRowAnswer, maxOutputTokens: OWN_MAX_OUTPUT,
+      });
+      ownRow = checkOwnRow(object, new Set(facts.map((f) => f.id)));
+    } catch (e) {
+      if (!(e instanceof AiError && !e.retryable)) throw e;
+      logger.warn({ err: e, runId }, 'discovery own row refused');
+    }
   }
   await withBrand(brandId, (tx) => tx.update(discoveryRuns).set({ ownRow }).where(eq(discoveryRuns.id, runId)));
 }

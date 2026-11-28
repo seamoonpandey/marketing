@@ -1,6 +1,7 @@
 // The discovery run (spec §5.2): wait for the owner to confirm the estimate, search the web and Maps for each keyword,
 // group the results into businesses, describe each one, then the brand itself. The run ID is the DBOS workflow ID.
 import { DBOS } from '@dbos-inc/dbos-sdk';
+import { AiError } from '../ai/index.ts';
 import type { SearchResult } from '../db/schema/research.ts';
 import { matchKey } from '../domain/research/discovery/match.ts';
 import { setDiscoveryState } from '../domain/research/discovery/run.ts';
@@ -54,8 +55,10 @@ export const discoveryWorkflow = DBOS.registerWorkflow(
       }
       await DBOS.runStep(() => setDiscoveryState(brandId, runId, 'completed', { counts }), { name: 'finish' });
     } catch (e) {
+      // A refusal or an off-schema answer comes back the same, so a retry would only pay for it again.
+      const to = e instanceof AiError && !e.retryable ? 'failed_final' : 'failed_retryable';
       // A cancelled workflow cannot run steps; setDiscoveryState only touches runs that are still active.
-      await DBOS.runStep(() => setDiscoveryState(brandId, runId, 'failed_retryable', { error: runError(e) }), { name: 'fail' }).catch(() => {});
+      await DBOS.runStep(() => setDiscoveryState(brandId, runId, to, { error: runError(e) }), { name: 'fail' }).catch(() => {});
       throw e;
     }
   },

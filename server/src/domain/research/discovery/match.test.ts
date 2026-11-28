@@ -2,9 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { linkKind, matchKey, siteHost, tidyBusinesses, type Business } from './match.ts';
 
 const biz = (b: Partial<Business> & { name: string }): Business => ({ site: null, channels: [], placeCid: null, resultIds: ['r1'], rank: 1, ...b });
-const resultIds = new Set(Array.from({ length: 40 }, (_, i) => `r${i + 1}`));
+type Result = { url: string | null; place: { cid: string | null } | null };
+// r1 to r40 are web results of every site the tests below name; r41 and r42 are the Maps listings 111 and 222.
+const SITES = ['momohut.com.np', 'himal.com.np', 'shop.himal.com.np'];
+const results = new Map<string, Result>(Array.from({ length: 40 }, (_, i) => [`r${i + 1}`, { url: `https://${SITES[i % 3]}/`, place: null }]));
+results.set('r41', { url: null, place: { cid: '111' } });
+results.set('r42', { url: null, place: { cid: '222' } });
 const tidy = (raw: Business[], o: { ownSite?: string | null; skipKeys?: Set<string> } = {}) =>
-  tidyBusinesses(raw, { ownSite: o.ownSite ?? null, skipKeys: o.skipKeys ?? new Set(), resultIds });
+  tidyBusinesses(raw, { ownSite: o.ownSite ?? null, skipKeys: o.skipKeys ?? new Set(), results });
 
 describe('siteHost and linkKind', () => {
   it('reads the host of a full URL or a bare domain, and nothing that is not http(s)', () => {
@@ -59,7 +64,22 @@ describe('tidyBusinesses', () => {
   });
 
   it('keeps two same-named businesses with different Maps listing IDs apart', () => {
-    expect(tidy([biz({ name: 'Momo House', placeCid: '111' }), biz({ name: 'Momo House', placeCid: '222', rank: 2 })]).kept).toHaveLength(2);
+    const raw = [biz({ name: 'Momo House', placeCid: '111', resultIds: ['r41'] }), biz({ name: 'Momo House', placeCid: '222', resultIds: ['r42'], rank: 2 })];
+    expect(tidy(raw).kept).toHaveLength(2);
+  });
+
+  it("keeps a site or a Maps listing ID only when one of the business's own results carries it", () => {
+    const [b] = tidy([biz({ name: 'Evil Momo', site: 'https://real.example/', placeCid: '111', resultIds: ['r1'] })]).kept;
+    expect(b).toMatchObject({ site: null, placeCid: null });
+    // So it is neither skipped as the hidden business it names, nor merged into the real one.
+    const r = tidy(
+      [biz({ name: 'Evil Momo', site: 'https://real.example/', resultIds: ['r1'] }), biz({ name: 'Real Momo', placeCid: '111', resultIds: ['r41'] }), biz({ name: 'Evil Two', placeCid: '111', resultIds: ['r1'] })],
+      { skipKeys: new Set(['site:real.example']) },
+    );
+    expect(r.skipped).toBe(0);
+    expect(r.kept.map((x) => [x.name, x.site, x.placeCid])).toEqual([['Evil Momo', null, null], ['Real Momo', null, '111'], ['Evil Two', null, null]]);
+    const [real] = tidy([biz({ name: 'Momo Hut', site: 'momohut.com.np', placeCid: '111', resultIds: ['r1', 'r41'] })]).kept;
+    expect(real).toMatchObject({ site: 'https://momohut.com.np/', placeCid: '111' });
   });
 
   it('drops a business with no valid result id', () => {

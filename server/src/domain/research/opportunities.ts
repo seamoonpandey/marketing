@@ -43,13 +43,15 @@ const TITLE_MAX = 120;
 const TEXT_MAX = 600;
 const NOTHING = 'Nothing to compare yet: find or watch a competitor first';
 
+// JSON with every "</" written "<\/" (still valid JSON), so no text inside a block can close it early.
+const data = (x: unknown) => JSON.stringify(x).replace(/<\//g, '<\\/');
 // Each label once, so a competitor's name is not repeated for each of its items; IDs and source IDs stay on the server.
 const shown = (xs: EvidenceItem[]) =>
-  JSON.stringify([...Map.groupBy(xs, (x) => x.label)].map(([label, g]) => ({ label, items: g.map(({ ref, type, detail, quote }) => ({ ref, type, detail, quote })) })));
+  data([...Map.groupBy(xs, (x) => x.label)].map(([label, g]) => ({ label, items: g.map(({ ref, type, detail, quote }) => ({ ref, type, detail, quote })) })));
 const prompt = (items: EvidenceItem[], titles: string[]) =>
   `<evidence>\n${shown(items.filter((i) => i.type !== 'fact'))}\n</evidence>\n` +
   `<approved_facts>\n${shown(items.filter((i) => i.type === 'fact'))}\n</approved_facts>\n` +
-  `<already_proposed>\n${JSON.stringify(titles)}\n</already_proposed>`;
+  `<already_proposed>\n${data(titles)}\n</already_proposed>`;
 
 // The shortest observation the model can write (its keys, a type and a 10-character quote), in tokens.
 const MIN_OBSERVATION_TOKENS = 20;
