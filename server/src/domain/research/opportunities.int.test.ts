@@ -168,6 +168,15 @@ describe('scan', () => {
     expect(created[0]!.evidence.map((e) => e.type)).toEqual(['candidate', 'observation']);
   });
 
+  it('stores one copy when two simultaneous scans propose the same title', async () => {
+    const brand = await t.makeBrand();
+    await withCandidate(brand);
+    mockAi.queue({ opportunities: [p()] }, { opportunities: [p({ title: 'offer office  LUNCH' })] });
+    const both = await Promise.all([scanOpportunities(brand), scanOpportunities(brand)]);
+    expect(both.map((r) => r.created.length).sort()).toEqual([0, 1]);
+    expect(await count(brand)).toBe(1);
+  });
+
   it('writes nothing when the model call fails', async () => {
     const brand = await t.makeBrand();
     await withCandidate(brand);

@@ -18,7 +18,7 @@ import { getSource } from '../../sources/index.ts';
 import { listCandidates } from './candidates.ts';
 import { suggestKeywords } from './keywords.ts';
 import { GROUP_SYSTEM, PROFILE_SYSTEM } from './prompts.ts';
-import { confirmDiscovery, createDiscovery, getDiscovery, retryDiscovery } from './run.ts';
+import { cancelDiscovery, confirmDiscovery, createDiscovery, getDiscovery, retryDiscovery } from './run.ts';
 import { searchAgain } from './steps.ts';
 
 const fixture = (name: string) => readFileSync(new URL(`../../../../test/fixtures/research/discovery/${name}.html`, import.meta.url), 'utf8');
@@ -161,6 +161,17 @@ describe('discovery run', () => {
     for (const s of settled) if (s.status === 'rejected') expect(s.reason).toBeInstanceOf(ConflictError);
     expect(await t.adminQuery(`select 1 from audit_events where action = 'research.discovery.confirm' and object_id = $1`, [runId])).toHaveLength(1);
     expect((await settle(brand, runId)).state).toBe('completed');
+  });
+
+  it('searches nothing for a run cancelled before confirm, and refuses to confirm it', async () => {
+    const brand = await factBrand();
+    const { runId } = await createDiscovery(brand, ['momo kathmandu']);
+    await cancelDiscovery(brand, runId);
+    await expect(confirmDiscovery(brand, runId)).rejects.toThrow(ConflictError);
+    await new Promise((r) => setTimeout(r, 300));
+    expect((await withBrand(brand, (tx) => getDiscovery(tx, brand, runId))).state).toBe('cancelled');
+    expect(mockSearch.calls).toEqual([]);
+    expect(await runCosts(runId)).toBe(0);
   });
 
   it('answers 503 and creates no run when Serper has no key', async () => {
@@ -497,6 +508,30 @@ describe('what a run finds', () => {
     const empty = await discover(bare, KW, { businesses: [] });
     expect(empty.ownRow).toEqual({});
     expect(mockAi.calls).toHaveLength(1);
+  });
+
+  it('resumes at the business whose profile failed retryably, repeating no search and no profile already made', async () => {
+    const brand = await factBrand();
+    pages = { 'momohut.example/': fixture('momohut') };
+    mockSearch.set('web', 'momo lalitpur', [hit('Momo Hut', site('momohut.example')), hit('Dumpling Den', null)]);
+    const den = { sells: { value: 'Momo', basis: 'quoted', quote: 'Dumpling Den serves momo', sourceId: 'results' } };
+    // No answer queued for Dumpling Den's profile: the mock model fails as an outage does.
+    const failed = await discover(brand, ['momo lalitpur'], group(
+      { name: 'Momo Hut', site: site('momohut.example'), resultIds: ['r1'] }, { name: 'Dumpling Den', resultIds: ['r2'] },
+    ), {});
+    expect(failed.state).toBe('failed_retryable');
+    expect((await candidates(brand)).map((c) => c.name)).toEqual(['Momo Hut']);
+    const searches = mockSearch.calls.length;
+
+    mockAi.reset();
+    mockAi.queue(den, {});
+    await retryDiscovery(brand, failed.id);
+    const run = await settle(brand, failed.id);
+    expect(run.state).toBe('completed');
+    expect(mockSearch.calls).toHaveLength(searches);
+    expect(mockAi.calls.map((c) => (c.system.startsWith(PROFILE_SYSTEM) ? userText(c).match(/<business_name>\n(.*)\n/)![1] : 'other'))).toEqual(['Dumpling Den', 'other']);
+    expect(run.counts).toMatchObject({ found: 2, profiled: 2, failedProfiles: 0 });
+    expect((await candidates(brand)).map((c) => c.name).sort()).toEqual(['Dumpling Den', 'Momo Hut']);
   });
 
   it('loses only the row whose profile the model refuses', async () => {
