@@ -6,6 +6,8 @@ import { api, unwrap, type Schemas } from '@/lib/api/client';
 
 export type Observation = Schemas['Observation'];
 export type Run = Schemas['WatchRun'];
+export type DiscoveryRun = Schemas['DiscoveryRun'];
+export type Candidate = Schemas['DiscoveryCandidate'];
 
 const root = (brandId: string) => ['research', brandId] as const;
 const p = (brandId: string) => ({ path: { brandId } });
@@ -61,6 +63,24 @@ export const useOpportunities = (b: string, status: 'new' | 'accepted' | 'dismis
   useQuery({
     queryKey: [...root(b), 'opportunities', status],
     queryFn: () => unwrap(api.GET('/api/brands/{brandId}/research/opportunities', { params: { ...p(b), query: { status } } })),
+  });
+
+export const useDiscoveries = (b: string) =>
+  useQuery({
+    queryKey: [...root(b), 'discoveries'],
+    queryFn: async () =>
+      (await unwrap(api.GET('/api/brands/{brandId}/research/discoveries', { params: p(b) }))).sort((x, y) => y.createdAt.localeCompare(x.createdAt)),
+  });
+
+export const discoveryKey = (b: string, id: string) => [...root(b), 'discovery', id] as const;
+export const fetchDiscovery = async (b: string, id: string) =>
+  unwrap(api.GET('/api/brands/{brandId}/research/discoveries/{id}', { params: { path: { brandId: b, id } } }));
+
+/** Candidates in the order the server ranked them (overlap, then rank); `dismissed` lists the hidden ones. */
+export const useCandidates = (b: string, status?: 'dismissed') =>
+  useQuery({
+    queryKey: [...root(b), 'candidates', status ?? 'shown'],
+    queryFn: () => unwrap(api.GET('/api/brands/{brandId}/research/candidates', { params: { ...p(b), query: { status } } })),
   });
 
 export const useProfile = (b: string, competitorId: string) =>
