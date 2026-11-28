@@ -1,7 +1,8 @@
 import { DBOS, type WorkflowHandle } from '@dbos-inc/dbos-sdk';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { AiError } from '../ai/index.ts';
 import { config } from '../config.ts';
+import type { Money } from '../contracts/common.ts';
 import { isUniqueViolation } from '../db/client.ts';
 import { runStates } from '../db/schema/core.ts';
 import { planRuns } from '../db/schema/plan.ts';
@@ -80,12 +81,27 @@ export type RunTable = {
   objectType: string;
 };
 
-/** Cancels a running or waiting run: the row and its audit event first, then the workflow. */
+/**
+ * Cancels a running or waiting run: the row, with what its cost rows hold, and its audit event first, then the workflow.
+ * A call still in flight counts at its reserved estimate; the cost ledger has the settled amount.
+ */
 export async function cancelRun(t: RunTable, brandId: string, runId: string): Promise<void> {
+  const ended = 'This run has already finished';
   const run = await withBrand(brandId, async (tx) => {
     const r = await t.get(tx, brandId, runId);
-    if (r.state !== 'running' && r.state !== 'awaiting_approval') throw new ConflictError('This run has already finished');
-    await tx.update(t.table).set({ state: 'cancelled', finishedAt: new Date() }).where(eq(t.table.id, runId));
+    if (r.state !== 'running' && r.state !== 'awaiting_approval') throw new ConflictError(ended);
+    const [spent] = (
+      await tx.execute<Money>(
+        sql`select coalesce(sum(cost_usd), 0)::numeric(14,4)::text as usd, coalesce(sum(cost_npr), 0)::numeric(14,2)::text as npr
+            from cost_events where run_id = ${runId}`,
+      )
+    ).rows;
+    // Only while it is still active, so a cancel that races the run's own end cannot overwrite it.
+    const rows = await tx
+      .update(t.table).set({ state: 'cancelled', finishedAt: new Date(), actual: spent! })
+      .where(and(eq(t.table.id, runId), inArray(t.table.state, ['running', 'awaiting_approval'])))
+      .returning({ id: t.table.id });
+    if (!rows.length) throw new ConflictError(ended);
     await audit(tx, { brandId, actor: 'operator', action: `${t.action}.cancel`, objectType: t.objectType, objectId: runId, result: 'ok' });
     return r;
   });

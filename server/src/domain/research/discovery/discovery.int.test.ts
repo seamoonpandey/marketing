@@ -7,11 +7,13 @@ import { launchTestWorkflows, testDb, type TestDb } from '../../../../test/helpe
 import { mockAi } from '../../../ai/index.ts';
 import { createApp } from '../../../app.ts';
 import { config } from '../../../config.ts';
+import { discoveryRuns } from '../../../db/schema/research.ts';
 import { withBrand } from '../../../db/tenant.ts';
 import { BudgetError, ConflictError, ValidationError } from '../../../http/errors.ts';
 import { mockSearch, type SearchHit } from '../../../search/index.ts';
 import { createCompetitor } from '../../brands/index.ts';
-import { remainingMonthlyCap } from '../../costs/index.ts';
+import { cancelRun } from '../../../workflows/index.ts';
+import { recordCost, remainingMonthlyCap } from '../../costs/index.ts';
 import { approveFact, approvedFacts, enterFact } from '../../knowledge/index.ts';
 import { fetchGuard } from '../../sources/fetch.ts';
 import { getSource } from '../../sources/index.ts';
@@ -172,6 +174,25 @@ describe('discovery run', () => {
     expect((await withBrand(brand, (tx) => getDiscovery(tx, brand, runId))).state).toBe('cancelled');
     expect(mockSearch.calls).toEqual([]);
     expect(await runCosts(runId)).toBe(0);
+  });
+
+  it('records what a cancelled run had spent, and leaves a run that ended meanwhile as it ended', async () => {
+    const brand = await factBrand();
+    const { runId } = await createDiscovery(brand, ['momo kathmandu']);
+    await withBrand(brand, (tx) =>
+      recordCost(tx, { id: randomUUID(), brandId: brand, runType: 'research_discovery', runId, model: 'mock:web', inputTokens: 1, outputTokens: 0, ok: true }),
+    );
+    await cancelDiscovery(brand, runId);
+    const [spent] = await t.adminQuery(`select sum(cost_npr)::numeric(14,2)::text as npr from cost_events where run_id = $1`, [runId]);
+    const run = await withBrand(brand, (tx) => getDiscovery(tx, brand, runId));
+    expect(Number(spent.npr)).toBeGreaterThan(0);
+    expect(run.actual?.npr).toBe(spent.npr);
+
+    // A cancel that read the run as active just before it ended must not overwrite how it ended.
+    await t.adminQuery(`update discovery_runs set state = 'completed' where id = $1`, [runId]);
+    const stale = { table: discoveryRuns, get: async () => ({ state: 'running' as const, workflowId: runId }), action: 'research.discovery', objectType: 'discovery_run' };
+    await expect(cancelRun(stale, brand, runId)).rejects.toBeInstanceOf(ConflictError);
+    expect((await withBrand(brand, (tx) => getDiscovery(tx, brand, runId))).state).toBe('completed');
   });
 
   it('answers 503 and creates no run when Serper has no key', async () => {
