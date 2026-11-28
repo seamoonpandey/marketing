@@ -9,8 +9,9 @@ Everything runs against the mock model. The API and the screens exist for each m
 | Module | Server (`server/src/domain/`) | Server tests (unit / integration files) | Web screens | Web e2e (`web/e2e/`) |
 |---|---|---|---|---|
 | Brands, sources, costs, audit (base) | `brands`, `sources`, `costs`, `audit` | 5 / 4 | brand list, new brand | `base.spec.ts` |
+| Search gateway (base) | `server/src/search/` (Serper, and a mock for tests) | 1 / 1 | none | none |
 | Brand | `knowledge` | 2 / 5 | `brand/` (facts, review, sources, visual identity) | `brand.spec.ts`, `brand.stub.spec.ts` |
-| Research | `research` | 2 / 5 | `research/` (competitors, opportunities, battlecards) | `research.spec.ts`, `research.stub.spec.ts` |
+| Research | `research` (with `discovery/`) | 8 / 7 | `research/` (competitors, find competitors, opportunities, battlecards) | `research.spec.ts`, `research.stub.spec.ts`, `discover.stub.spec.ts` |
 | Plan | `plan` | 2 / 5 | `plan/` (calendar, campaigns, settings) | `plan.spec.ts`, `plan.stub.spec.ts` |
 | Studio | `studio`, `render/` | 2 / 4, plus 1 render test | `studio/` (dashboard, draft editor) | `studio.spec.ts`, `studio.stub.spec.ts` |
 | Approve | `approve` | 1 / 4 | `approve/` (queue, version preview, settings) | `approve.spec.ts`, `approve.stub.spec.ts` |
@@ -33,7 +34,10 @@ From each design's "not in this sprint" section (the Brand design lists non-goal
 | Brand | Channel connections, website tracking, CRM settings, quiet hours, auto-actions | Their modules add their own onboarding |
 | Research | Screenshots of competitor pages | They need a headless browser on the server. The landing page says "with screenshots saved", so this is a gap against published copy; the saved page text and before and after quotes stand in |
 | Research | Public ad library scan | Meta's API needs an approved app and a verified identity; a link field per competitor stands in |
-| Research | Competitor discovery, market and trend scans, search gap, AI answer visibility | They need a web search provider, a separate decision; the owner names the competitors |
+| Research | Market and trend scans, search gap, AI answer visibility | Each needs its own design. The search gateway they would use exists; competitor discovery is built on it |
+| Research | A schedule for competitor discovery or for opportunity scans | They would spend money without being asked; the owner starts each one |
+| Research | Reading a competitor's Facebook, Instagram or TikTok page | They need a login. A business found only there is described from its search results and its Maps listing |
+| Research | A step and a running count while a discovery run is in progress | The run shows its state; the counts appear when it ends |
 | Research | Review and voice-of-customer scan | Needs consent and PII handling |
 | Research | Social content scan | Platform APIs and policies vary by channel; it belongs with Publish |
 | Research | Email or push alerts | There is no user to notify; new observations show on the Research screen |
@@ -66,6 +70,7 @@ From each design's "not in this sprint" section (the Brand design lists non-goal
 | Real platform connectors | Only `manual` and `mock` exist in `domain/publish/connectors/`; no route creates a mock channel |
 | Inbox | No code |
 | A real model provider key and a live run | `ai/registry.ts` lists one real model (`anthropic:claude-opus-5-5`) and `ai/index.ts` can call it, but `vitest.config.ts` and the e2e server force `AI_MODEL=mock`, so no test makes a paid call and the real path has not been exercised by them |
+| A Serper key and a live search | `search/serper.ts` is tested against a stubbed `fetch` only; `vitest.config.ts` and the e2e server force `SEARCH_PROVIDER=mock`. No query has been sent to Serper, and the two prices in `ai/registry.ts` (`serper:web`, `serper:places`, each USD 1 per 1,000 queries) are placeholders until they are set from the account's rates |
 
 ## 4. Before the server is exposed to the internet or to a second tenant
 
@@ -93,6 +98,21 @@ Every comment of the form `shortcut:` in the code.
 | `server/src/domain/sources/fetch.ts` (`politeWait`) | Per-host pacing is per-process memory, so several API processes each keep their own pace. Move it to a DBOS queue rate limit when fetching runs on more than one process |
 | `server/src/domain/sources/fetch.ts` (`robotsCache`) | `robots.txt` is cached per process for an hour |
 | `server/scripts/e2e-control.ts` | The fetch guard checks addresses, not ports, so every port on 127.0.0.1 opens. Only the throwaway e2e process does this |
+| `server/src/domain/research/opportunities.ts` (`scanOpportunities`) | Two scans started at once each pay for a model call. The same title is stored once, the screen disables the button while a scan runs, and the monthly cap holds. Hold one scan per brand in a run table if it happens outside tests |
+
+Limits of Research that have no `shortcut:` comment:
+
+| Where | Limit |
+|---|---|
+| Every estimate (`estimateDiscovery`, the watch run's `estimateRun`, `estimateOpportunities`) | It prices one model attempt per call. `extract` makes a second attempt when the first answer does not match the schema, so a run can cost more than the bound it showed; every attempt checks the monthly cap, so it never costs more than the cap. The estimate also leaves out the JSON schema `extract` adds to each system prompt and the tags around each block (well under 1% of a call) |
+| The discovery estimate | With the default model and exchange rate it is about NPR 365 for one keyword and NPR 415 for fifteen (30 profile calls at their largest input and output are most of it). A run usually costs a fraction of that, but it cannot be confirmed while less than the estimate is left of the monthly cap |
+| A search query that fails | It is recorded at zero cost. Serper may still have charged a query that timed out on our side after 15 seconds |
+| A cancelled run's cost | `cancelRun` stores the sum of the run's cost rows at that moment. A model call still in flight counts at its reserved estimate; the cost ledger (`/costs`) has the settled amount |
+| Retrying a discovery run | A retried profile step saves its page and its search-results text again; the first copies stay as unused `sources` rows (nothing is paid twice). A retry of an older run, after a newer run has finished, refreshes `new` candidates from the older run's search results |
+| Cancelling a discovery run during its second search round | That round (it runs only after every query failed once) is one step, so it finishes its queries before the run stops |
+| One record per business | A business is matched by its site, else its Maps listing, else its folded name. A business with no site that one run finds on Maps and another finds only by name gets two `new` rows; hidden and watched ones are also matched by name, so they are never described again |
+| A watched candidate whose competitor is deleted | It stays `watched`: the compare table still says Watching and later runs skip it. Whether it should return to the table is the owner's decision |
+| `retryWorkflow` | It forks from the first step that recorded an error. A workflow that throws outside any step would fork after its last step and stay `running`; the discovery and watch workflows throw only inside steps |
 
 ## 6. What a deployment must set
 
@@ -110,7 +130,7 @@ Read from `server/.env.example` and `server/src/config.ts`. With `NODE_ENV=produ
 | `AI_MODEL` | `mock`, or a model in `ai/registry.ts` (default `anthropic:claude-opus-5-5`) | `mock` is refused |
 | `ANTHROPIC_API_KEY` | The provider key | Must set while `AI_MODEL` starts with `anthropic:` |
 | `SEARCH_PROVIDER` | `serper` or `mock` (default `serper`) | `serper`; `mock` is refused |
-| `SERPER_API_KEY` | Serper.dev key for competitor search | Needed to find competitors; without it Find competitors answers 503 |
+| `SERPER_API_KEY` | Serper.dev key for competitor search | Needed to find competitors; without it starting a search answers 503 (suggesting keywords still works). Before the first live run, set the price of each endpoint in `server/src/ai/registry.ts` (`serper:web`, `serper:places`) from the account's rate: a Maps query may cost more credits than a web query |
 | `AI_MONTHLY_CAP_NPR` | The tenant's AI spend cap per calendar month (UTC); default 5000 | Set deliberately |
 | `USD_NPR` | The exchange rate used to price calls; default 155.08 | Set to the current rate |
 | `TENANT_SLUG` | The one tenant (default `xenextech`); `pnpm seed` creates it | Seed it once with `pnpm seed` |

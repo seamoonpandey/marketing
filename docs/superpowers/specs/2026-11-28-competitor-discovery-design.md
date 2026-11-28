@@ -161,3 +161,31 @@ All against the mock search provider and the mock model, so no test pays.
 - How Serper's Maps listing ID and fields map onto the row.
 - Whether search steps run one per keyword or in one step, as long as a retry does not repeat paid queries already made.
 - Polling interval and loading states on the page.
+
+## 10. What changed during the build
+
+Where the code differs from the sections above. None breaks a goal, an anti-goal or an acceptance line.
+
+| Section | The design said | The code does | Why |
+|---|---|---|---|
+| §5.1, §5.2, §5.4 | Paths under `…/research/discovery/` (`runs`, `runs/{runId}/confirm`, `candidates/watch`) | `POST …/research/discovery/keywords`; runs at `…/research/discoveries` and `…/discoveries/{id}` with `/confirm`, `/cancel`, `/retry`; candidates at `…/research/candidates`, `/candidates/watch`, `/candidates/{id}/dismiss` and `/restore` | The names the watch run's routes already use |
+| §5.1 | 6 to 10 suggested keywords | The same, and at least two of them carry no place name; the answer is cleaned, deduplicated by folded text and cut to 10 | The owner asked for searches that reach beyond the local area |
+| §5.2 step 3 | If every query fails the run fails retryable | One more step asks every query again, and the run fails retryable only if they all fail again | A failed query is a step that succeeded, so a retry would only have replayed the failures and left the run running. Failed queries cost nothing |
+| §5.2 step 3 | 10 web results and the Maps listings | At most 10 web results and 20 listings are kept per query | The estimate prices that many |
+| §5.2 step 4 | The model gives each business its site and Maps listing | A site or a listing ID is kept only when one of the business's own results carries it; the group call lists at most 60 businesses (output cap 8,192 tokens) | A snippet could otherwise point a business at another one's key and have it merged or skipped; a longer list was cut off mid-answer |
+| §5.2 step 4, §5.4 | A business with no site matches by its Maps listing ID or its folded name | A hidden or watched business with no site is matched by both, so it is never described again. A `new` one is matched by one key (site, else listing, else name), so a business found once on Maps and once only by name can show as two rows | The skip is what costs money; merging `new` rows across keys was left |
+| §5.2 step 5 | The business's search results go to the model | At most 20 results a business, each cut to 700 characters; the model cites its two sources as `results` and `page`, and the row stores their source IDs | The estimate prices 20 results of 700 characters; mock answers and models handle short names better than UUIDs |
+| §5.2 steps 4 to 6 | A model failure fails the run | A refusal (or an answer that stays off-schema) on one business loses that row and is counted (`failedProfiles`); on the own row it leaves the row empty; on the group call it ends the run `failed_final`, so no retry pays for the same refusal | A retry of a refusal buys the same refusal |
+| §5.2 step 6 | The brand's own row | No own row when the search found nothing, and an empty one (no model call) when the brand has no approved facts | There is nothing to compare it with, or nothing to fill it from |
+| §5.2 step 7 | Counts: queries, failed queries, results, found, profiled, cells dropped | Also `skipped` (already hidden or watched) and `failedProfiles`. The stored rank is the position after tidying, not the model's number | The screen reports both |
+| §5.2 | The estimate is roughly NPR 300 | About NPR 365 for one keyword and NPR 415 for fifteen with the default model and rate | The group call's larger output cap, and 20 results a profile |
+| §5.2 | The estimate is an upper bound | It prices one model attempt per call. A repair attempt adds one more, so a run can pass its bound; every attempt checks the monthly cap. The JSON schema `extract` appends and the tags around each block are not priced | The convention every estimate in the product follows |
+| §5.3 | Channels: every link found | At most 12, the Maps listing first | A page can link to thousands of profiles |
+| §5.4 | Dismiss and restore | Dismiss only from `new`, restore only from `dismissed`; a watch, a hide or a restore that finds the status changed answers 409. A watch request takes the brand's watch-slot lock before it counts free slots | Two requests at once |
+| §6 | The tables' columns | `discovery_runs` also has `own_row`; `discovery_candidates` also has `place_cid` and `place` (the first Maps hit, for the rating). A business's search results are a `sources` row of kind `page`, titled "Search results", with the key `search:<run>:<match key>` for a URI | The screen shows the rating; a quote needs a source to be checked against |
+| §7 | The Search button shows the estimate; the run in progress shows its step and counts | The estimate appears in the cost confirmation after Search is pressed; a running run shows its state only, and its counts when it ends | An estimate needs the run's keywords stored; the shared run panel shows states |
+| §7 | "Watch 2 selected" | "Watch selected", with the free slots beside it | Copy |
+| §7 | Add a Devanagari face | Nothing added | The app's font stack already had Noto Sans Devanagari |
+| §8 | An e2e stub spec | `discover.stub.spec.ts`, and the full flow against the real API in `research.spec.ts` | The owner asked for the whole path proved |
+
+Cancelling a run records what its cost rows hold at that moment. A watched candidate whose competitor is later deleted stays `watched` (see `docs/status.md`, section 5).

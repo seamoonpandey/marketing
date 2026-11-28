@@ -27,7 +27,7 @@ Observations (the change log) ──► Opportunities: a hypothesis and a sugges
 - **Baseline run.** It snapshots every watched page and extracts a competitor profile: positioning, products with prices, current offers and calls to action. Every profile entry carries a quote.
 - **Weekly run** (WF-002). Default Monday 06:00 in the brand's timezone. The owner can pause, resume, run now, retry and cancel it (spec developer rules).
 - **Observations.** Types: `price_change`, `new_offer`, `offer_ended`, `new_product`, `product_removed`, `messaging_change`, `other`. Each holds the competitor, a summary, the before and after quotes with their sources, the URL, the date and a confidence (§16).
-- **Opportunities.** After a run with new observations, the model proposes hypotheses. Each cites at least one observation and gives a suggested action and why it matters. The owner accepts or dismisses each one. Accepted opportunities are what the Plan module will read.
+- **Opportunities** (replaced by [opportunities, second version](2026-11-28-opportunities-design.md)). After a run with new observations, the model proposes hypotheses. Each cites at least one observation and gives a suggested action and why it matters. The owner accepts or dismisses each one. Accepted opportunities are what the Plan module will read.
 - **Battlecard** per competitor: where we differ, proof, likely objections and how to respond. The owner approves a version; regenerating makes a new draft and leaves the approved one in place.
 
 ## 3. Rules
@@ -49,11 +49,13 @@ Observations (the change log) ──► Opportunities: a hypothesis and a sugges
 
 ## 4. Not in this sprint
 
+Two rows of the first version of this table are built since: competitor discovery has its own design, [competitor discovery](2026-11-28-competitor-discovery-design.md), and the Opportunities item in §2 is replaced by [opportunities, second version](2026-11-28-opportunities-design.md).
+
 | Left out | Why | What stands in |
 |---|---|---|
 | Screenshots of competitor pages | They need a headless browser on the server. **The landing page says "with screenshots saved"**, so this is a gap against published copy | The saved page text and the before and after quotes |
 | Public ad library scan | Meta's API needs an approved app and a verified identity | A link field per competitor, opened by hand |
-| Competitor discovery, market and trend scans (WF-003), search gap, AI answer visibility | They need a web search provider, which is a separate decision | The owner names the competitors |
+| Market and trend scans (WF-003), search gap, AI answer visibility | Each needs its own design; the search gateway they would use exists (`server/src/search`) | Nothing yet |
 | Review and voice-of-customer scan | It needs consent and PII handling (R05) | Nothing yet |
 | Social content scan | Platform APIs and policies vary by channel; this belongs with Publish | Nothing yet |
 | Email or push alerts | There is no user to notify until login exists | New observations show on the Research screen |

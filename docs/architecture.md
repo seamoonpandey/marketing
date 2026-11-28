@@ -1,20 +1,20 @@
 # Architecture
 
-Prachaar is a marketing team that runs on AI, for brands in Nepal. The owner states what is true about a brand once and approves each fact. Prachaar watches competitors, plans a week of content, writes and designs the posts from approved facts only, asks the owner to approve each post, and then sends it or hands it over to post by hand. Every step shows what it will cost before it spends, and nothing reaches the public without the owner's approval of the exact content. `docs/structure.md` is the code layout; `docs/status.md` is what is built and what is not.
+Prachaar is a marketing team that runs on AI, for brands in Nepal. The owner states what is true about a brand once and approves each fact. Prachaar finds and watches competitors, plans a week of content, writes and designs the posts from approved facts only, asks the owner to approve each post, and then sends it or hands it over to post by hand. Every step shows what it will cost before it spends, and nothing reaches the public without the owner's approval of the exact content. `docs/structure.md` is the code layout; `docs/status.md` is what is built and what is not.
 
 ## The modules, in the order work flows
 
 | # | Module | Takes in | Puts out | Design |
 |---|---|---|---|---|
 | 1 | Brand (`knowledge`) | A website, uploaded files, typed entries | Approved facts with source and quote, palette, assets, readiness score | [brand onboarding](superpowers/specs/2026-11-27-brand-onboarding-design.md) |
-| 2 | Research | The owner's list of competitors and their pages; approved facts | Observations of changes, competitor profiles, opportunities, battlecards | [competitor research](superpowers/specs/2026-11-27-competitor-research-design.md) |
+| 2 | Research | The owner's search keywords, web and Maps search results, the competitors' public pages; approved facts | Businesses found and compared side by side (each cell quoted or marked inferred), the competitors the owner picked to watch, observations of changes, competitor profiles, ranked opportunities with the evidence each rests on, battlecards | [competitor research](superpowers/specs/2026-11-27-competitor-research-design.md), [competitor discovery](superpowers/specs/2026-11-28-competitor-discovery-design.md), [opportunities](superpowers/specs/2026-11-28-opportunities-design.md) |
 | 3 | Plan | Approved facts, opportunities, the owner's goals | Campaign briefs and an approved week plan of items (day, channel, format) | [plan](superpowers/specs/2026-11-27-plan-design.md) |
 | 4 | Studio | An approved plan item and the facts it may cite | A draft with copy, designs and video, its checks, a ready version | [studio](superpowers/specs/2026-11-27-studio-design.md) |
 | 5 | Approve | A ready draft version | An approval bound to that version's payload hash, with an expiry, or a rejection | [approve](superpowers/specs/2026-11-27-approve-design.md) |
 | 6 | Publish | An approved draft and a channel | A scheduled job, then a published post with its link, or a manual package | [publish](superpowers/specs/2026-11-27-publish-design.md) |
 | | Home | Every module's summary | What needs the owner now, ranked; this month's cost | none (code: `server/src/domain/home/`) |
 
-Base services under every module: brands and competitors, sources (fetching and storing pages and files), costs, audit.
+Base services under every module: brands and competitors, sources (fetching and storing pages and files), costs, audit. Research also uses the search gateway (`server/src/search`): web and Maps queries through Serper, paid per query.
 
 ```
 website / files / typed entries
@@ -61,6 +61,8 @@ website / files / typed entries
 The product depends on these. Each is enforced in code and covered by tests.
 
 - **Facts carry sources and quotes.** A fact shown as sourced has a quote that the quote check found in its source. Text inside a source is data: the model is given no tools, so it cannot act on it.
+- **What a competitor or a search result wrote is data.** It reaches the model only inside a tagged block that it cannot close (`dataBlock`, `dataJson` in `server/src/ai`), under a system prompt that says to ignore instructions inside it. It is cleaned before it is stored (`cleanCut`), a link is kept and shown only when it is http or https, and pages are fetched only through the guarded fetcher.
+- **A discovered business says where each statement comes from.** A cell is quoted (the quote check found it in the business's page or its search results) or inferred (a reason, a confidence and the sources or approved facts it rests on); anything else is dropped. A site or Maps listing counts as a business's own only when one of its own search results carries it. An opportunity is kept only when it cites competitor evidence the server gave the model, and a claim about the brand's strength only with an approved fact.
 - **Only approved facts are used.** Plan, Studio, Approve and Publish read facts through `approvedFacts`. Conflicting facts are blocked until the owner resolves them.
 - **Numbers in copy come from cited facts.** The check does not depend on the model labelling its own claims honestly.
 - **Approval binds to a payload hash and lapses by itself.** See steps 7 and 8. Approvals are append-only rows; the state is derived on every read.
@@ -71,9 +73,12 @@ The product depends on these. Each is enforced in code and covered by tests.
 
 - Every model call goes through `extract` in `server/src/ai`, which refuses to run when the call's worst-case cost (input plus its output cap, at the model's list price) exceeds what is left of the tenant's monthly cap (`AI_MONTHLY_CAP_NPR`, calendar month in UTC).
 - The check and a cost row reserving the estimate commit together under a tenant advisory lock, so concurrent calls cannot spend the same remainder. The row is then settled with the real token counts. Every call writes a row, failed or not, with the rates it used.
+- A search query is paid too. Each goes through `search` in `server/src/search`, which checks the same cap under the same lock and writes its own cost row, priced per query in `ai/registry.ts`; a failed query is recorded at zero.
 - The owner sees the estimate and the remaining cap before a paid run starts (`CostConfirm`); a run that would exceed the cap cannot be confirmed. Rendering is local and costs no model money.
+- A discovery run searches nothing and calls no model until the owner confirms its estimate, an upper bound: two queries a keyword, one call to group the results, at most 30 calls to describe a business (20 search results of 700 characters and 12,000 characters of its home page each) and one for the brand's own row. Suggesting keywords and "Find opportunities" are single calls the owner starts with a click, with no confirm step; the cap applies.
+- An estimate prices one model attempt per call. A second attempt (when an answer does not match its schema) can take a run past the bound it showed, never past the cap.
 - A retried run forks from its first failed step, so a completed paid step is not paid for twice.
-- Scheduled competitor checks have their own per-run ceiling, `RESEARCH_RUN_CAP_NPR`, and pause a target after repeated failures. Nothing else spends on a schedule: the owner starts each draft and each import.
+- Scheduled competitor checks have their own per-run ceiling, `RESEARCH_RUN_CAP_NPR`, and pause a target after repeated failures. Nothing else spends on a schedule: the owner starts each draft, each import, each search for competitors and each scan for opportunities.
 - `/api/brands/{brandId}/costs` lists the month's spend by run; Home shows it by module.
 
 ## How brands are isolated

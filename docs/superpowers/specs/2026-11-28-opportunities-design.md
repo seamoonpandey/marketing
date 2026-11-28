@@ -118,3 +118,17 @@ All with the mock model.
 - Restore moves a dismissed opportunity to `new`; restoring an accepted one answers 409.
 - An instruction inside a competitor's quote has no effect: the call has no tools and the quote sits inside a data block.
 - Another brand's opportunity cannot be scanned into, restored or read (isolation test).
+
+## 7. What changed during the build
+
+Where the code differs from the sections above. None breaks a goal, an anti-goal or an acceptance line.
+
+| Section | The design said | The code does | Why |
+|---|---|---|---|
+| §3.1 | The model is given the evidence items | Items are grouped under their label, so a competitor's name is sent once; row IDs and source IDs stay on the server | Fewer tokens, and the model has nothing to cite but the references |
+| §3.2 | A title already used is dropped | The check runs again under a per-brand lock when the proposals are stored, against every title the brand has | Two calls at once could otherwise both store the same title |
+| §3.3 | "Find opportunities" is one call | Two scans started at once each pay for a call (a `shortcut:` comment marks it). The screen disables the button while a scan runs | Closing it needs a scan run table, which is a contract change |
+| §3.3 | The watch run's opportunities call | `generateOpportunities(brandId, runId)` reads the approved facts itself; the watch run no longer passes them | One read of the facts |
+| §3.3 | The scan answers `{ created, dropped }` | It also writes an audit event, `research.opportunity.scan`, with both counts. Its opportunities carry a run ID of their own, not a watch run's | The owner's action is recorded |
+| §4 | The read path builds old rows' evidence | The list does, and so do the answers to accept, dismiss and restore | The screen shows the answered row |
+| §6 | Text inside a quote sits in a data block | Every `</` inside a block is written `<\/`, so no quote, name or stored title can close its block | A closing tag in a competitor's page ended the block |
