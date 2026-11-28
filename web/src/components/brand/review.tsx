@@ -378,7 +378,9 @@ function CompetitorsPanel({ brandId }: { brandId: string }) {
               ))}
             </ul>
           ) : (
-            <StateBlock state="empty" size="inline" title="No competitors yet">Add the brands your customers compare you with.</StateBlock>
+            <StateBlock state="empty" size="inline" title="No competitors yet" action={<Link href={`/app/b/${brandId}/research/discover`} className="btn btn-primary">Find competitors</Link>}>
+              Let Prachaar search for them, or add the brands your customers compare you with.
+            </StateBlock>
           )
         }
       </Async>

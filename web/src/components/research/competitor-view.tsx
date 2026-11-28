@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Async, BackLink, PageHeader, SourceQuote, StateBlock, useBrandId } from '@/components/app';
 import { hasStatus } from '@/lib/api/client';
+import { httpUrl } from '@/lib/url';
 import { BattlecardSection } from './battlecard';
 import { useCompetitors, useObservations, useProfile } from './lib';
 import { ObservationCard } from './observation-card';
@@ -33,8 +34,8 @@ export function CompetitorView() {
               title={c.name}
               description={<>{c.kind[0]!.toUpperCase() + c.kind.slice(1)} competitor{c.site ? <> · <span className="break-all">{c.site.replace(/^https?:\/\//, '')}</span></> : null}</>}
               actions={
-                c.adLibraryUrl ? (
-                  <a href={c.adLibraryUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+                httpUrl(c.adLibraryUrl) ? (
+                  <a href={httpUrl(c.adLibraryUrl)!}target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
                     Ad library<ExternalLink className="size-3.5" aria-hidden /><span className="sr-only"> (opens in a new tab)</span>
                   </a>
                 ) : undefined

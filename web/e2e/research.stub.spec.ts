@@ -14,14 +14,19 @@ const obs = [
   { id: 'o-1', competitorId: C, competitorName: 'Rival Shawls', runId: 'run-1', type: 'price_change', summary: 'Pashmina shawl price cut from NPR 4,500 to NPR 3,900', before: { quote: 'Pashmina shawl NPR 4,500', sourceId: 's-0' }, after: { quote: 'Pashmina shawl NPR 3,900', sourceId: 's-1' }, url: 'https://rival.example/pricing', observedAt: NOW, confidence: 'high' },
   { id: 'o-2', competitorId: C, competitorName: 'Rival Shawls', runId: 'run-1', type: 'new_offer', summary: 'Dashain offer on the home page', before: null, after: { quote: 'दशैं विशेष छुट — सुपर पश्मिना सल रु ३,९००', sourceId: 's-2' }, url: 'https://rival.example/', observedAt: NOW, confidence: 'medium' },
 ];
-const opp = { id: 'op-1', runId: 'run-1', title: 'Answer the shawl price cut', hypothesis: 'Rival’s cut will pull price-led buyers.', suggestedAction: 'Lead the next post with the hand-woven proof.', whyItMatters: 'Price is the first thing shoppers compare.', observationIds: ['o-1'], confidence: 'medium', status: 'new', decidedAt: null, createdAt: NOW };
+const opp = { id: 'op-1', runId: 'run-1', title: 'Answer the shawl price cut', hypothesis: 'Rival’s cut will pull price-led buyers.', suggestedAction: 'Lead the next post with the hand-woven proof.', whyItMatters: 'Price is the first thing shoppers compare.', observationIds: ['o-1'], kind: 'change', impact: 'medium', effort: 'low', evidence: [{ type: 'observation', id: 'o-1', label: 'Rival Shawls', detail: 'Pashmina shawl price cut from NPR 4,500 to NPR 3,900' }], confidence: 'medium', status: 'new', decidedAt: null, createdAt: NOW };
+const gap = { ...opp, id: 'op-2', kind: 'gap', impact: 'high', effort: 'low', title: 'दफ्तरमा डेलिभरी दिनुहोस्', observationIds: [], evidence: [
+  { type: 'candidate', id: 'cand-1', label: 'Momo Hut', detail: 'Sells to offices (inferred)' },
+  { type: 'candidate', id: 'cand-2', label: 'Bhojan Ghar', detail: 'Office lunch', quote: 'दिउँसो १२:३० सम्म अफिसमा लन्च डेलिभरी', sourceId: 's-9' },
+  { type: 'fact', id: 'f-1', label: 'Your brand', detail: 'delivery area: Kathmandu' },
+] };
 const statement = (text: string) => ({ text, factIds: ['f-1'], observationIds: ['o-1'] });
 const card = (o: object = {}) => ({ id: 'bc-2', competitorId: C, version: 2, status: 'draft', body: { differ: [statement('Hand-woven in Patan')], proof: [statement('Fifteen years of weaving')], objections: [statement('Rival is cheaper')], responses: [statement('Ours lasts a generation')] }, leftOut: [{ text: 'Ours is the softest shawl in Nepal', reason: 'no approved fact' }], approvedAt: null, createdAt: NOW, ...o });
 
 type World = Record<string, any> & { calls: string[] };
 
 async function stub(page: Page, init: Partial<World> = {}) {
-  const w: World = { competitors: [competitor], targets: [target()], runs: [run()], observations: obs, opportunities: [opp], battlecard: { approved: null, draft: null }, suggest: ['https://rival.example/offers'], calls: [], ...init };
+  const w: World = { competitors: [competitor], targets: [target()], runs: [run()], observations: obs, opportunities: [opp], battlecard: { approved: null, draft: null }, suggest: ['https://rival.example/offers'], candidates: [], calls: [], gap, ...init };
   const costs = { month: '2026-11', total: money('12.5'), cap: money('1000'), remaining: money('987.5'), runs: [{ runType: 'research', runId: 'run-1', calls: 1, failedCalls: 0, inputTokens: 1, outputTokens: 1, cost: money('12.5'), lastAt: NOW }] };
   await page.route('**/api/**', async (route) => {
     const req = route.request();
@@ -58,6 +63,10 @@ async function stub(page: Page, init: Partial<World> = {}) {
     if (path === '/research/schedule') return send({ enabled: true, weekday: 1, hour: 6, lastRunAt: NOW });
     if (path === '/research/observations') return send(w.observations);
     if (path === `/research/competitors/${C}/profile`) return send({ error: { code: 'not_found', message: 'No profile' } }, 404);
+    if (path === '/sources') return send([{ id: 's-9', brandId: B, kind: 'page', uri: 'https://bhojan.example/lunch', mime: 'text/html', checksum: 'x', capturedAt: NOW, trust: 'external', meta: { title: 'Bhojan lunch' }, hasText: true, downloadUrl: '' }]);
+    if (path === '/research/candidates') return send(w.candidates);
+    if (path === '/research/opportunities/scan') { w.opportunities.push(w.gap); return send({ created: [w.gap], dropped: 1 }); }
+    if ((x = path.match(/^\/research\/opportunities\/([\w-]+)\/restore$/))) { const o = w.opportunities.find((o: any) => o.id === x![1]); o.status = 'new'; return send(o); }
     if (path === '/research/opportunities') return send(w.opportunities.filter((o: any) => o.status === new URL(req.url()).searchParams.get('status')));
     if ((x = path.match(/^\/research\/opportunities\/([\w-]+)\/(accept|dismiss)$/))) { const o = w.opportunities.find((o: any) => o.id === x![1]); o.status = x[2] === 'accept' ? 'accepted' : 'dismissed'; return send(o); }
     if (path === `/research/competitors/${C}/battlecard`) return send(w.battlecard);
@@ -90,11 +99,12 @@ test('overview shows a price change with both quotes, and a Devanagari quote unt
   await expect(page.getByText('Research this month')).toBeVisible();
 });
 
-test('a brand with no competitors gets an empty state linking to the brand review', async ({ page }) => {
+test('a brand with no competitors is sent to Find competitors, or to add one by hand', async ({ page }) => {
   await stub(page, { competitors: [] });
   await page.goto(`/app/b/${B}/research`);
   await expect(page.locator('[data-state="empty"]')).toContainText('No competitors to watch yet');
-  await expect(page.getByRole('link', { name: 'Review the brand' })).toHaveAttribute('href', `/app/b/${B}/brand/review`);
+  await expect(page.locator('[data-state="empty"]').getByRole('link', { name: 'Find competitors' })).toHaveAttribute('href', `/app/b/${B}/research/discover`);
+  await expect(page.getByRole('link', { name: 'Add one by hand' })).toHaveAttribute('href', `/app/b/${B}/brand/review`);
 });
 
 test('add a watched page, then pause it', async ({ page }) => {
@@ -135,6 +145,59 @@ test('accept an opportunity', async ({ page }) => {
   expect(w.calls).toContain('POST /research/opportunities/op-1/accept');
   await page.getByRole('button', { name: 'Accepted' }).click();
   await expect(page.getByRole('article', { name: 'Answer the shawl price cut' })).toBeVisible();
+});
+
+test('Find opportunities adds ranked cards with their evidence', async ({ page }) => {
+  const w = await stub(page, { opportunities: [] });
+  await page.goto(`/app/b/${B}/research/opportunities`);
+  await page.getByRole('button', { name: 'Find opportunities' }).click();
+  await expect(page.getByText('1 new opportunity')).toBeVisible();
+  expect(w.calls).toContain('POST /research/opportunities/scan');
+  const o = page.getByRole('article', { name: 'दफ्तरमा डेलिभरी दिनुहोस्' });
+  await expect(o).toContainText('Gap');
+  await expect(o).toContainText('High impact');
+  await expect(o).toContainText('Low effort');
+  await expect(o).toContainText('Momo Hut');
+  await expect(o).toContainText('Your brand');
+  await expect(o).toContainText('delivery area: Kathmandu');
+  await expect(o.getByRole('link', { name: /Bhojan lunch/ })).toHaveAttribute('href', 'https://bhojan.example/lunch');
+  await expect(page.getByRole('button', { name: /^New 1/ })).toBeVisible();
+});
+
+test('restores a dismissed opportunity and links an accepted one to Plan', async ({ page }) => {
+  const w = await stub(page, { opportunities: [{ ...opp, status: 'dismissed' }, { ...gap, status: 'accepted' }] });
+  await page.goto(`/app/b/${B}/research/opportunities`);
+  await page.getByRole('button', { name: /^Accepted 1/ }).click();
+  await expect(page.getByRole('link', { name: /Plan a campaign/ })).toHaveAttribute('href', `/app/b/${B}/plan`);
+  await page.getByRole('button', { name: /^Dismissed 1/ }).click();
+  await page.getByRole('button', { name: /Restore/ }).click();
+  expect(w.calls).toContain('POST /research/opportunities/op-1/restore');
+  await page.getByRole('button', { name: /^New 1/ }).click();
+  await expect(page.getByRole('article', { name: 'Answer the shawl price cut' })).toBeVisible();
+});
+
+test('an empty brand is sent to Find competitors from Research and Opportunities (the Brand competitors panel is in brand.stub.spec.ts)', async ({ page }) => {
+  await stub(page, { competitors: [], opportunities: [] });
+  await page.goto(`/app/b/${B}/research/opportunities`);
+  await expect(page.locator('[data-state="empty"]').getByRole('link', { name: 'Find competitors' })).toHaveAttribute('href', `/app/b/${B}/research/discover`);
+  await page.goto(`/app/b/${B}/research`);
+  await expect(page.locator('[data-state="empty"]').getByRole('link', { name: 'Find competitors' })).toHaveAttribute('href', `/app/b/${B}/research/discover`);
+});
+
+test('a javascript: channel is not rendered as a link', async ({ page }) => {
+  await stub(page, { competitors: [{ ...competitor, adLibraryUrl: 'javascript:alert(1)' }], targets: [target({ url: 'javascript:alert(2)' })] });
+  await page.goto(`/app/b/${B}/research/competitors/${C}`);
+  await expect(page.getByRole('heading', { level: 1, name: 'Rival Shawls' })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Watched pages' })).toContainText('javascript:alert(2)');
+  await expect(page.locator('a[href^="javascript:"]')).toHaveCount(0);
+});
+
+test('Opportunities does not scroll sideways at 375px with Devanagari evidence', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await stub(page, { opportunities: [{ ...gap, hypothesis: 'अत्यन्तलामोशब्दअत्यन्तलामोशब्दअत्यन्तलामोशब्दअत्यन्तलामोशब्द' }] });
+  await page.goto(`/app/b/${B}/research/opportunities`);
+  await expect(page.getByRole('article', { name: 'दफ्तरमा डेलिभरी दिनुहोस्' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
 });
 
 test('a battlecard lists what was left out, and the draft can be approved', async ({ page }) => {
