@@ -1,10 +1,15 @@
-/** A model the gateway may call, with its list price in USD per million tokens (decimal strings). */
-type ModelEntry = { provider: string; modelId: string; inUsdPerM: string; outUsdPerM: string };
+/**
+ * A model the gateway may call, with its list price in USD per million tokens (decimal strings).
+ * `thinkingTokens` is for a model that thinks before it answers: the provider counts that thinking against
+ * the output cap, so the gateway adds this many tokens to every call's cap (ai/index.ts).
+ */
+type ModelEntry = { provider: string; modelId: string; inUsdPerM: string; outUsdPerM: string; thinkingTokens?: number };
 
 const models: Record<string, ModelEntry> = {
   'anthropic:claude-opus-5-5': { provider: 'anthropic', modelId: 'claude-opus-5-5', inUsdPerM: '4', outUsdPerM: '20' },
   // Through OpenRouter's Anthropic-compatible endpoint, with OPENROUTER_API_KEY. The free model is for local testing.
-  'openrouter:nvidia/nemotron-3.5-super-vl:free': { provider: 'openrouter', modelId: 'nvidia/nemotron-3.5-super-vl:free', inUsdPerM: '0', outUsdPerM: '0' },
+  // It thinks first: a 10-keyword answer of 48 tokens took 827 of thinking, and a cap of 512 was spent before any answer.
+  'openrouter:nvidia/nemotron-3.5-super-vl:free': { provider: 'openrouter', modelId: 'nvidia/nemotron-3.5-super-vl:free', inUsdPerM: '0', outUsdPerM: '0', thinkingTokens: 8192 },
   'openrouter:anthropic/claude-opus-5.5': { provider: 'openrouter', modelId: 'anthropic/claude-opus-5.5', inUsdPerM: '4', outUsdPerM: '20' },
   // AI_MODEL=mock: answers from ai/mock.ts, priced like the default model so budget checks behave the same.
   mock: { provider: 'mock', modelId: 'mock', inUsdPerM: '4', outUsdPerM: '20' },

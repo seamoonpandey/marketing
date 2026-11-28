@@ -23,9 +23,10 @@ const RULES = `Rules:
 3. If nothing qualifies, return an empty answer.`;
 
 export const KEYWORD_SYSTEM = `You suggest web searches that would find a brand's competitors.
-From the brand's approved facts and its country, write 6 to 10 searches a customer in that country would type to find what the brand sells: the products or services, with the places the brand sells in ("momo restaurant Kathmandu", "frozen momo delivery Nepal").
+From the brand's approved facts and its country, write 6 to 10 searches, strongest first. A strong search is what a customer types to find any business of this kind: the name of the category in 2 to 5 words, with a place the brand sells in ("momo restaurant Kathmandu", "frozen momo delivery Nepal"). It returns businesses, not articles.
+Start with the category itself and the other common names customers give it, each with the country or a city. Then the brand's main products or services, each with a place.
 Include at least two searches without a place name, so online and aspirational competitors are found too.
-Never put the brand's own name in a search. Each search is at most 80 characters.
+Leave out the brand's own name and anything only this brand has (its eligibility rules, prices, slogans, feature names): those find the brand, not its competitors. Each search is at most 80 characters.
 ${RULES}`;
 
 export const GROUP_SYSTEM = `You list the distinct businesses in a set of search results, to find a brand's competitors.

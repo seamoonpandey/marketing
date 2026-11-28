@@ -5,7 +5,7 @@ const REFUSAL = Symbol('refusal');
 const answers: unknown[] = [];
 
 type PromptPart = { type: string; text?: string; mediaType?: string; data?: unknown; filename?: string };
-type CallOptions = { prompt: { role: string; content: string | PromptPart[] }[]; tools?: unknown[] };
+type CallOptions = { prompt: { role: string; content: string | PromptPart[] }[]; tools?: unknown[]; maxOutputTokens?: number };
 
 /**
  * The model behind AI_MODEL=mock. Each call answers with the next queued object (sent as JSON; a
@@ -16,8 +16,8 @@ export const mockAi = {
   queue(...objects: unknown[]): void {
     answers.push(...objects);
   },
-  /** Every call the model received: its system prompt, the user parts, and any tools. */
-  calls: [] as { system: string; parts: AiPart[]; tools?: unknown[] }[],
+  /** Every call the model received: its system prompt, the user parts, its output cap, and any tools. */
+  calls: [] as { system: string; parts: AiPart[]; maxOutputTokens?: number; tools?: unknown[] }[],
   /** Queue this to make the model refuse (finish reason content-filter). */
   refusal: REFUSAL as unknown,
   reset(): void {
@@ -41,7 +41,7 @@ export const mockModel = {
           ? { type: 'text', text: p.text! }
           : { type: 'file', mediaType: p.mediaType!, data: p.data as Uint8Array, ...(p.filename ? { filename: p.filename } : {}) },
       );
-    mockAi.calls.push({ system, parts, ...(options.tools ? { tools: options.tools } : {}) });
+    mockAi.calls.push({ system, parts, maxOutputTokens: options.maxOutputTokens, ...(options.tools ? { tools: options.tools } : {}) });
     if (!answers.length) throw new Error('mockAi: no answer queued for this call');
     const answer = answers.shift();
     const text = answer === REFUSAL ? '' : typeof answer === 'string' ? answer : JSON.stringify(answer);

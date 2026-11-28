@@ -76,7 +76,9 @@ export async function extract<T>(o: {
   maxOutputTokens?: number;
 }): Promise<{ object: T; cost: Money }> {
   const model = config.AI_MODEL;
-  const maxOutputTokens = o.maxOutputTokens ?? DEFAULT_MAX_OUTPUT;
+  // A model that thinks first spends its thinking from the same cap, so a small cap can be used up before the answer starts.
+  // shortcut: the estimates modules compute for a run (estimateCost with their own caps) leave this allowance out; add it there when a paid model gets thinkingTokens.
+  const maxOutputTokens = (o.maxOutputTokens ?? DEFAULT_MAX_OUTPUT) + (modelEntry(model).thinkingTokens ?? 0);
   const jsonSchema = JSON.stringify(z.toJSONSchema(o.schema, { unrepresentable: 'any' }));
   const system = `${o.system}\n\nAnswer with one JSON object and nothing else. It must match this JSON Schema:\n${jsonSchema}`;
   const messages: ModelMessage[] = [

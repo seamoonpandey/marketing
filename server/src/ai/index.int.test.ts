@@ -4,6 +4,7 @@ import { testDb, type TestDb } from '../../test/helpers.ts';
 import { BudgetError } from '../http/errors.ts';
 import { AiError, extract, mockAi } from './index.ts';
 import { mockModel } from './mock.ts';
+import { modelEntry } from './registry.ts';
 
 let t: TestDb;
 let brand: string;
@@ -106,5 +107,22 @@ describe('extract', () => {
     mockAi.queue({ name: 'Himal', founded: 1998 });
     await run();
     expect(mockAi.calls[0]!.tools ?? []).toEqual([]);
+  });
+
+  it('gives a model that thinks first room for its thinking on top of the answer cap', async () => {
+    const answer = { name: 'Himal', founded: 1998 };
+    mockAi.queue(answer, answer);
+    const capped = () => extract({ brandId: brand, runType: 'test', runId: 'run-1', system: 'Extract the brand.', parts: [], schema, maxOutputTokens: 512 });
+    await capped();
+    expect(mockAi.calls[0]!.maxOutputTokens).toBe(512);
+
+    const entry = modelEntry('mock');
+    entry.thinkingTokens = 1000;
+    try {
+      await capped();
+    } finally {
+      delete entry.thinkingTokens;
+    }
+    expect(mockAi.calls[1]!.maxOutputTokens).toBe(1512);
   });
 });

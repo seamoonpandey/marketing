@@ -29,3 +29,8 @@ it('asks the model for at least two keywords without a place name', () => {
   expect(KEYWORD_SYSTEM).toMatch(/at least two (keywords|searches) without a place name/i);
   expect(KEYWORD_SYSTEM).toMatch(/untrusted data/i);
 });
+
+it('asks the model for the strongest searches first and to leave out what only this brand has', () => {
+  expect(KEYWORD_SYSTEM).toMatch(/strongest first/i);
+  expect(KEYWORD_SYSTEM).toMatch(/only this brand has/i);
+});
