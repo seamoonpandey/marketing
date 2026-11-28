@@ -83,6 +83,8 @@ export function tidyBusinesses(
       resultIds: [...new Set([...prev.resultIds, ...b.resultIds])], channels: [...new Set([...prev.channels, ...b.channels])],
     } : { ...b, channels: [...new Set(channels)] });
   }
-  const kept = [...merged.entries()].filter(([key]) => !o.skipKeys.has(key)).map(([, b]) => b);
+  // A business with no site is also skipped when its folded name is a skipped key (a hidden one or competitor with no site).
+  const skip = (key: string, b: Business) => o.skipKeys.has(key) || (!b.site && o.skipKeys.has(matchKey({ site: null, name: b.name })));
+  const kept = [...merged.entries()].filter(([key, b]) => !skip(key, b)).map(([, b]) => b);
   return { kept: kept.sort((a, b) => a.rank - b.rank).slice(0, MAX_CANDIDATES), skipped: merged.size - kept.length };
 }

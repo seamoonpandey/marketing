@@ -77,12 +77,14 @@ export async function saveResults(brandId: string, runId: string, results: Searc
 export async function groupResults(brandId: string, runId: string, results: SearchResult[]): Promise<{ businesses: Business[]; skipped: number }> {
   const { ownSite, skipKeys } = await withBrand(brandId, async (tx) => {
     const held = await tx
-      .select({ key: discoveryCandidates.matchKey }).from(discoveryCandidates)
+      .select({ key: discoveryCandidates.matchKey, name: discoveryCandidates.name, site: discoveryCandidates.site }).from(discoveryCandidates)
       .where(and(eq(discoveryCandidates.brandId, brandId), inArray(discoveryCandidates.status, ['dismissed', 'watched'])));
     const competitors = await listCompetitors(tx, brandId);
+    // One with no site also matches by its folded name (spec §5.4), so a business keyed by a Maps listing finds it.
+    const nameKey = (x: { site: string | null; name: string }) => (x.site ? [] : [matchKey({ site: null, name: x.name })]);
     return {
       ownSite: (await getBrand(tx, brandId)).website,
-      skipKeys: new Set([...held.map((h) => h.key), ...competitors.map((c) => matchKey({ site: c.site, name: c.name }))]),
+      skipKeys: new Set([...held.flatMap((h) => [h.key, ...nameKey(h)]), ...competitors.map((c) => matchKey({ site: c.site, name: c.name }))]),
     };
   });
   const { object } = await extract({

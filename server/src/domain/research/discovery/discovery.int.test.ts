@@ -409,6 +409,22 @@ describe('what a run finds', () => {
     expect(await candidates(brand)).toEqual([]);
   });
 
+  it('skips a business with no site whose name matches a hidden candidate or a competitor with no site', async () => {
+    const brand = await factBrand();
+    await withBrand(brand, (tx) => createCompetitor(tx, brand, { name: 'Momo Cart' }));
+    await t.adminQuery(
+      `insert into discovery_candidates (tenant_id, brand_id, match_key, name, rank, status, first_run_id, last_run_id)
+       values ($1, $2, 'cid:5', 'Dumpling Den', 1, 'dismissed', gen_random_uuid(), gen_random_uuid())`,
+      [t.tenantId, brand],
+    );
+    // Found again under another key: the competitor on its Maps listing, the hidden one from a web result alone.
+    mockSearch.set('web', 'momo patan', [hit('Dumpling Den', null)]);
+    mockSearch.set('places', 'momo patan', [{ ...hit('Momo Cart', null), place: { address: null, category: null, rating: null, ratingCount: null, phone: null, cid: '9' } }]);
+    const run = await discover(brand, ['momo patan'], group({ name: 'Dumpling Den', resultIds: ['r1'] }, { name: 'MOMO cart', placeCid: '9', resultIds: ['r2'] }), {});
+    expect(run.counts).toMatchObject({ found: 0, skipped: 2, profiled: 0 });
+    expect(profileCalls()).toEqual([]);
+  });
+
   it('keeps one candidate when two runs find the same business, updated by the second', async () => {
     const brand = await factBrand();
     const fact = await factOf(brand);
