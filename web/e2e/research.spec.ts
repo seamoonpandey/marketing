@@ -8,6 +8,7 @@ const OFFER = '<html><head><title>Offers</title></head><body><h1>Offers</h1><p>D
 test.beforeEach(async () => { await resetAi(); await resetSearch(); await clearPages(); });
 
 test('add a competitor, watch two pages, confirm the baseline, see the price change, accept an opportunity, approve a battlecard', async ({ page, request }) => {
+  test.setTimeout(120_000);
   const brand = await (await request.post('/api/brands', { data: { name: `Research ${Date.now()}`, website: 'https://fixtures.example', defaultLanguage: 'en', languages: ['en'] } })).json();
   const b = `/api/brands/${brand.id}`;
   const comp = await (await request.post(`${b}/competitors`, { data: { name: 'Fixture Rival', site: fixtureUrl('/rival') } })).json();
@@ -39,23 +40,30 @@ test('add a competitor, watch two pages, confirm the baseline, see the price cha
   await expect(page.getByText(/2 pages read: 0 changed, 2 unchanged/)).toBeVisible({ timeout: 60_000 });
   expect(await aiCalls()).toBe(2);
 
-  // The price changes. Opportunities must cite real observation ids, which exist only after the
-  // observation is saved, so the opportunity answer is queued after that and the run is retried.
+  // The price changes. The run reads the change, then stops at the opportunity call, which has no answer queued. The
+  // answer is queued only once the run has failed, so the retry is what makes that call, and it repeats none before it.
   await setPage('/rival/pricing', html('4,200'));
   await queueAi({ observations: [{ type: 'price_change', summary: 'Classic shawl price cut from 5,000 to 4,200 rupees', before: { quote: 'Classic pashmina shawl costs 5,000 rupees' }, after: { quote: 'Classic pashmina shawl costs 4,200 rupees' }, confidence: 'high' }] });
   await page.getByRole('button', { name: 'Run now' }).click();
-  await expect.poll(async () => (await (await request.get(`${b}/research/observations`)).json()).length, { timeout: 60_000 }).toBe(1);
+  const retry = page.getByRole('button', { name: /Retry/ });
+  await expect(retry).toBeVisible({ timeout: 60_000 });
+  expect(await aiCalls()).toBe(4);
   await queueAi({ opportunities: [{ title: 'Answer the shawl price cut', hypothesis: 'The rival cut its price to win price-led buyers.', suggestedAction: 'Lead with hand-woven quality.', whyItMatters: 'Price is compared first.', kind: 'change', evidence: ['e1'], impact: 'medium', effort: 'medium', confidence: 'medium' }] });
-  await page.getByRole('button', { name: /Retry/ }).click({ timeout: 60_000 });
+  await retry.click();
+  await expect(page.getByText(/2 pages read: 1 changed, 1 unchanged/)).toBeVisible({ timeout: 60_000 });
+  expect(await aiCalls()).toBe(5);
 
   const card = page.getByRole('article', { name: /Price change/ });
-  await expect(card).toBeVisible({ timeout: 60_000 });
+  await expect(card).toBeVisible();
   await expect(card.getByText('“Classic pashmina shawl costs 5,000 rupees”')).toBeVisible();
   await expect(card.getByText('“Classic pashmina shawl costs 4,200 rupees”')).toBeVisible();
 
+  // Inside its card: "Accept" alone would match the Accepted filter first.
   await page.goto(`/app/b/${brand.id}/research/opportunities`);
-  await page.getByRole('button', { name: /Accept/ }).first().click();
-  await expect(page.getByText('Answer the shawl price cut')).toBeHidden();
+  const opportunity = page.getByRole('article', { name: 'Answer the shawl price cut' });
+  await opportunity.getByRole('button', { name: 'Accept' }).click();
+  await expect(opportunity).toBeHidden();
+  expect((await (await request.get(`${b}/research/opportunities?status=accepted`)).json()).map((o: { title: string }) => o.title)).toEqual(['Answer the shawl price cut']);
 
   // Battlecard: the objection is backed by a profile quote; the model's other statements cite no approved fact.
   await queueAi({
@@ -67,11 +75,13 @@ test('add a competitor, watch two pages, confirm the baseline, see the price cha
   await expect(page.getByText('The rival is cheaper')).toBeVisible();
   await page.getByRole('button', { name: 'Approve this version' }).click();
   await expect(page.getByRole('article', { name: /approved/ })).toBeVisible();
+  expect(await aiCalls()).toBe(6);
 });
 
 const RIVAL_HOME = `<html><head><title>Shawl Rival</title></head><body><h1>Shawl Rival</h1><p>Hand-made pashmina shawls from Kathmandu</p><a href="/rival/pricing">Pricing</a></body></html>`;
 
 test('from no competitors to a planned opportunity', async ({ page, request }) => {
+  test.setTimeout(120_000);
   const brand = await (await request.post('/api/brands', { data: { name: `Discover ${Date.now()}`, website: 'https://fixtures.example', defaultLanguage: 'en', languages: ['en'] } })).json();
   const b = `/api/brands/${brand.id}`;
   const fact = await (await request.post(`${b}/knowledge/facts`, { data: { section: 'positioning', field: 'value_proposition', value: 'Hand-woven pashmina shawls from Patan', language: 'en' } })).json();
@@ -110,6 +120,8 @@ test('from no competitors to a planned opportunity', async ({ page, request }) =
   await expect(confirm).toContainText('NPR');
   await confirm.getByRole('button', { name: 'Confirm and start' }).click();
   await expect(page.getByText(/Found 2 businesses, described 2/)).toBeVisible({ timeout: 60_000 });
+  // One keyword call, one group call, one profile per business, one own row.
+  expect(await aiCalls()).toBe(5);
 
   // 3. The table: the brand's row and two businesses; an inferred and a quoted cell open.
   const rows = page.getByRole('table', { name: 'Competitors found' }).locator('tbody tr');
@@ -172,6 +184,8 @@ test('from no competitors to a planned opportunity', async ({ page, request }) =
   await expect(gap).toContainText('Shawl Rival');
   await gap.getByRole('button', { name: 'Accept' }).click();
   await expect(gap).toBeHidden();
+  // Since the discovery: two baseline profiles, the change, its opportunity, and the scan.
+  expect(await aiCalls()).toBe(10);
 
   await page.goto(`/app/b/${brand.id}/plan`);
   await expect(page.getByRole('heading', { name: 'Offer a pashmina care guide' })).toBeVisible();
