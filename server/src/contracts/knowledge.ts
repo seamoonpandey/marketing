@@ -22,6 +22,7 @@ export const FieldDef = z
     multi: z.boolean().openapi({ description: 'Several facts may hold this field for one subject; they never conflict.' }),
     asksExpiry: z.boolean().optional().openapi({ description: 'Ask the owner for an expiry date (prices, offers).' }),
     options: z.array(z.string()).optional().openapi({ description: 'The allowed values of an enum field.' }),
+    example: z.string().optional().openapi({ description: 'What a typical value looks like, shown to the owner as a hint.' }),
   })
   .openapi('FieldDef');
 
@@ -245,6 +246,7 @@ export const ImportCounts = z
     unchanged: z.number().int(),
     dropped: z.number().int().openapi({ description: 'Answers for fields not in the catalogue, or with an invalid value.' }),
     colours: z.number().int().openapi({ description: 'Palette colours added.' }),
+    logos: z.number().int().openapi({ description: 'Logos found on the website and stored as files for the owner to confirm.' }),
   })
   .openapi('ImportCounts');
 

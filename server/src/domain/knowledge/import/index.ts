@@ -11,11 +11,12 @@ import { logger } from '../../../log.ts';
 import { getObject } from '../../../storage/index.ts';
 import { audit } from '../../audit/index.ts';
 import { estimateCost, remainingMonthlyCap } from '../../costs/index.ts';
-import { getSource, pickPages, savePageSource } from '../../sources/index.ts';
+import { fetchText, getSource, pickPages, savePageSource, saveSiteImage } from '../../sources/index.ts';
 import { logoKeys } from '../assets.ts';
 import { proposeFacts, type ProposedFact } from '../facts/index.ts';
 import { addColours, cssColours, extractPalette } from '../palette/index.ts';
 import { EXTRACTION_SYSTEM, Extraction, isFile, sourceParts, toProposed } from './prompt.ts';
+import { fontFamilies, logoCandidates, stylesheetLinks } from './site.ts';
 
 export { EXTRACTION_SYSTEM } from './prompt.ts';
 
@@ -35,7 +36,7 @@ type Counts = Required<ImportCounts>;
 type ProposeCounts = Pick<Counts, 'unverified' | 'inferred' | 'conflicts' | 'unchanged' | 'dropped'>;
 
 const ZERO: Counts = {
-  pages: 0, pagesFailed: 0, files: 0, batches: 0, unverified: 0, inferred: 0, conflicts: 0, unchanged: 0, dropped: 0, colours: 0,
+  pages: 0, pagesFailed: 0, files: 0, batches: 0, unverified: 0, inferred: 0, conflicts: 0, unchanged: 0, dropped: 0, colours: 0, logos: 0,
 };
 const OPERATOR = 'operator';
 const iso = (d: Date | null) => (d ? d.toISOString() : null);
@@ -300,39 +301,61 @@ export async function verifyStage(brandId: string, runId: string, sourceIds: str
   return withBrand(brandId, (tx) => proposeFacts(tx, brandId, runId, facts, sourceIds));
 }
 
-/** Adds the logo assets' dominant colours and the homepage's CSS colours the palette lacks. Never fails the run. */
-export async function paletteStage(brandId: string, runId: string): Promise<number> {
+/**
+ * Reads the brand's look (free; a failed fetch is skipped, never fails the run). When the brand has no
+ * logo yet, the first logo the homepage points to is stored as a file for the owner to confirm. The
+ * logos' dominant colours and the colours of the homepage and its stylesheets go into the palette
+ * without roles, and the fonts its CSS uses are proposed as inferred facts for review.
+ */
+export async function paletteStage(brandId: string, runId: string): Promise<Partial<Counts>> {
   const run = await running(brandId, runId);
   const { keys, home } = await withBrand(brandId, async (tx) => ({
     keys: await logoKeys(tx, brandId),
     home: (await sourcesOf(tx, brandId, run.sourceIds)).find((s) => s.kind === 'page'),
   }));
-  const colours: { hex: string; origin: 'logo' | 'site'; share?: number }[] = [];
-  for (const key of keys) {
-    try {
-      colours.push(...(await extractPalette(await getObject(key))).map((c) => ({ ...c, origin: 'logo' as const })));
-    } catch (e) {
-      logger.warn({ err: e, key }, 'logo palette skipped');
-    }
-  }
+  const logos: Uint8Array[] = [];
+  for (const key of keys) logos.push(await getObject(key).catch(() => new Uint8Array()));
+  let html = '';
+  const sheets: string[] = [];
+  let found = 0;
   if (home) {
-    try {
-      const html = new TextDecoder().decode(await getObject(home.objectKey));
-      colours.push(...cssColours(html).map((hex) => ({ hex, origin: 'site' as const })));
-    } catch (e) {
-      logger.warn({ err: e }, 'site colours skipped');
+    html = new TextDecoder().decode(await getObject(home.objectKey).catch(() => new Uint8Array()));
+    for (const href of stylesheetLinks(html, home.uri)) sheets.push(await fetchText(href).catch(() => ''));
+    for (const url of keys.length ? [] : logoCandidates(html, home.uri)) {
+      try {
+        logos.push((await withBrand(brandId, (tx) => saveSiteImage(tx, brandId, url))).bytes);
+        found = 1;
+        break;
+      } catch (e) {
+        logger.warn({ err: e, url }, 'site logo skipped');
+      }
     }
   }
+  const colours: { hex: string; origin: 'logo' | 'site'; share?: number }[] = [];
+  for (const bytes of logos) {
+    try {
+      colours.push(...(await extractPalette(bytes)).map((c) => ({ ...c, origin: 'logo' as const })));
+    } catch (e) {
+      logger.warn({ err: e }, 'logo palette skipped');
+    }
+  }
+  colours.push(...cssColours(html, sheets).map((hex) => ({ hex, origin: 'site' as const })));
   const seen = new Set<string>();
   const unique = colours.filter((c) => !seen.has(c.hex) && !!seen.add(c.hex)); // logo colours win over site ones
-  return withBrand(brandId, (tx) => addColours(tx, brandId, unique));
+  const fonts: ProposedFact[] = fontFamilies(html, sheets).map((value) => ({
+    section: 'visual', field: 'fonts', value, language: 'und', origin: 'inferred', confidence: 0.6,
+  }));
+  return withBrand(brandId, async (tx) => ({
+    colours: await addColours(tx, brandId, unique), logos: found, ...(await proposeFacts(tx, brandId, runId, fonts, [])),
+  }));
 }
 
-export async function finishStage(brandId: string, runId: string, batches: ProposeCounts[], colours: number): Promise<void> {
+export async function finishStage(brandId: string, runId: string, found: Partial<Counts>[]): Promise<void> {
   await withBrand(brandId, async (tx) => {
     const run = await runRow(tx, brandId, runId);
-    const counts = { ...ZERO, ...run.counts, colours };
-    for (const b of batches) for (const k of Object.keys(b) as (keyof ProposeCounts)[]) counts[k] += b[k];
+    const counts = { ...ZERO, ...run.counts };
+    // A run from before the palette step returned counts stored a bare number there: Object.entries skips it.
+    for (const f of found) for (const [k, v] of Object.entries(f ?? {}) as [keyof Counts, number][]) counts[k] += v;
     const done = await tx
       .update(importRuns)
       .set({ state: 'completed', stage: 'done', counts, actual: await actualCost(tx, runId), finishedAt: new Date() })

@@ -6462,6 +6462,8 @@ export interface components {
             asksExpiry?: boolean;
             /** @description The allowed values of an enum field. */
             options?: string[];
+            /** @description What a typical value looks like, shown to the owner as a hint. */
+            example?: string;
         };
         ImportRun: {
             id: string;
@@ -6504,6 +6506,8 @@ export interface components {
             dropped: number;
             /** @description Palette colours added. */
             colours: number;
+            /** @description Logos found on the website and stored as files for the owner to confirm. */
+            logos: number;
         };
         /** @description A website, uploads, or both. The run fetches, estimates, then waits for confirm. */
         ImportCreate: {

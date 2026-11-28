@@ -23,6 +23,8 @@ export type AssetRights = {
 export type ImportCounts = {
   pages?: number; pagesFailed?: number; files?: number; batches?: number;
   unverified?: number; inferred?: number; conflicts?: number; unchanged?: number; dropped?: number; colours?: number;
+  /** 1 when a logo was found on the website and stored for the owner to confirm. */
+  logos?: number;
 };
 
 /** Products and audience segments: the subjects facts other than the brand's own are about. */

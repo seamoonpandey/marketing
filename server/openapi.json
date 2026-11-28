@@ -683,6 +683,10 @@
               "type": "string"
             },
             "description": "The allowed values of an enum field."
+          },
+          "example": {
+            "type": "string",
+            "description": "What a typical value looks like, shown to the owner as a hint."
           }
         },
         "required": [
@@ -869,6 +873,10 @@
           "colours": {
             "type": "integer",
             "description": "Palette colours added."
+          },
+          "logos": {
+            "type": "integer",
+            "description": "Logos found on the website and stored as files for the owner to confirm."
           }
         },
         "required": [
@@ -881,7 +889,8 @@
           "conflicts",
           "unchanged",
           "dropped",
-          "colours"
+          "colours",
+          "logos"
         ]
       },
       "ImportCreate": {

@@ -48,7 +48,7 @@ export async function extractPalette(image: Uint8Array): Promise<{ hex: string; 
   }));
 }
 
-/** A CSS colour as #rrggbb: hex (3, 4, 6 or 8 digits) or rgb()/rgba(). Mostly transparent or anything else: null. */
+/** A CSS colour as #rrggbb: hex (3, 4, 6 or 8 digits), rgb(), hsl() or oklch(). Mostly transparent or anything else: null. */
 function cssHex(value: string): string | null {
   const v = value.trim().toLowerCase();
   const h = v.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/)?.[1];
@@ -57,30 +57,74 @@ function cssHex(value: string): string | null {
     if (full.length === 8 && parseInt(full.slice(6), 16) < 128) return null;
     return `#${full.slice(0, 6)}`;
   }
-  const fn = v.match(/^rgba?\(([^)]*)\)$/)?.[1];
-  if (!fn) return null; // shortcut: hsl(), oklch() and named colours are skipped; add them if sites use them.
-  const parts = fn.split(/[\s,/]+/).filter(Boolean);
+  const fn = v.match(/^(rgba?|hsla?|oklch)\(([^)]*)\)$/);
+  if (!fn) return null; // shortcut: named colours, lab(), lch() and color-mix() are skipped; add them if sites use them.
+  const parts = fn[2]!.split(/[\s,/]+/).filter(Boolean);
   if (parts.length < 3) return null;
-  const channel = (p: string) => (p.endsWith('%') ? (parseFloat(p) / 100) * 255 : parseFloat(p));
-  const [r, g, b] = parts.slice(0, 3).map(channel);
-  const alpha = parts[3] === undefined ? 1 : parts[3].endsWith('%') ? parseFloat(parts[3]) / 100 : parseFloat(parts[3]);
-  if (![r, g, b, alpha].every(Number.isFinite) || alpha < 0.5) return null;
-  return hexOf((clamp(r!) << 16) | (clamp(g!) << 8) | clamp(b!));
+  const num = (p: string, whole = 1) => (p === 'none' ? 0 : p.endsWith('%') ? (parseFloat(p) / 100) * whole : parseFloat(p));
+  const alpha = parts[3] === undefined ? 1 : num(parts[3]);
+  const [a, b, c] = parts as [string, string, string];
+  // hsl() takes its saturation and lightness as percentages, with or without the % sign.
+  const rgb = fn[1]!.startsWith('rgb') ? [num(a, 255), num(b, 255), num(c, 255)]
+    : fn[1]!.startsWith('hsl') ? hslRgb(hue(a), parseFloat(b) / 100, parseFloat(c) / 100)
+    : oklchRgb(num(a), num(b, 0.4), hue(c));
+  if (![...rgb, alpha].every(Number.isFinite) || alpha < 0.5) return null;
+  return hexOf((clamp(rgb[0]!) << 16) | (clamp(rgb[1]!) << 8) | clamp(rgb[2]!));
 }
 const clamp = (n: number) => Math.min(255, Math.max(0, Math.round(n)));
 
-/** The theme-color meta and the CSS colour custom properties of a page's inline styles, as hex, first seen first. */
-export function cssColours(html: string): string[] {
+/** A CSS hue in degrees (deg, turn, rad, grad or a bare number). */
+function hue(p: string): number {
+  const n = p === 'none' ? 0 : parseFloat(p);
+  return p.endsWith('turn') ? n * 360 : p.endsWith('grad') ? n * 0.9 : p.endsWith('rad') ? (n * 180) / Math.PI : n;
+}
+
+function hslRgb(h: number, s: number, l: number): number[] {
+  const k = (n: number) => (n + (((h % 360) + 360) % 360) / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  return [0, 8, 4].map((n) => 255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))));
+}
+
+/** OKLCH to sRGB (Björn Ottosson's OKLab matrices); out-of-gamut channels are clamped by the caller. */
+function oklchRgb(L: number, C: number, H: number): number[] {
+  const a = C * Math.cos((H * Math.PI) / 180);
+  const b = C * Math.sin((H * Math.PI) / 180);
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  return [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ].map((x) => 255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055));
+}
+
+// A declaration that can carry a colour: a custom property, or a property that paints text, a
+// background, a border or an icon. The lookbehind starts a name only at its first character; without
+// it a run of dashes backtracks quadratically.
+const DECLARATION = /(?<![\w-])(?:--[\w-]+|color|background(?:-color)?|border(?:-[a-z]+)*(?:-color)?|outline-color|fill|stroke)\s*:\s*([^;{}]+)/gi;
+const COLOUR = /#[0-9a-f]{3,8}(?![\w-])|(?:rgba?|hsla?|oklch)\([^()]*\)/gi;
+
+/**
+ * A page's colours as hex: the theme-color meta first, then the colours its inline styles and the
+ * given stylesheets declare, most used first (ties in the order first seen). At most 12.
+ */
+export function cssColours(html: string, sheets: string[] = []): string[] {
   const root = parse(html);
-  const values = root.querySelectorAll('meta[name="theme-color"]').map((m) => m.getAttribute('content') ?? '');
+  const meta = root.querySelectorAll('meta[name="theme-color"]').map((m) => cssHex(m.getAttribute('content') ?? ''));
   const css = [
     ...root.querySelectorAll('style').map((s) => s.text),
     ...root.querySelectorAll('[style]').map((e) => e.getAttribute('style') ?? ''),
+    ...sheets,
   ].join('\n');
-  // The lookbehind starts a name only at its first dash; without it a run of dashes backtracks quadratically.
-  for (const m of css.matchAll(/(?<![\w-])--[\w-]+\s*:\s*([^;{}]+)/g)) values.push(m[1]!);
-  const hexes = values.map(cssHex).filter((h): h is string => h !== null);
-  return [...new Set(hexes)].slice(0, 12);
+  const uses = new Map<string, number>();
+  for (const d of css.matchAll(DECLARATION))
+    for (const c of d[1]!.matchAll(COLOUR)) {
+      const hex = cssHex(c[0]);
+      if (hex) uses.set(hex, (uses.get(hex) ?? 0) + 1);
+    }
+  const ranked = [...uses].sort((x, y) => y[1] - x[1]).map(([hex]) => hex);
+  return [...new Set([...meta.filter((h): h is string => h !== null), ...ranked])].slice(0, 12);
 }
 
 export function toRgb(hex: string): { r: number; g: number; b: number } {

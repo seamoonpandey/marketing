@@ -20,7 +20,12 @@ import { batching, EXTRACTION_SYSTEM } from './index.ts';
 const fixture = (path: string) => readFileSync(new URL(`../../../../test/fixtures/brand/${path}`, import.meta.url));
 const PAGES: Record<string, string> = {
   '/': 'home.html', '/about': 'about.html', '/products/green-tea': 'green-tea.html', '/notice': 'notice.html',
-  '/refund-policy': 'refund-policy.html',
+  '/refund-policy': 'refund-policy.html', '/look/': 'look.html',
+};
+/** The second fixture site's logo and stylesheet (an oklch brand colour and a font). */
+const FILES: Record<string, { type: string; body: () => Promise<Buffer> | Buffer }> = {
+  '/look/logo.png': { type: 'image/png', body: () => sharp({ create: { width: 40, height: 20, channels: 4, background: '#0f5257' } }).png().toBuffer() },
+  '/look/styles.css': { type: 'text/css', body: () => Buffer.from(':root{--brand:oklch(62.8% 0.2577 29.23)} body{font-family:"Mukta",sans-serif;color:#141414}') },
 };
 
 let t: TestDb;
@@ -35,7 +40,9 @@ beforeAll(async () => {
   stop = await launchTestWorkflows(t);
   server = createServer((req, res) => {
     const file = PAGES[req.url ?? ''];
+    const other = FILES[req.url ?? ''];
     if (file) res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(fixture(`site/${file}`));
+    else if (other) void Promise.resolve(other.body()).then((b) => res.writeHead(200, { 'content-type': other.type }).end(b));
     else res.writeHead(404).end();
   });
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
@@ -121,6 +128,37 @@ describe('brand import', () => {
     expect(palette.colours.map((c) => [c.hex, c.origin])).toEqual(
       expect.arrayContaining([['#e85d27', 'logo'], ['#0f5257', 'site'], ['#c3d7e5', 'site'], ['#141414', 'site']]),
     );
+  });
+
+  it('stores the logo a site points to for the owner, reads its stylesheet colours and fonts, and never copies the logo twice', async () => {
+    const brand = await t.makeBrand();
+    const importLook = async () => {
+      const { runId } = await startImport(brand, { websiteUrl: `${site}look/`, sourceIds: [] });
+      expect(await settle(brand, runId)).toMatchObject({ state: 'awaiting_approval' });
+      mockAi.queue({ facts: [] });
+      await confirmImport(brand, runId);
+      return settle(brand, runId);
+    };
+    const files = async () => (await withBrand(brand, (tx) => listSources(tx, brand))).filter((s) => s.kind === 'upload');
+
+    expect(await importLook()).toMatchObject({ state: 'completed', counts: { pages: 1, logos: 1, inferred: 1 } });
+    const [logo, ...more] = await files();
+    expect(more).toEqual([]);
+    expect(logo).toMatchObject({ uri: `${site}look/logo.png`, mime: 'image/png', trust: 'brand_site', meta: { filename: 'logo.png', status: 'ready', foundOnSite: true } });
+    const palette = await withBrand(brand, (tx) => getPalette(tx, brand));
+    expect(palette.colours.map((c) => [c.hex, c.origin, c.role])).toEqual(
+      expect.arrayContaining([['#0f5257', 'logo', null], ['#ff0000', 'site', null], ['#141414', 'site', null]]),
+    );
+    expect((await facts(brand)).map((f) => [f.field, f.value, f.status])).toEqual([['fonts', 'Mukta', 'inferred']]);
+
+    // Not confirmed yet: the next import finds the same bytes and stores no copy.
+    expect((await importLook()).counts).toMatchObject({ logos: 1, inferred: 0, unchanged: 1, colours: 0 });
+    expect(await files()).toHaveLength(1);
+
+    // Once the owner marks it as the logo, imports stop looking for one.
+    await withBrand(brand, (tx) => createAsset(tx, brand, { sourceId: logo!.id, kind: 'logo' }));
+    expect((await importLook()).counts).toMatchObject({ logos: 0 });
+    expect(await files()).toHaveLength(1);
   });
 
   it('AT-004: an injected instruction stays inside its data block and its price is stored inferred', async () => {

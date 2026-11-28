@@ -6,10 +6,10 @@ import { NotFoundError, ValidationError } from '../../http/errors.ts';
 import { deleteObject, getObject, objectKey, objectSize, presignUpload, putObject } from '../../storage/index.ts';
 import { audit } from '../audit/index.ts';
 import { extractText } from './extract-text.ts';
-import { fetchPage } from './fetch.ts';
-import { bytesMatch, MAX_UPLOAD_BYTES, UPLOAD_TYPES } from './uploads.ts';
+import { fetchFile, fetchPage } from './fetch.ts';
+import { bytesMatch, MAX_UPLOAD_BYTES, sniff, UPLOAD_TYPES } from './uploads.ts';
 
-export { FetchError, fetchPage } from './fetch.ts';
+export { FetchError, fetchPage, fetchText } from './fetch.ts';
 export { pickPages } from './pick-pages.ts';
 export { htmlText } from './html-text.ts';
 export { verifyQuote, normalizeQuote } from './verify-quote.ts';
@@ -68,6 +68,36 @@ export async function savePageSource(tx: Tx, brandId: string, url: string, trust
     })
     .returning(columns);
   return row!;
+}
+
+const SITE_IMAGES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+
+/**
+ * Fetches an image the brand's site points to (its logo) under the fetch guards and stores it as a
+ * ready file, for the owner to mark as a logo on Sources. The type comes from the bytes, never the
+ * server's header. A brand that already holds the same bytes gets that source back, so a retried step
+ * or a later import adds no copy.
+ */
+export async function saveSiteImage(tx: Tx, brandId: string, url: string): Promise<{ source: Source; bytes: Uint8Array }> {
+  const { finalUrl, body } = await fetchFile(url);
+  const mime = sniff(body);
+  if (!mime || !SITE_IMAGES.includes(mime)) throw new ValidationError(`${finalUrl} is not a PNG, JPEG, WebP or SVG image`);
+  const checksum = sha256(body);
+  const [same] = await tx.select(columns).from(sources).where(and(eq(sources.brandId, brandId), eq(sources.checksum, checksum)));
+  if (same) return { source: same, bytes: body };
+  const id = await newId(tx);
+  const ext = UPLOAD_TYPES[mime]!;
+  const key = objectKey(await tenantOf(tx), brandId, 'upload', id, ext);
+  await putObject(key, body, mime);
+  const filename = (new URL(finalUrl).pathname.split('/').pop() || `logo.${ext}`).slice(0, 200);
+  const [row] = await tx
+    .insert(sources)
+    .values({
+      id, brandId, kind: 'upload', uri: finalUrl, mime, checksum, capturedAt: new Date(), objectKey: key, trust: 'brand_site',
+      meta: { filename, bytes: body.byteLength, status: 'ready', foundOnSite: true },
+    })
+    .returning(columns);
+  return { source: row!, bytes: body };
 }
 
 /**

@@ -88,7 +88,8 @@ Every comment of the form `shortcut:` in the code.
 | `server/src/domain/research/watch/prompts.ts` | A page longer than 40,000 characters is cut for the model; the quote check still reads the whole text |
 | `server/src/domain/brands/index.ts` (`uniqueSlug`) | Two brands created at the same instant with the same name can race to one slug; the unique index answers 409 and a retry succeeds |
 | `server/src/domain/knowledge/import/prompt.ts` | One source's text is cut at about 100,000 tokens; split long documents if that bites |
-| `server/src/domain/knowledge/palette/colour.ts` | `hsl()`, `oklch()` and named colours are skipped when reading a site's palette |
+| `server/src/domain/knowledge/palette/colour.ts` | Named colours, `lab()`, `lch()` and `color-mix()` are skipped when reading a site's palette, and only the first 4 linked stylesheets are read |
+| `server/src/domain/knowledge/import/site.ts` | An inline SVG logo and `og:image` are never logo candidates (no file, or usually a banner photo); a site whose logo is only inline SVG gets none, and the owner uploads it |
 | `server/src/domain/sources/fetch.ts` (`politeWait`) | Per-host pacing is per-process memory, so several API processes each keep their own pace. Move it to a DBOS queue rate limit when fetching runs on more than one process |
 | `server/src/domain/sources/fetch.ts` (`robotsCache`) | `robots.txt` is cached per process for an hour |
 | `server/scripts/e2e-control.ts` | The fetch guard checks addresses, not ports, so every port on 127.0.0.1 opens. Only the throwaway e2e process does this |

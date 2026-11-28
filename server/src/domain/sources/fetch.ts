@@ -181,6 +181,13 @@ export async function fetchText(url: string): Promise<string> {
   return decode(answer.body, answer.charset);
 }
 
+/** Any file (a logo) under the same guards and robots.txt. The caller checks what the bytes are. */
+export async function fetchFile(url: string): Promise<{ finalUrl: string; body: Uint8Array }> {
+  const answer = await guardedGet(url, null, true);
+  if (answer.status < 200 || answer.status >= 300) throw new FetchError('status', `${url} answered ${answer.status}`);
+  return { finalUrl: answer.url.href, body: answer.body };
+}
+
 /**
  * Fetches one HTML page under the guards: http(s) only; no private, loopback, link-local or metadata
  * address, checked at connect time and after every redirect; at most 5 redirects; 2 MB; 10 seconds;
