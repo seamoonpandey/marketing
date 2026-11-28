@@ -18,13 +18,13 @@ import { cleanKeywords } from './keywords.ts';
 import { MAX_CANDIDATES } from './match.ts';
 import {
   factsBlock, GROUP_MAX_OUTPUT, GROUP_SYSTEM, MAX_PAGE_CHARS, OWN_MAX_OUTPUT, OWN_SYSTEM, PROFILE_MAX_OUTPUT, PROFILE_SYSTEM, RESULT_CHARS,
+  RESULTS_PER_BUSINESS,
 } from './prompts.ts';
 
 export type DiscoveryRun = typeof discoveryRuns.$inferSelect;
 
 const ACTIVE_MESSAGE = 'A discovery run is already in progress for this brand';
 const RESULTS_PER_KEYWORD = 30; // 10 web results and up to 20 Maps listings
-const RESULTS_PER_BUSINESS = 20;
 
 /**
  * The most a run can cost (spec §5.2): two queries per keyword, the group call over every result, MAX_CANDIDATES profile

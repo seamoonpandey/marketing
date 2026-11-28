@@ -16,7 +16,7 @@ import { checkCells, checkOwnRow, COLUMNS, OwnRowAnswer, RowAnswer, type OwnRow 
 import { cleanUrl, linkKind, matchKey, tidyBusinesses, type Business } from './match.ts';
 import {
   GROUP_MAX_OUTPUT, GROUP_SYSTEM, GroupAnswer, groupParts, OWN_MAX_OUTPUT, OWN_SYSTEM, ownParts, PAGE, PROFILE_MAX_OUTPUT, PROFILE_SYSTEM,
-  profileParts, RESULTS,
+  profileParts, RESULTS, RESULTS_PER_BUSINESS,
 } from './prompts.ts';
 
 const RUN_TYPE = 'research_discovery';
@@ -108,7 +108,8 @@ export async function profileBusiness(
   brandId: string, runId: string, b: Business, results: SearchResult[],
 ): Promise<{ dropped: number } | { failed: string }> {
   const key = matchKey(b);
-  const mine = results.filter((r) => b.resultIds.includes(r.id));
+  // The model picks which results are this business's, so the count is held to what the estimate priced.
+  const mine = results.filter((r) => b.resultIds.includes(r.id)).slice(0, RESULTS_PER_BUSINESS);
   // A site that cannot be read (robots.txt, unreachable, not HTML) leaves the business its search results alone.
   const page = b.site ? await withBrand(brandId, (tx) => savePageSource(tx, brandId, b.site!, 'external')).catch(() => null) : null;
   const channels = new Set([...b.channels, ...(page ? await socialLinks(page) : [])]);

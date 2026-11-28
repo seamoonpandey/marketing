@@ -425,6 +425,14 @@ describe('what a run finds', () => {
     ]);
   });
 
+  it('profiles a business from at most the 20 results the estimate prices', async () => {
+    const brand = await factBrand();
+    mockSearch.set('web', 'momo patan', Array.from({ length: 30 }, (_, i) => hit(`Momo Hut ${i + 1}`, null)));
+    const all = Array.from({ length: 30 }, (_, i) => `r${i + 1}`);
+    await discover(brand, ['momo patan'], group({ name: 'Momo Hut', resultIds: all }), {}, {});
+    expect(userText(profileCalls()[0]!).match(/Momo Hut \d+ serves momo/g)).toHaveLength(20);
+  });
+
   it('drops a business the model names with no valid result id', async () => {
     const brand = await factBrand();
     await momoHut(brand);
