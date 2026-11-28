@@ -57,6 +57,13 @@ function localSites() {
 }
 
 describe('fetchPage guards', () => {
+  it('lets public addresses through and blocks private ones, IPv4-mapped forms included', () => {
+    for (const ip of ['8.8.8.8', '104.21.68.244', '172.67.200.73', '2606:4700:3033::6815:44f4']) expect(defaults.isBlocked(ip), ip).toBe(false);
+    for (const ip of ['127.0.0.1', '10.1.2.3', '172.16.0.1', '192.168.1.1', '169.254.169.254', '100.64.0.1', '::1', 'fc00::1', 'fe80::1',
+      '::ffff:127.0.0.1', '::ffff:169.254.169.254', '::ffff:a9fe:a9fe', '64:ff9b::7f00:1', '2002:7f00:1::'])
+      expect(defaults.isBlocked(ip), ip).toBe(true);
+  });
+
   it.each([
     'http://127.0.0.1/',
     'http://10.0.0.5/',

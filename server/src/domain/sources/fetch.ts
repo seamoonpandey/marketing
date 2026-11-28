@@ -21,7 +21,9 @@ export class FetchError extends ValidationError {
 }
 
 // Private, loopback, link-local (cloud metadata), shared, documentation, multicast and reserved
-// ranges, plus IPv6 forms that can carry an IPv4 address (mapped, NAT64, 6to4, Teredo).
+// ranges, plus IPv6 forms that can carry an IPv4 address (NAT64, 6to4, Teredo). IPv4-mapped
+// addresses (::ffff:a.b.c.d) are checked against the IPv4 ranges by BlockList itself; listing
+// ::ffff:0:0/96 would block every IPv4 address, since BlockList matches IPv4 against that rule too.
 const reserved = new BlockList();
 for (const [net, bits] of [
   ['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16], ['172.16.0.0', 12],
@@ -29,7 +31,7 @@ for (const [net, bits] of [
   ['198.51.100.0', 24], ['203.0.113.0', 24], ['224.0.0.0', 4], ['240.0.0.0', 4],
 ] as const) reserved.addSubnet(net, bits, 'ipv4');
 for (const [net, bits] of [
-  ['::', 128], ['::1', 128], ['::ffff:0:0', 96], ['64:ff9b::', 96], ['64:ff9b:1::', 48], ['100::', 64],
+  ['::', 128], ['::1', 128], ['64:ff9b::', 96], ['64:ff9b:1::', 48], ['100::', 64],
   ['2001::', 23], ['2001:db8::', 32], ['2002::', 16], ['fc00::', 7], ['fe80::', 10], ['fec0::', 10], ['ff00::', 8],
 ] as const) reserved.addSubnet(net, bits, 'ipv6');
 
