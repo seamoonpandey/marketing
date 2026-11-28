@@ -133,6 +133,7 @@ export async function generateOpportunities(brandId: string, runId: string): Pro
 }
 
 /** Finds opportunities across all the evidence in one model call; 400 with nothing to compare, and no model call. */
+// shortcut: two scans started at once each pay for a call (the same title is stored once; the monthly cap holds); hold one scan per brand in a run table if that happens outside tests.
 export async function scanOpportunities(brandId: string): Promise<{ created: Opportunity[]; dropped: number }> {
   const ctx = await withBrand(brandId, (tx) => context(tx, brandId, 'all'));
   if (!ctx.items.some((i) => i.type !== 'fact')) throw new ValidationError(NOTHING);
