@@ -13,6 +13,8 @@ const FOUND = () => [
   cand({ id: 'cand-2', name: 'Bhojan Ghar', site: 'https://bhojan.example', channels: [], place: null, cells: { kind: inferred('indirect'), overlap: inferred('medium') }, rank: 2 }),
   cand({ id: 'cand-3', name: 'दाइको मोमो', site: null, channels: [], place: null, cells: { kind: inferred('direct') }, rank: 3 }),
 ];
+// What a run saves of a business's search results: text to quote from, with an internal key for an address.
+const RESULTS = { id: 'src-2', brandId: B, kind: 'page', uri: 'search:d-1:cid:c1', mime: 'text/plain', checksum: 'y', capturedAt: NOW, trust: 'external', meta: { searchResults: true, title: 'Search results' }, hasText: true, downloadUrl: '' };
 const run = (o: object = {}) => ({ id: 'd-1', keywords: ['momo Lalitpur'], state: 'awaiting_approval', error: null, startedAt: NOW, finishedAt: null, estimate: money('300'), actual: null, counts: {}, ownRow: null, createdAt: NOW, ...o });
 const DONE = { state: 'completed', finishedAt: NOW, estimate: money('300'), actual: money('120'), counts: { queries: 4, results: 40, found: 3, skipped: 2, profiled: 3, dropped: 1 }, ownRow: { sells: { value: 'Steamed and frozen momo', factIds: ['fact-1'] }, where: { value: 'Kathmandu', factIds: ['fact-2'] } } };
 
@@ -35,7 +37,7 @@ async function stub(page: Page, init: Partial<World> = {}) {
     if (path === '/competitors') return send([]);
     if (path === '/costs') return send({ month: '2026-11', total: money('0'), cap: money('1000'), remaining: money('1000'), runs: [] });
     // A run saves its sources: none exist before it has found a business.
-    if (path === '/sources') return send(!w.cands.length ? [] : [{ id: 'src-1', brandId: B, kind: 'page', uri: 'https://momohut.example/', mime: 'text/html', checksum: 'x', capturedAt: NOW, trust: 'external', meta: { title: 'Momo Hut home' }, hasText: true, downloadUrl: '' }]);
+    if (path === '/sources') return send(!w.cands.length ? [] : [{ id: 'src-1', brandId: B, kind: 'page', uri: 'https://momohut.example/', mime: 'text/html', checksum: 'x', capturedAt: NOW, trust: 'external', meta: { title: 'Momo Hut home' }, hasText: true, downloadUrl: '' }, RESULTS]);
     if (path === '/research/targets') return send(w.targets);
     if (path === '/research/discovery/keywords') return send({ keywords: ['momo restaurant Kathmandu', 'frozen momo Nepal'] });
     if (path === '/research/discoveries' && m === 'GET') return send(w.runs);
@@ -137,6 +139,21 @@ test('the Maps listing a run stored among the channels shows once, as the Map ch
   await expect(hut.getByRole('link', { name: /Map 4\.4/ })).toHaveAttribute('href', 'https://maps.google.com/?cid=c1');
   await expect(hut.getByRole('link', { name: /FB/ })).toBeVisible();
   await expect(hut.getByRole('link', { name: /google|Map/ })).toHaveCount(1);
+});
+
+test('a cell that rests on the search results says so, and shows no internal key', async ({ page }) => {
+  const listed = cand({ cells: { kind: { ...inferred('direct'), evidence: ['src-2'] }, where: { value: 'Lalitpur', basis: 'quoted', quote: 'Momo Hut, Lalitpur', sourceId: 'src-2' } }, sourceIds: ['src-2'] });
+  await stub(page, { cands: [listed], runs: [run({ ...DONE })] });
+  await page.goto(`/app/b/${B}/research/discover`);
+  const pop = page.locator('[popover]:popover-open');
+  await page.getByRole('button', { name: /^Lalitpur/ }).click();
+  await expect(pop).toContainText('Momo Hut, Lalitpur');
+  await expect(pop).toContainText('Search results');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /^direct/ }).click();
+  await expect(pop).toContainText('Search results');
+  await expect(pop.getByRole('link', { name: /search:|Search results/ })).toHaveCount(0);
+  await expect(page.getByText('search:d-1')).toHaveCount(0);
 });
 
 test('a watched business whose site could not be read links to its competitor page', async ({ page }) => {

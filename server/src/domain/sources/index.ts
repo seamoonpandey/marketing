@@ -80,7 +80,8 @@ export async function saveTextSource(tx: Tx, brandId: string, uri: string, text:
     .insert(sources)
     .values({
       id, brandId, kind: 'page', uri, mime: 'text/plain', checksum: sha256(body), capturedAt: new Date(), objectKey: key, text,
-      trust: 'external', meta: { searchResults: true },
+      // The title is what a quote from it is captioned with; its URI is an internal key, not an address.
+      trust: 'external', meta: { searchResults: true, title: 'Search results' },
     })
     .returning(columns);
   return row!;

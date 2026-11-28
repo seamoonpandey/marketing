@@ -33,6 +33,8 @@ const sourceLabel = (s: Source) => {
 function CellButton({ cell, c, sources, brandId }: { cell?: Cell; c: Candidate; sources: Source[]; brandId: string }) {
   const id = useId();
   if (!cell) return DASH;
+  const any = (sid: string) => sources.find((s) => s.id === sid);
+  // A page to link to; a business's saved search results have no address, only their title.
   const find = (sid: string) => sources.find((s) => s.id === sid && httpUrl(s.uri));
   const inferred = cell.basis === 'inferred';
   const ids = inferred ? cell.evidence : [];
@@ -47,7 +49,7 @@ function CellButton({ cell, c, sources, brandId }: { cell?: Cell; c: Candidate; 
       <div id={id} popover="auto" className="panel m-auto w-[min(26rem,calc(100vw-2rem))] p-4 text-sm text-ink">
         <div className="grid gap-2">
           {cell.basis === 'quoted' ? (
-            find(cell.sourceId) ? <SourceQuote quote={cell.quote} source={find(cell.sourceId)!} /> : <p>“{cell.quote}”</p>
+            any(cell.sourceId) ? <SourceQuote quote={cell.quote} source={any(cell.sourceId)!} /> : <p>“{cell.quote}”</p>
           ) : (
             <>
               <p className="break-words">{cell.reason}</p>
@@ -57,7 +59,7 @@ function CellButton({ cell, c, sources, brandId }: { cell?: Cell; c: Candidate; 
                   const s = find(e);
                   return (
                     <li key={e}>
-                      {s ? <a href={httpUrl(s.uri)!} target="_blank" rel="noopener noreferrer" className="break-all text-action underline">{sourceLabel(s)}<span className="sr-only"> (opens in a new tab)</span></a> : <span className="text-muted">A saved source</span>}
+                      {s ? <a href={httpUrl(s.uri)!} target="_blank" rel="noopener noreferrer" className="break-all text-action underline">{sourceLabel(s)}<span className="sr-only"> (opens in a new tab)</span></a> : <span className="text-muted">{typeof any(e)?.meta.title === 'string' ? any(e)!.meta.title as string : 'A saved source'}</span>}
                     </li>
                   );
                 })}
