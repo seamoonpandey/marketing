@@ -9,7 +9,7 @@ Everything runs against the mock model. The API and the screens exist for each m
 | Module | Server (`server/src/domain/`) | Server tests (unit / integration files) | Web screens | Web e2e (`web/e2e/`) |
 |---|---|---|---|---|
 | Brands, sources, costs, audit (base) | `brands`, `sources`, `costs`, `audit` | 5 / 4 | brand list, new brand | `base.spec.ts` |
-| Brand | `knowledge` | 2 / 5 | `brand/` (facts, review, sources, visual identity) | `brand.spec.ts`, `brand.stub.spec.ts` |
+| Brand | `knowledge` | 4 / 6 | `brand/` (facts, review, sources, visual identity, brand book with readiness answered in place and drafts of the hard fields) | `brand.spec.ts`, `brand.stub.spec.ts` |
 | Research | `research` | 2 / 5 | `research/` (competitors, opportunities, battlecards) | `research.spec.ts`, `research.stub.spec.ts` |
 | Plan | `plan` | 2 / 5 | `plan/` (calendar, campaigns, settings) | `plan.spec.ts`, `plan.stub.spec.ts` |
 | Studio | `studio`, `render/` | 2 / 4, plus 1 render test | `studio/` (dashboard, draft editor) | `studio.spec.ts`, `studio.stub.spec.ts` |

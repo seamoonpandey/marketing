@@ -2,8 +2,10 @@
 
 import { ArrowRight, Check, CircleDashed, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { Async, PageHeader, StateBlock, useBrandId } from '@/components/app';
 import type { Schemas } from '@/lib/api/client';
+import { AskCard } from './ask';
 import { useBook, Value, type Fact } from './data';
 
 type Readiness = Schemas['Readiness'];
@@ -22,7 +24,7 @@ export function BookScreen() {
           const empty = !approved && !b.assets.length && !b.palette.colours.length && !b.competitors.length;
           return (
             <div className="grid gap-8">
-              <ReadinessCard r={b.readiness} />
+              <ReadinessCard r={b.readiness} brandId={brandId} />
               {empty ? (
                 <StateBlock
                   state="empty" title="Nothing approved yet"
@@ -65,7 +67,19 @@ export function BookScreen() {
   );
 }
 
-function ReadinessCard({ r }: { r: Readiness }) {
+function ReadinessCard({ r, brandId }: { r: Readiness; brandId: string }) {
+  const all = r.dimensions.flatMap((d) => d.criteria);
+  const askable = (c: (typeof all)[number]) => !c.pass && !!c.ask;
+  const [open, setOpen] = useState<string | null>(null);
+  const current = all.find((c) => c.label === open);
+  // The owner just answered the open item: move on to the next one still missing.
+  useEffect(() => {
+    if (!current?.pass) return;
+    const after = all.slice(all.indexOf(current) + 1).find(askable) ?? all.find(askable);
+    setOpen(after?.label ?? null);
+  }, [current?.pass]);
+  const first = all.find(askable);
+
   return (
     <section aria-labelledby="rd" className="grid gap-5">
       {r.gates.length ? (
@@ -87,12 +101,18 @@ function ReadinessCard({ r }: { r: Readiness }) {
           <div className="grid gap-1">
             <h2 id="rd" className="text-lg font-semibold">Readiness</h2>
             <p className="text-sm text-muted">Out of 100. The last 30 points come as Publish, Results and Leads arrive.</p>
+            {first ? (
+              <p className="text-sm text-muted">Answer the open items one at a time. Prachaar shows what it found on your website, and can draft the harder ones.</p>
+            ) : null}
           </div>
           <p className="flex items-baseline gap-3">
             <span className="num text-5xl leading-none font-semibold" aria-label={`Score ${r.score} out of 100`}>{r.score}</span>
             <span className="text-lg font-semibold text-muted">{BAND[r.band]}</span>
           </p>
         </div>
+        {first && !open ? (
+          <div><button type="button" className="btn btn-primary" onClick={() => setOpen(first.label)}>Answer the next question <ArrowRight className="size-4" aria-hidden /></button></div>
+        ) : null}
         <ul aria-label="Dimensions" className="grid gap-5">
           {r.dimensions.map((d) => {
             return (
@@ -111,7 +131,12 @@ function ReadinessCard({ r }: { r: Readiness }) {
                       <li key={c.label} className="flex flex-wrap items-center gap-x-3">
                         {c.pass ? <Check className="size-4 text-success" aria-label="Done" /> : <CircleDashed className="size-4 text-muted" aria-label="Missing" />}
                         <span className={c.pass ? 'text-muted' : ''}>{c.label}</span>
-                        {!c.pass ? <Link href={c.fixPath} className="font-medium text-action underline">Fix<span className="sr-only"> {c.label}</span></Link> : null}
+                        {askable(c) ? (
+                          <button type="button" aria-expanded={open === c.label} className="font-medium text-action underline" onClick={() => setOpen(open === c.label ? null : c.label)}>
+                            {open === c.label ? 'Close' : 'Answer'}<span className="sr-only"> {c.label}</span>
+                          </button>
+                        ) : !c.pass ? <Link href={c.fixPath} className="font-medium text-action underline">Fix<span className="sr-only"> {c.label}</span></Link> : null}
+                        {open === c.label && c.ask ? <div className="mt-2 basis-full"><AskCard brandId={brandId} ask={c.ask} fixPath={c.fixPath} /></div> : null}
                       </li>
                     ))}
                   </ul>

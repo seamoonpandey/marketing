@@ -170,7 +170,7 @@ export async function brand(tx: Tx, c: Ctx): Promise<Collected> {
     if (r.gates.length) items.push(make('readiness_gates', 'brand', 'later', r.gates.length === 1 ? 'A readiness gate is blocking the brand' : `${r.gates.length} readiness gates are blocking the brand`,
       r.gates[0]!.label, r.gates[0]!.fixPath, { count: r.gates.length === 1 ? null : r.gates.length }));
     if (missing.length) items.push(make('readiness_missing', 'brand', 'later', missing.length === 1 ? 'A readiness criterion is missing' : `${missing.length} readiness criteria are missing`,
-      `Readiness is ${r.score} of 100; next: ${missing[0]!.label.toLowerCase()}.`, missing[0]!.fixPath, { count: missing.length === 1 ? null : missing.length }));
+      `Readiness is ${r.score} of 100; next: ${missing[0]!.label.toLowerCase()}.`, missing[0]!.ask ? app(c, '/brand') : missing[0]!.fixPath, { count: missing.length === 1 ? null : missing.length }));
     return { items, status: `Readiness ${r.score} of 100` };
   }
   return { items, status: pending.length ? `${plural(pending.length, 'fact', 'facts')} to review` : 'No facts yet' };
