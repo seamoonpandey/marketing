@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { asciiDigits, foldText, latinLookalikes, plainText, stripAccents, stripInvisible } from './normalise.ts';
+import { asciiDigits, cleanCut, foldText, latinLookalikes, plainText, stripAccents, stripInvisible } from './normalise.ts';
 
 // Every trick an earlier review proved against one module's own copy (approve/rules, studio/checks, studio/drafts,
 // plan/balance, sources/verify-quote), and a few of the same kinds none had tried. [what, input, foldText(input)].
@@ -76,5 +76,14 @@ describe('the parts', () => {
   });
   it('plainText keeps case, digits and invisible characters', () => {
     expect(plainText('  “Rs” —​ १५  ')).toBe('"Rs" -​ १५');
+  });
+});
+
+describe('cleanCut', () => {
+  it('removes a NUL and bidi controls, keeps line breaks, trims', () => expect(cleanCut(' pash\u0000mina\u202e\nshawl ', 50)).toBe('pashmina\nshawl'));
+  it('leaves an emoji split at the cut well-formed', () => {
+    const out = cleanCut('ab😀', 3);
+    expect(out.isWellFormed()).toBe(true);
+    expect(out.startsWith('ab')).toBe(true);
   });
 });

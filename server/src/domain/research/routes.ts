@@ -8,7 +8,7 @@ import { listCompetitors } from '../brands/index.ts';
 import { approvedFacts } from '../knowledge/index.ts';
 import { approveBattlecard, generateBattlecard, getBattlecards, type Battlecard } from './battlecard.ts';
 import { getProfile, listObservations, type ObservationRow } from './observations.ts';
-import { decideOpportunity, listOpportunities, type Opportunity } from './opportunities.ts';
+import { decideOpportunity, listOpportunities, restoreOpportunity, scanOpportunities, type Opportunity } from './opportunities.ts';
 import { cancelRun, confirmRun, getRun, getSchedule, listRuns, retryRun, setSchedule, startRun, type Schedule, type WatchRun } from './watch/index.ts';
 import { addTarget, listTargets, removeTarget, setTargetStatus, suggestTargets, type WatchTarget } from './targets.ts';
 
@@ -36,8 +36,9 @@ const toObservation = (o: ObservationRow): z.infer<typeof C.Observation> => ({
   before: o.before, after: o.after, url: o.url, observedAt: o.observedAt.toISOString(), confidence: o.confidence,
 });
 const toOpportunity = (o: Opportunity): z.infer<typeof C.Opportunity> => ({
-  id: o.id, runId: o.runId, title: o.title, hypothesis: o.hypothesis, suggestedAction: o.suggestedAction, whyItMatters: o.whyItMatters,
-  observationIds: o.observationIds, confidence: o.confidence, status: o.status, decidedAt: iso(o.decidedAt), createdAt: o.createdAt.toISOString(),
+  id: o.id, runId: o.runId, kind: o.kind, title: o.title, hypothesis: o.hypothesis, suggestedAction: o.suggestedAction, whyItMatters: o.whyItMatters,
+  observationIds: o.observationIds, evidence: o.evidence, confidence: o.confidence, impact: o.impact, effort: o.effort, status: o.status,
+  decidedAt: iso(o.decidedAt), createdAt: o.createdAt.toISOString(),
 });
 const toBattlecard = (b: Battlecard): z.infer<typeof C.Battlecard> => ({
   id: b.id, competitorId: b.competitorId, version: b.version, status: b.status, body: b.body as z.infer<typeof C.BattlecardBody>,
@@ -237,6 +238,27 @@ export const routes = createRouter()
     async (c) => {
       const { brandId, id } = c.req.valid('param');
       return c.json(toOpportunity(await withBrand(brandId, (tx) => decideOpportunity(tx, brandId, id, 'dismissed'))), 200);
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post', path: `${P}/opportunities/{id}/restore`, tags, request: { params: BrandItemParams },
+      responses: { 200: json(C.Opportunity, 'Back to new'), 404: E, 409: E },
+    }),
+    async (c) => {
+      const { brandId, id } = c.req.valid('param');
+      return c.json(toOpportunity(await withBrand(brandId, (tx) => restoreOpportunity(tx, brandId, id))), 200);
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post', path: `${P}/opportunities/scan`, tags, request: { params: BrandParams },
+      responses: { 200: json(C.OpportunityScanResult, 'From every observation, profile, candidate and fact'), 400: E, 402: E, 404: E },
+    }),
+    async (c) => {
+      const { brandId } = c.req.valid('param');
+      const { created, dropped } = await scanOpportunities(brandId);
+      return c.json({ created: created.map(toOpportunity), dropped }, 200);
     },
   )
   .openapi(

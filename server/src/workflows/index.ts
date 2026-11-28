@@ -5,7 +5,7 @@ import { config } from '../config.ts';
 import { isUniqueViolation } from '../db/client.ts';
 import { runStates } from '../db/schema/core.ts';
 import { planRuns } from '../db/schema/plan.ts';
-import { watchRuns } from '../db/schema/research.ts';
+import { discoveryRuns, watchRuns } from '../db/schema/research.ts';
 import { studioRuns } from '../db/schema/studio.ts';
 import { withBrand, type Tx } from '../db/tenant.ts';
 import { audit } from '../domain/audit/index.ts';
@@ -73,7 +73,7 @@ export async function retryWorkflow<T>(workflowId: string): Promise<WorkflowHand
 
 /** A run table that records its workflow ID: the module's getRun (404 outside the brand) and the names its audit events use. */
 export type RunTable = {
-  table: typeof planRuns | typeof studioRuns | typeof watchRuns;
+  table: typeof planRuns | typeof studioRuns | typeof watchRuns | typeof discoveryRuns;
   get: (tx: Tx, brandId: string, runId: string) => Promise<{ state: RunState; workflowId: string | null }>;
   /** `<action>.cancel`, `<action>.retry` */
   action: string;

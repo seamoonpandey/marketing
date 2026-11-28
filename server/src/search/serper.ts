@@ -1,3 +1,4 @@
+import { cleanCut } from '../text/normalise.ts';
 import type { SearchHit, SearchKind } from './index.ts';
 
 type Organic = { title?: string; link?: string; snippet?: string };
@@ -6,9 +7,7 @@ type Listing = {
   phoneNumber?: string; website?: string; cid?: string;
 };
 
-// Control characters (Postgres cannot store NUL) and bidi controls, as `cut` in domain/studio/generate.ts.
-const UNSAFE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
-const cut = (s: string | null | undefined, n: number) => (s ?? '').replace(UNSAFE, '').trim().slice(0, n).toWellFormed();
+const cut = (s: string | null | undefined, n: number) => cleanCut(s ?? '', n);
 const orNull = (s: string | null | undefined, n: number) => cut(s, n) || null;
 const num = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) ? n : null);
 

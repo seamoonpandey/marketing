@@ -9,6 +9,12 @@ const INVISIBLE = /[\p{Default_Ignorable_Code_Point}\p{Cf}\u0000-\u0008\u000e-\u
 /** Removes every character that draws nothing, so it cannot split a word or a number. */
 export const stripInvisible = (s: string): string => s.replace(INVISIBLE, '');
 
+// Control characters other than tab and line breaks (Postgres cannot store NUL) and bidi controls.
+const UNSAFE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
+
+/** Text a model, a page or a search result wrote, ready to store: unsafe characters removed, trimmed, cut to `max` UTF-16 units, well-formed. */
+export const cleanCut = (s: string, max: number): string => s.replace(UNSAFE, '').trim().slice(0, max).toWellFormed();
+
 // Generic combining accents and enclosing marks (a keycap). Each script's own marks, such as Devanagari vowel signs,
 // are not in these blocks and stay, since they tell words apart.
 const ACCENTS = /[̀-ͯ᪰-᫿᷀-᷿⃐-⃿︠-︯]/g;

@@ -91,14 +91,87 @@ export const Profile = z
   .object({ competitorId: z.string(), runId: z.string(), createdAt: iso, entries: z.array(ProfileEntry), sourceIds: z.array(z.string()) })
   .openapi('CompetitorProfile');
 
+const Level = z.enum(['low', 'medium', 'high']).openapi('ResearchLevel');
+
+export const OpportunityEvidence = z
+  .object({
+    type: z.enum(['observation', 'profile', 'candidate', 'fact']),
+    id: z.string().openapi({ description: 'The observation, profile, candidate or fact row it was taken from.' }),
+    label: z.string().openapi({ description: 'Who: the competitor name, or "Your brand".' }),
+    detail: z.string().openapi({ description: 'What.' }),
+    quote: z.string().optional(), sourceId: z.string().optional(),
+  })
+  .openapi('OpportunityEvidence', { description: 'A snapshot taken when the opportunity was made; it stays readable after its competitor is deleted.' });
+
 export const Opportunity = z
   .object({
-    id: z.string(), runId: z.string().nullable(), title: z.string(), hypothesis: z.string(), suggestedAction: z.string(),
-    whyItMatters: z.string(), observationIds: z.array(z.string()).openapi({ description: 'Observations that back it; never empty.' }),
-    confidence: Confidence, status: z.enum(['new', 'accepted', 'dismissed']), decidedAt: iso.nullable(), createdAt: iso,
+    id: z.string(), runId: z.string().nullable(), kind: z.enum(['change', 'gap', 'strength']), title: z.string(), hypothesis: z.string(),
+    suggestedAction: z.string(), whyItMatters: z.string(),
+    observationIds: z.array(z.string()).openapi({ description: 'The observations among its evidence; may be empty.' }),
+    evidence: z.array(OpportunityEvidence), confidence: Confidence, impact: Level, effort: Level,
+    status: z.enum(['new', 'accepted', 'dismissed']), decidedAt: iso.nullable(), createdAt: iso,
   })
   .openapi('Opportunity');
 export const OpportunitiesQuery = z.object({ status: z.enum(['new', 'accepted', 'dismissed']).optional() });
+export const OpportunityScanResult = z
+  .object({ created: z.array(Opportunity), dropped: z.number().int().openapi({ description: 'Proposals the server did not keep.' }) })
+  .openapi('OpportunityScanResult');
+
+export const DiscoveryCell = z
+  .discriminatedUnion('basis', [
+    z.object({ value: z.string(), basis: z.literal('quoted'), quote: z.string(), sourceId: z.string() }),
+    z.object({ value: z.string(), basis: z.literal('inferred'), reason: z.string(), evidence: z.array(z.string()), confidence: Confidence }),
+  ])
+  .openapi('DiscoveryCell', { description: 'quoted: the quote is in the saved source. inferred: a reasoned guess from the evidence.' });
+const cell = DiscoveryCell.optional();
+export const DiscoveryCells = z
+  .object({ kind: cell, sells: cell, sellsTo: cell, priceLevel: cell, where: cell, pitch: cell, overlap: cell })
+  .openapi('DiscoveryCells');
+const ownCell = z.object({ value: z.string(), factIds: z.array(z.string()) }).optional();
+export const DiscoveryOwnRow = z
+  .object({ sells: ownCell, sellsTo: ownCell, priceLevel: ownCell, where: ownCell, pitch: ownCell })
+  .openapi('DiscoveryOwnRow', { description: "The brand's own row, from its approved facts." });
+export const DiscoveryPlace = z
+  .object({
+    address: z.string().nullable(), category: z.string().nullable(), rating: z.number().nullable(), ratingCount: z.number().nullable(),
+    phone: z.string().nullable(), cid: z.string().nullable(),
+  })
+  .openapi('DiscoveryPlace');
+
+const count = z.number().int().optional();
+export const DiscoveryCounts = z
+  .object({
+    queries: count, failedQueries: count, results: count, found: count, skipped: count, profiled: count, failedProfiles: count, dropped: count,
+  })
+  .openapi('DiscoveryCounts');
+export const DiscoveryRun = z
+  .object({
+    id: z.string(), keywords: z.array(z.string()), state: RunState, error: z.string().nullable(),
+    startedAt: iso.nullable(), finishedAt: iso.nullable(), estimate: orNull(RunMoney), actual: orNull(RunMoney),
+    counts: DiscoveryCounts, ownRow: orNull(DiscoveryOwnRow), createdAt: iso,
+  })
+  .openapi('DiscoveryRun');
+export const DiscoveryRunCreate = z
+  .object({ keywords: z.array(z.string().max(500)).min(1).max(50) })
+  .openapi('DiscoveryRunCreate', { description: 'At most 15 keywords of at most 80 characters, after cleaning.' });
+export const KeywordSuggestions = z.object({ keywords: z.array(z.string()) }).openapi('KeywordSuggestions');
+
+const CandidateStatus = z.enum(['new', 'watched', 'dismissed']);
+export const DiscoveryCandidate = z
+  .object({
+    id: z.string(), name: z.string(), site: z.string().nullable(), channels: z.array(z.string()), place: orNull(DiscoveryPlace),
+    cells: DiscoveryCells, sourceIds: z.array(z.string()), rank: z.number().int(), status: CandidateStatus,
+    competitorId: z.string().nullable(), lastFoundAt: iso, dismissedAt: iso.nullable(),
+  })
+  .openapi('DiscoveryCandidate');
+export const CandidateWatch = z.object({ ids: z.array(z.string()).min(1).max(30) }).openapi('CandidateWatch');
+export const CandidateWatchResult = z
+  .object({
+    watched: z.array(DiscoveryCandidate),
+    unreadable: z.array(z.string()).openapi({ description: 'IDs of candidates whose site gave no pages.' }),
+  })
+  .openapi('CandidateWatchResult');
+export const CandidatesQuery = z.object({ status: CandidateStatus.optional().openapi({ description: 'Without it: new and watched.' }) });
 
 export const Statement = z
   .object({

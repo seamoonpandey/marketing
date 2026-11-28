@@ -92,3 +92,13 @@ export async function decideOpportunity(tx: Tx, brandId: string, id: string, dec
   await audit(tx, { brandId, actor: 'operator', action: `research.opportunity.${decision}`, objectType: 'opportunity', objectId: id, result: 'ok' });
   return row;
 }
+
+/** Finds opportunities across all the evidence in one model call; 400 with nothing to compare, and no model call. */
+export async function scanOpportunities(brandId: string): Promise<{ created: Opportunity[]; dropped: number }> {
+  throw new Error('not built: scanOpportunities');
+}
+
+/** A dismissed opportunity back to new; 409 unless it is dismissed. */
+export async function restoreOpportunity(tx: Tx, brandId: string, id: string): Promise<Opportunity> {
+  throw new Error('not built: restoreOpportunity');
+}
