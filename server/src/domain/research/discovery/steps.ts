@@ -51,7 +51,17 @@ export async function runSearch(brandId: string, runId: string, query: string, k
  */
 export async function searchAgain(brandId: string, runId: string, queries: Query[], country: string): Promise<Searched[]> {
   const answers: Searched[] = [];
-  for (const q of queries) answers.push(await runSearch(brandId, runId, q.query, q.kind, country));
+  for (const q of queries) {
+    try {
+      answers.push(await runSearch(brandId, runId, q.query, q.kind, country));
+    } catch (e) {
+      // Over the cap partway: a retry would rerun this step and pay again for the queries before, so they are kept and the
+      // rest count as failed; the run's next paid call meets the cap and fails there.
+      if (!(e instanceof BudgetError) || answers.every((a) => a.failed)) throw e;
+      while (answers.length < queries.length) answers.push({ hits: [], failed: true });
+      break;
+    }
+  }
   if (answers.every((a) => a.failed)) throw new HttpError(503, 'search_failed', 'Every search failed; retry the run');
   return answers;
 }

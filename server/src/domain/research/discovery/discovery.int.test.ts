@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -10,6 +11,7 @@ import { withBrand } from '../../../db/tenant.ts';
 import { BudgetError, ConflictError, ValidationError } from '../../../http/errors.ts';
 import { mockSearch, type SearchHit } from '../../../search/index.ts';
 import { createCompetitor } from '../../brands/index.ts';
+import { remainingMonthlyCap } from '../../costs/index.ts';
 import { approveFact, approvedFacts, enterFact } from '../../knowledge/index.ts';
 import { fetchGuard } from '../../sources/fetch.ts';
 import { getSource } from '../../sources/index.ts';
@@ -17,6 +19,7 @@ import { listCandidates } from './candidates.ts';
 import { suggestKeywords } from './keywords.ts';
 import { GROUP_SYSTEM, PROFILE_SYSTEM } from './prompts.ts';
 import { confirmDiscovery, createDiscovery, getDiscovery, retryDiscovery } from './run.ts';
+import { searchAgain } from './steps.ts';
 
 const fixture = (name: string) => readFileSync(new URL(`../../../../test/fixtures/research/discovery/${name}.html`, import.meta.url), 'utf8');
 /** Pages the local server answers, by host and path ("momohut.example/"). Every host resolves to it. */
@@ -206,6 +209,17 @@ describe('discovery run', () => {
     expect(run.state).toBe('completed');
     expect(mockSearch.calls).toHaveLength(2);
     expect(run.counts).toMatchObject({ queries: 2, failedQueries: 0, results: 1 });
+  });
+
+  it('keeps what a second search round paid for when the cap runs out partway, so a retry pays for none of it again', async () => {
+    const brand = await factBrand();
+    const spent = Number(config.AI_MONTHLY_CAP_NPR) - Number((await withBrand(brand, (tx) => remainingMonthlyCap(tx))).npr);
+    config.AI_MONTHLY_CAP_NPR = (spent + 0.25).toFixed(2); // room for one query (NPR 0.16), not two
+    mockSearch.set('web', 'momo a', [hit('Momo Hut', 'https://momohut.com.np/')]);
+    const queries = [{ query: 'momo a', kind: 'web' as const }, { query: 'momo b', kind: 'web' as const }];
+    const answers = await searchAgain(brand, randomUUID(), queries, 'NP');
+    expect(answers.map((a) => a.failed)).toEqual([false, true]);
+    expect(mockSearch.calls.map((c) => c.query)).toEqual(['momo a']);
   });
 
   it('ends failed_final when the model refuses the group call, so no retry pays for the same refusal', async () => {
