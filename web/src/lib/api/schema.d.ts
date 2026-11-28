@@ -2740,7 +2740,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Newest first */
+                /** @description Best first (impact, confidence, effort), newest first within a rank */
                 200: {
                     headers: {
                         [name: string]: unknown;

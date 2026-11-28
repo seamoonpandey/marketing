@@ -213,7 +213,7 @@ export const routes = createRouter()
   .openapi(
     createRoute({
       method: 'get', path: `${P}/opportunities`, tags, request: { params: BrandParams, query: C.OpportunitiesQuery },
-      responses: { 200: json(z.array(C.Opportunity), 'Newest first'), 404: E },
+      responses: { 200: json(z.array(C.Opportunity), 'Best first (impact, confidence, effort), newest first within a rank'), 404: E },
     }),
     async (c) => {
       const { brandId } = c.req.valid('param');
