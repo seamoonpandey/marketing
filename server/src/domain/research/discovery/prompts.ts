@@ -5,7 +5,7 @@ import type { SearchResult } from '../../../db/schema/research.ts';
 import { cleanCut } from '../../../text/normalise.ts';
 
 export const KEYWORD_MAX_OUTPUT = 512;
-export const GROUP_MAX_OUTPUT = 4096;
+export const GROUP_MAX_OUTPUT = 8192; // holds the 60 businesses GROUP_SYSTEM asks for at most (prompts.test.ts)
 export const PROFILE_MAX_OUTPUT = 2048;
 export const OWN_MAX_OUTPUT = 1024;
 /** The page text a profile call reads; the quote check still reads the whole page. */
@@ -29,6 +29,7 @@ ${RULES}`;
 export const GROUP_SYSTEM = `You list the distinct businesses in a set of search results, to find a brand's competitors.
 Each result has an id. For each business give its name, its own website (or null), the social links found in its results (Facebook, Instagram, TikTok, YouTube and the like), its Maps listing id (cid) if a Maps result has one, the ids of every result it came from, and a rank (1 is the most relevant competitor).
 Leave out the brand itself, directories and marketplaces (Daraz, Foodmandu, Tripadvisor and the like), news, blogs, job posts and lists of many businesses.
+List at most 60 businesses, the most relevant first.
 ${RULES}`;
 
 export const PROFILE_SYSTEM = `You describe one business found in search results, as a possible competitor of a brand, one cell per column.
