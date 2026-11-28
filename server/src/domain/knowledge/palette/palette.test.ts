@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { contrast, cssColours, extractPalette, toCmyk, toRgb } from './colour.ts';
+import { contrast, cssColours, extractPalette, suggestRoles, toCmyk, toRgb } from './colour.ts';
 
 /** A PNG of colour columns (percent of the width each) under a transparent top half. */
 async function stripes(cols: [string, number][], width = 100, height = 20): Promise<Uint8Array> {
@@ -67,6 +67,25 @@ describe('palette', () => {
     const sheet = `:root{--brand:oklch(62.8% 0.2577 29.23);--soft:hsl(0 100% 50% / 0.2)} .btn{background:var(--brand) url(x.png)}
       .a{background-color:#0f5257}.b{color:#0f5257}.c{fill:#0F5257} #c3d7e5{margin:0} .d{width:calc(#fff)}`;
     expect(cssColours(html, [sheet])).toEqual(['#ffffff', '#0f5257', '#008000', '#c3d7e5', '#ff0000']);
+  });
+
+  it('suggests background, text, then primary, secondary and accent of clearly different hues', () => {
+    // unnatiapp.com's colours, most used first.
+    const site = ['#15c35b', '#ffffff', '#0074a3', '#101828', '#e4e4e7', '#18181b', '#23a136', '#0d1a3d', '#2790c4', '#f2b33d', '#0f7d3c', '#46dc9b'];
+    expect(suggestRoles(site.map((hex) => ({ hex, role: null })))).toEqual(
+      ['primary', 'background', 'secondary', 'text', null, null, null, null, null, 'accent', null, null],
+    );
+    // A dark site with no light grey: the near-black is the background and nothing grey reads on it as text.
+    expect(suggestRoles([{ hex: '#0b0b0b', role: null }, { hex: '#e85d27', role: null }])).toEqual(['background', 'primary']);
+  });
+
+  it('never changes a role the owner gave, and fills only the roles nobody holds', () => {
+    const owner = [
+      { hex: '#0f5257', role: 'primary' as const }, { hex: '#c3d7e5', role: null }, { hex: '#141414', role: null },
+      { hex: '#1a6a70', role: null }, { hex: '#e85d27', role: null },
+    ];
+    expect(suggestRoles(owner)).toEqual([null, 'background', 'text', null, 'secondary']);
+    expect(suggestRoles(owner.map((c) => ({ ...c, role: 'accent' as const })))).toEqual([null, null, null, null, null]);
   });
 
   it('reads a hostile page of dashes in linear time, so a homepage cannot stall the server', () => {

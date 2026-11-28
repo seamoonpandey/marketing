@@ -155,3 +155,45 @@ export function contrast(a: string, b: string): number {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return Math.round(((hi! + 0.05) / (lo! + 0.05)) * 100) / 100;
 }
+
+type Role = 'primary' | 'secondary' | 'accent' | 'text' | 'background';
+
+/** How colourful a colour is, 0 (grey) to 1, and its hue in degrees. */
+function chromaHue(hex: string): { chroma: number; hue: number } {
+  const { r, g, b } = toRgb(hex);
+  const max = Math.max(r, g, b);
+  const d = max - Math.min(r, g, b);
+  const hue = d === 0 ? 0 : max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return { chroma: d / 255, hue: hue * 60 };
+}
+const COLOURFUL = 0.15;
+const DISTINCT_HUE = 30;
+const hueGap = (a: number, b: number) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
+
+/**
+ * A guessed role for each colour that has none, filling only the roles no colour holds yet. Colours
+ * come most important first (the logo's by share, then the site's by use). Background: the first
+ * light near-grey colour (or, on a dark site, the first near-black one). Text: the first near-grey
+ * colour readable on it at 4.5:1. Primary: the first colourful one. Secondary, then accent: the next
+ * colourful ones whose hue is clearly different from those already picked. For the owner to check.
+ */
+export function suggestRoles(colours: { hex: string; role: Role | null }[]): (Role | null)[] {
+  const out: (Role | null)[] = colours.map(() => null);
+  const held = (role: Role) => colours.find((c) => c.role === role)?.hex;
+  const free = colours.map((c, i) => ({ ...c, i, ...chromaHue(c.hex), lum: luminance(c.hex) })).filter((c) => !c.role);
+  const take = (role: Role, c: (typeof free)[number] | undefined) => {
+    if (!c || held(role)) return held(role);
+    out[c.i] = role;
+    free.splice(free.indexOf(c), 1);
+    return c.hex;
+  };
+  const grey = free.filter((c) => c.chroma < COLOURFUL);
+  const background = take('background', grey.find((c) => c.lum >= 0.6) ?? grey.find((c) => c.lum <= 0.03));
+  take('text', free.find((c) => c.chroma < COLOURFUL && (background ? contrast(c.hex, background) >= 4.5 : c.lum <= 0.1)));
+  const picked: string[] = [];
+  for (const role of ['primary', 'secondary', 'accent'] as const) {
+    const hex = take(role, free.find((c) => c.chroma >= COLOURFUL && picked.every((p) => hueGap(chromaHue(p).hue, c.hue) >= DISTINCT_HUE)));
+    if (hex) picked.push(hex);
+  }
+  return out;
+}

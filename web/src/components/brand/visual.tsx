@@ -208,10 +208,13 @@ function PaletteEditor({ brandId, palette }: { brandId: string; palette: Schemas
   const id = useId();
   const client = useQueryClient();
   const server: Draft = palette.colours.map((c) => ({ hex: c.hex, role: c.role, saved: c }));
-  const [draft, setDraft] = useState<Draft | null>(null);
+  // Prachaar's guesses start as an unsaved draft: saving them is the owner's approval of the roles.
+  const [draft, setDraft] = useState<Draft | null>(() =>
+    palette.colours.some((c) => !c.role && c.suggestedRole) ? palette.colours.map((c) => ({ hex: c.hex, role: c.role ?? c.suggestedRole, saved: c })) : null);
   const [hex, setHex] = useState('');
   const colours = draft ?? server;
   const validHex = /^#[0-9a-fA-F]{6}$/.test(hex.trim());
+  const suggested = (c: Draft[number]) => !!c.saved && !c.saved.role && !!c.role && c.role === c.saved.suggestedRole;
 
   const save = useMutation({
     mutationFn: () => unwrap(api.PUT('/api/brands/{brandId}/knowledge/palette', { params: { path: { brandId } }, body: { colours: colours.map(({ hex, role }) => ({ hex, role })) } })),
@@ -234,6 +237,9 @@ function PaletteEditor({ brandId, palette }: { brandId: string; palette: Schemas
       </div>
       <MutationError error={save.error} />
       <LiveStatus message={save.isSuccess && !draft ? 'Palette saved.' : ''} />
+      {colours.some(suggested) ? (
+        <p className="text-sm">Prachaar suggested the roles marked below from your logo and website. Change any that are wrong, then save the palette.</p>
+      ) : null}
 
       {colours.length ? (
         <ul aria-label="Colours" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -268,6 +274,7 @@ function PaletteEditor({ brandId, palette }: { brandId: string; palette: Schemas
                       <Trash2 className="size-4" aria-hidden />
                     </button>
                   </div>
+                  {suggested(c) ? <p className="hint -mt-1">Suggested role</p> : null}
                 </div>
               </li>
             );

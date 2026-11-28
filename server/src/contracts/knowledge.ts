@@ -196,6 +196,7 @@ export const PaletteColour = z
     id,
     hex: z.string().openapi({ example: '#0f5257' }),
     role: orNull(PaletteRole),
+    suggestedRole: orNull(PaletteRole).openapi({ description: 'A guess for a colour without a role, filling only roles no colour holds yet. It is not the role until the owner saves it.' }),
     origin: z.enum(['logo', 'site', 'guide', 'owner']),
     share: z.number().nullable().openapi({ description: 'Share of the logo\'s opaque pixels, 0 to 1; null for site and owner colours.' }),
     rgb: z.object({ r: z.number().int(), g: z.number().int(), b: z.number().int() }),

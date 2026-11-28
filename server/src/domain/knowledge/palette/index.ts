@@ -4,22 +4,23 @@ import { paletteColours, type paletteOrigins, type paletteRoles } from '../../..
 import type { Tx } from '../../../db/tenant.ts';
 import { ValidationError } from '../../../http/errors.ts';
 import { audit } from '../../audit/index.ts';
-import { contrast, toCmyk, toRgb } from './colour.ts';
+import { contrast, suggestRoles, toCmyk, toRgb } from './colour.ts';
 
 export { contrast, cssColours, extractPalette, toCmyk, toRgb } from './colour.ts';
 
 type Role = (typeof paletteRoles)[number];
 type Origin = (typeof paletteOrigins)[number];
 
-/** The palette with RGB, approximate CMYK, and the contrast of every text colour on every background. */
+/** The palette with RGB, approximate CMYK, suggested roles for the roles nobody holds, and the contrast of every text colour on every background. */
 export async function getPalette(tx: Tx, brandId: string): Promise<PaletteOut> {
   const rows = await tx
     .select()
     .from(paletteColours)
     .where(eq(paletteColours.brandId, brandId))
     .orderBy(sql`${paletteColours.share} desc nulls last`, asc(paletteColours.id));
-  const colours = rows.map((r) => ({
-    id: r.id, hex: r.hex, role: r.role, origin: r.origin, share: r.share === null ? null : Number(r.share),
+  const suggested = suggestRoles(rows);
+  const colours = rows.map((r, i) => ({
+    id: r.id, hex: r.hex, role: r.role, suggestedRole: suggested[i]!, origin: r.origin, share: r.share === null ? null : Number(r.share),
     rgb: toRgb(r.hex), cmyk: toCmyk(r.hex),
   }));
   const contrasts = colours

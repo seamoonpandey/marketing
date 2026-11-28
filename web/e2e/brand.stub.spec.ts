@@ -428,6 +428,23 @@ test.describe('visual identity', () => {
     expect((st.calls.at(-1)!.body as { colours: unknown[] }).colours).toContainEqual({ hex: '#24201d', role: 'text' });
   });
 
+  test('fills in the suggested roles as an unsaved draft that the owner saves', async ({ page }) => {
+    const st = await open(page, '/visual', (s) => {
+      for (const [c, role] of [[0, 'primary'], [1, 'background'], [2, 'text']] as const) s.palette[c]!.suggestedRole = role;
+    });
+    await expect(page.getByText('Prachaar suggested the roles marked below')).toBeVisible();
+    await expect(page.getByLabel('Role of #0f5257')).toHaveValue('primary');
+    await expect(page.getByLabel('Role of #f5efe5')).toHaveValue('background');
+    await expect(page.getByText('Suggested role')).toHaveCount(3);
+    expect(st.calls.some((c) => c.path === '/knowledge/palette')).toBe(false); // nothing saved until the owner says so
+    await page.getByLabel('Role of #24201d').selectOption('accent');
+    await expect(page.getByText('Suggested role')).toHaveCount(2);
+    await page.getByRole('button', { name: 'Save palette' }).click();
+    await expect.poll(() => st.calls.find((c) => c.path === '/knowledge/palette')?.body).toEqual({
+      colours: [{ hex: '#0f5257', role: 'primary' }, { hex: '#f5efe5', role: 'background' }, { hex: '#24201d', role: 'accent' }],
+    });
+  });
+
   test('asks for each item with an example, and confirms the logo and font the website gave', async ({ page }) => {
     const st = await open(page, '/visual', (s) => {
       s.sources = [{ id: 's-logo', brandId: B, kind: 'upload', uri: 'https://himalpashmina.example/logo.svg', mime: 'image/svg+xml', checksum: 'c', capturedAt: '2026-11-27T09:00:00Z', trust: 'brand_site', meta: { filename: 'logo.svg', status: 'ready', foundOnSite: true }, hasText: false, downloadUrl: '/stub-storage/logo.svg' }];

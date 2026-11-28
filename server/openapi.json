@@ -1582,6 +1582,17 @@
               }
             ]
           },
+          "suggestedRole": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaletteRole"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A guess for a colour without a role, filling only roles no colour holds yet. It is not the role until the owner saves it."
+          },
           "origin": {
             "type": "string",
             "enum": [
@@ -1646,6 +1657,7 @@
           "id",
           "hex",
           "role",
+          "suggestedRole",
           "origin",
           "share",
           "rgb",

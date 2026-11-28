@@ -6693,6 +6693,8 @@ export interface components {
             /** @example #0f5257 */
             hex: string;
             role: components["schemas"]["PaletteRole"] | null;
+            /** @description A guess for a colour without a role, filling only roles no colour holds yet. It is not the role until the owner saves it. */
+            suggestedRole: components["schemas"]["PaletteRole"] | null;
             /** @enum {string} */
             origin: "logo" | "site" | "guide" | "owner";
             /** @description Share of the logo's opaque pixels, 0 to 1; null for site and owner colours. */
