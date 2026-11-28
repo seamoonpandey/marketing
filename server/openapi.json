@@ -687,6 +687,44 @@
           "example": {
             "type": "string",
             "description": "What a typical value looks like, shown to the owner as a hint."
+          },
+          "question": {
+            "type": "string",
+            "description": "The field asked as a plain question, for owners who do not know the term."
+          },
+          "why": {
+            "type": "string",
+            "description": "Why Prachaar needs the answer, in one line."
+          },
+          "none": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "description": "An answer meaning \"we have none\": a button with this label saves this value as the owner's."
+          },
+          "draftable": {
+            "type": "boolean",
+            "description": "POST knowledge/drafts can write a first draft of this field."
           }
         },
         "required": [
@@ -694,6 +732,50 @@
           "label",
           "type",
           "multi"
+        ]
+      },
+      "Draft": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "One item for a single text field; one per value or list item otherwise. Empty when the material holds nothing to draft from."
+          },
+          "cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "description": "Decimal strings, never floats."
+              }
+            ]
+          }
+        },
+        "required": [
+          "values",
+          "cost"
+        ],
+        "description": "A suggestion only: nothing is saved until the owner adds it as a fact."
+      },
+      "DraftCreate": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "$ref": "#/components/schemas/SectionKey"
+          },
+          "field": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "section",
+          "field"
         ]
       },
       "ImportRun": {
@@ -1813,12 +1895,23 @@
                       "fixPath": {
                         "type": "string",
                         "description": "App path that fixes it, e.g. /app/b/{brandId}/brand/review?section=products"
+                      },
+                      "ask": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/components/schemas/ReadinessAsk"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
                     },
                     "required": [
                       "label",
                       "pass",
-                      "fixPath"
+                      "fixPath",
+                      "ask"
                     ]
                   }
                 }
@@ -1839,6 +1932,42 @@
           "gates",
           "dimensions"
         ]
+      },
+      "ReadinessAsk": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "$ref": "#/components/schemas/SectionKey"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "The fields still missing, in the order to ask them."
+          },
+          "subjectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The product or segment to complete; null for the brand, or to create a new one."
+          },
+          "subjectName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "section",
+          "fields",
+          "subjectId",
+          "subjectName"
+        ],
+        "description": "What to ask the owner so this criterion passes, answered in place."
       },
       "BrandBook": {
         "type": "object",
@@ -7784,6 +7913,87 @@
             }
           },
           "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands/{brandId}/knowledge/drafts": {
+      "post": {
+        "tags": [
+          "knowledge"
+        ],
+        "description": "A first draft of a field the catalogue marks draftable, from approved facts and the website text. One model call; nothing is saved.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0196f3c2-0000-7000-8000-000000000000"
+            },
+            "required": true,
+            "name": "brandId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Draft"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error: `{ error: { code, message } }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
             "description": "Error: `{ error: { code, message } }`",
             "content": {
               "application/json": {

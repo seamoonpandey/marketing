@@ -40,6 +40,7 @@ const BODY: Record<string, unknown> = {
   'POST /api/brands/:brandId/knowledge/facts/:id/reject': { reason: 'Wrong' },
   'POST /api/brands/:brandId/knowledge/conflicts/resolve': { keepFactId: '$fact' },
   'POST /api/brands/:brandId/knowledge/subjects': { type: 'product', name: 'Scarf' },
+  'POST /api/brands/:brandId/knowledge/drafts': { section: 'positioning', field: 'value_proposition' },
   'POST /api/brands/:brandId/knowledge/assets': { sourceId: '$source', kind: 'photo', rights: { licence: 'Own work' } },
   'PATCH /api/brands/:brandId/knowledge/assets/:id': { variant: 'square' },
   'PUT /api/brands/:brandId/knowledge/palette': { colours: [{ hex: '#0f5257', role: 'primary' }] },

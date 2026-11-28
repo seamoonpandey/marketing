@@ -739,6 +739,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/brands/{brandId}/knowledge/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description A first draft of a field the catalogue marks draftable, from approved facts and the website text. One model call; nothing is saved. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    brandId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DraftCreate"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Draft"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                402: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error: `{ error: { code, message } }` */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/brands/{brandId}/knowledge/imports": {
         parameters: {
             query?: never;
@@ -6464,6 +6542,27 @@ export interface components {
             options?: string[];
             /** @description What a typical value looks like, shown to the owner as a hint. */
             example?: string;
+            /** @description The field asked as a plain question, for owners who do not know the term. */
+            question?: string;
+            /** @description Why Prachaar needs the answer, in one line. */
+            why?: string;
+            /** @description An answer meaning "we have none": a button with this label saves this value as the owner's. */
+            none?: {
+                label: string;
+                value: string | string[];
+            };
+            /** @description POST knowledge/drafts can write a first draft of this field. */
+            draftable?: boolean;
+        };
+        /** @description A suggestion only: nothing is saved until the owner adds it as a fact. */
+        Draft: {
+            /** @description One item for a single text field; one per value or list item otherwise. Empty when the material holds nothing to draft from. */
+            values: string[];
+            cost: components["schemas"]["Money"] & unknown;
+        };
+        DraftCreate: {
+            section: components["schemas"]["SectionKey"];
+            field: string;
         };
         ImportRun: {
             id: string;
@@ -6758,8 +6857,18 @@ export interface components {
                     pass: boolean;
                     /** @description App path that fixes it, e.g. /app/b/{brandId}/brand/review?section=products */
                     fixPath: string;
+                    ask: components["schemas"]["ReadinessAsk"] | null;
                 }[];
             }[];
+        };
+        /** @description What to ask the owner so this criterion passes, answered in place. */
+        ReadinessAsk: {
+            section: components["schemas"]["SectionKey"];
+            /** @description The fields still missing, in the order to ask them. */
+            fields: string[];
+            /** @description The product or segment to complete; null for the brand, or to create a new one. */
+            subjectId: string | null;
+            subjectName: string | null;
         };
         BrandBook: {
             /** @description Every catalogue section, in catalogue order, with its current approved, unexpired facts. */
