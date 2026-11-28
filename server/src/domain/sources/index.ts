@@ -70,6 +70,22 @@ export async function savePageSource(tx: Tx, brandId: string, url: string, trust
   return row!;
 }
 
+/** Stores text found off the brand's site (a business's search results) as an external source, so quotes from it can be checked. */
+export async function saveTextSource(tx: Tx, brandId: string, uri: string, text: string): Promise<Source> {
+  const id = await newId(tx);
+  const body = new TextEncoder().encode(text);
+  const key = objectKey(await tenantOf(tx), brandId, 'snapshot', id, 'txt');
+  await putObject(key, body, 'text/plain; charset=utf-8');
+  const [row] = await tx
+    .insert(sources)
+    .values({
+      id, brandId, kind: 'page', uri, mime: 'text/plain', checksum: sha256(body), capturedAt: new Date(), objectKey: key, text,
+      trust: 'external', meta: { searchResults: true },
+    })
+    .returning(columns);
+  return row!;
+}
+
 const SITE_IMAGES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
 
 /**

@@ -8,7 +8,7 @@ import { withBrand } from '../../db/tenant.ts';
 import { ValidationError } from '../../http/errors.ts';
 import { ensureBucket, getObject, presignDownload } from '../../storage/index.ts';
 import { fetchGuard } from './fetch.ts';
-import { completeUpload, createUpload, getSource, listSources, savePageSource } from './index.ts';
+import { completeUpload, createUpload, getSource, listSources, savePageSource, saveTextSource } from './index.ts';
 
 const file = (name: string) => readFileSync(new URL(`../../../test/fixtures/base/files/${name}`, import.meta.url));
 const PDF = 'application/pdf';
@@ -64,6 +64,15 @@ describe('sources', () => {
     const html = await getObject(s.objectKey);
     expect(s.checksum).toBe(createHash('sha256').update(html).digest('hex'));
     expect((await withBrand(brand, (tx) => getSource(tx, brand, s.id))).id).toBe(s.id);
+  });
+
+  it('saves a text source with its text and an external trust', async () => {
+    const text = 'Momo Hut\nhttps://momohut.com.np/\nमःम घर, Lalitpur';
+    const s = await withBrand(brand, (tx) => saveTextSource(tx, brand, 'search:run:site:momohut.com.np', text));
+    expect(s).toMatchObject({ kind: 'page', uri: 'search:run:site:momohut.com.np', mime: 'text/plain', trust: 'external', text, meta: { searchResults: true } });
+    expect(s.objectKey).toBe(`tenant/${t.tenantId}/brand/${brand}/snapshot/${s.id}.txt`);
+    expect(new TextDecoder().decode(await getObject(s.objectKey))).toBe(text);
+    expect(s.checksum).toBe(createHash('sha256').update(text).digest('hex'));
   });
 
   it('keeps a Devanagari, spaced, long file name in meta and out of the key', async () => {

@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import type { AiPart } from '../../../ai/index.ts';
 import type { ApprovedFact } from '../../../contracts/common.ts';
+import type { SearchResult } from '../../../db/schema/research.ts';
+import { cleanCut } from '../../../text/normalise.ts';
 
 export const KEYWORD_MAX_OUTPUT = 512;
 export const GROUP_MAX_OUTPUT = 4096;
@@ -29,6 +31,7 @@ ${RULES}`;
 
 export const PROFILE_SYSTEM = `You describe one business found in search results, as a possible competitor of a brand, one cell per column.
 Columns: kind (direct, indirect or aspirational), sells, sellsTo, priceLevel (low, mid or high), where (the area it serves, online or physical), pitch (how it describes itself), overlap with the brand (high, medium or low).
+The sources are the search results and the page text, each tagged with its source_id.
 A cell is either quoted (value, a quote copied exactly from one source's text, 10 to 300 characters, and that source's id) or inferred (value, a one-sentence reason, the ids of the sources or approved facts it rests on, and a confidence of low, medium or high).
 kind and overlap are always inferred, and overlap must cite at least one approved fact. Leave a column null when the data does not show it.
 ${RULES}`;
@@ -38,6 +41,19 @@ Each cell has a value and the ids of the approved facts it rests on. Leave a col
 ${RULES}`;
 
 export const KeywordAnswer = z.object({ keywords: z.array(z.string()) });
+export const GroupAnswer = z.object({
+  businesses: z.array(z.object({
+    name: z.string(), site: z.string().nullable(), resultIds: z.array(z.string()), socials: z.array(z.string()), placeCid: z.string().nullable(),
+    rank: z.number(),
+  })),
+});
+
+/** The IDs a profile call cites its two sources by; the step swaps them for the stored sources' IDs. */
+export const RESULTS = 'results';
+export const PAGE = 'page';
+
+/** A block of untrusted data; its own closing tag is broken inside it, so the data cannot end the block early. */
+const block = (tag: string, text: string, attrs = '') => `<${tag}${attrs}>\n${text.replace(new RegExp(`</(${tag})`, 'gi'), '<\\/$1')}\n</${tag}>`;
 
 /** The approved facts as the model reads them, with their IDs for citations (as battlecard.ts). */
 export const factsBlock = (facts: ApprovedFact[]) =>
@@ -46,3 +62,18 @@ export const factsBlock = (facts: ApprovedFact[]) =>
 export function keywordParts(country: string, facts: ApprovedFact[]): AiPart[] {
   return [{ type: 'text', text: `<brand_country>${country}</brand_country>\n${factsBlock(facts)}` }];
 }
+
+/** Every search result of the run, one JSON object per line, with the ID the group answer cites. */
+export function groupParts(results: SearchResult[]): AiPart[] {
+  const lines = results.map((r) => JSON.stringify({ id: r.id, kind: r.kind, title: r.title, url: r.url, snippet: r.snippet, place: r.place }));
+  return [{ type: 'text', text: block('search_results', lines.join('\n')) }];
+}
+
+/** One business: the approved facts, its name, its search results as stored, and its home page text (cut) when it has one. */
+export function profileParts(facts: ApprovedFact[], name: string, results: string, page: string | null): AiPart[] {
+  const blocks = [factsBlock(facts), block('business_name', name), block('search_results', results, ` source_id="${RESULTS}"`)];
+  if (page !== null) blocks.push(block('page_text', cleanCut(page, MAX_PAGE_CHARS), ` source_id="${PAGE}"`));
+  return [{ type: 'text', text: blocks.join('\n') }];
+}
+
+export const ownParts = (facts: ApprovedFact[]): AiPart[] => [{ type: 'text', text: factsBlock(facts) }];
