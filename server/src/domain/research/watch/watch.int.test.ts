@@ -181,6 +181,21 @@ describe('watch run', () => {
     await startRun(brand, 'baseline').then(({ runId: next }) => cancelRun(brand, next));
   });
 
+  it('refuses a confirm that waited on a cancel, so a cancelled run is never set running again', async () => {
+    const { brand } = await setup();
+    const { runId } = await startRun(brand, 'baseline');
+    expect((await settle(brand, runId)).state).toBe('awaiting_approval');
+    // A cancel has changed the row and not committed yet: the confirm still reads it as waiting, then waits for the row.
+    await t.adminQuery('begin');
+    await t.adminQuery(`update watch_runs set state = 'cancelled' where id = $1`, [runId]);
+    const confirm = confirmRun(brand, runId).then(() => 'confirmed', (e) => e);
+    await new Promise((r) => setTimeout(r, 300));
+    await t.adminQuery('commit');
+    expect(await confirm).toBeInstanceOf(ConflictError);
+    expect((await withBrand(brand, (tx) => getRun(tx, brand, runId))).state).toBe('cancelled');
+    expect(mockAi.calls).toHaveLength(0);
+  });
+
   it('stops watching a deleted competitor and keeps its observations readable', async () => {
     const { brand, rival } = await setup();
     await baseline(brand);

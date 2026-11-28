@@ -54,7 +54,12 @@ export async function confirmRun(brandId: string, runId: string): Promise<void> 
   const run = await withBrand(brandId, async (tx) => {
     const r = await getRun(tx, brandId, runId);
     if (r.state !== 'awaiting_approval') throw new ConflictError('This run is not waiting for approval');
-    await tx.update(watchRuns).set({ state: 'running' }).where(eq(watchRuns.id, runId));
+    // Only from awaiting_approval, so a confirm racing another, a cancel or the expiry cannot revive the run as running.
+    const [moved] = await tx
+      .update(watchRuns).set({ state: 'running' })
+      .where(and(eq(watchRuns.id, runId), eq(watchRuns.state, 'awaiting_approval')))
+      .returning({ id: watchRuns.id });
+    if (!moved) throw new ConflictError('This run is not waiting for approval');
     await audit(tx, { brandId, actor: 'operator', action: 'research.run.confirm', objectType: 'watch_run', objectId: runId, result: 'ok' });
     return r;
   });
