@@ -427,6 +427,30 @@ test.describe('visual identity', () => {
     expect(st.calls.at(-1)).toMatchObject({ method: 'PUT', path: '/knowledge/palette' });
     expect((st.calls.at(-1)!.body as { colours: unknown[] }).colours).toContainEqual({ hex: '#24201d', role: 'text' });
   });
+
+  test('asks for each item with an example, and confirms the logo and font the website gave', async ({ page }) => {
+    const st = await open(page, '/visual', (s) => {
+      s.sources = [{ id: 's-logo', brandId: B, kind: 'upload', uri: 'https://himalpashmina.example/logo.svg', mime: 'image/svg+xml', checksum: 'c', capturedAt: '2026-11-27T09:00:00Z', trust: 'brand_site', meta: { filename: 'logo.svg', status: 'ready', foundOnSite: true }, hasText: false, downloadUrl: '/stub-storage/logo.svg' }];
+      s.facts.push(fact({ id: 'f-font', section: 'visual', subjectType: 'brand', subjectId: null, subjectName: null, field: 'fonts', fieldLabel: 'Licensed fonts', value: 'Mukta', language: 'und', status: 'inferred', origin: 'inferred', confidence: 0.6, source: null, quote: null }));
+    });
+    await expect(page.getByText('Example: ilamleaf-logo.svg')).toBeVisible();
+    await expect(page.getByText('Example: #0f5257')).toBeVisible();
+    await expect(page.getByLabel('Add a font by name')).toHaveAccessibleDescription(/Example: Mukta/);
+
+    await page.getByLabel(/We own this logo/).check();
+    await page.getByRole('button', { name: 'Use this logo' }).click();
+    await expect.poll(() => st.calls.find((c) => c.path === '/knowledge/assets')?.body).toEqual({
+      sourceId: 's-logo', kind: 'logo', rights: { owner: 'Himal Pashmina', licence: 'Owned by the brand', commercialUse: true, paidUse: true },
+    });
+
+    await page.getByRole('button', { name: 'Yes, ours' }).click();
+    await expect.poll(() => st.calls.some((c) => c.path === '/knowledge/facts/f-font/approve')).toBe(true);
+
+    await page.getByLabel('Add a font by name').fill('Poppins');
+    await page.getByRole('button', { name: 'Add font' }).click();
+    await expect.poll(() => st.calls.find((c) => c.path === '/knowledge/facts')?.body).toEqual({ section: 'visual', subjectId: null, field: 'fonts', value: 'Poppins', language: 'und' });
+    await expect(page.getByLabel('Add a font by name')).toHaveValue('');
+  });
 });
 
 test.describe('brand book', () => {

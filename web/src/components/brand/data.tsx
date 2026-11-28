@@ -38,6 +38,27 @@ export const useSubjects = (b: string) => useQuery({ queryKey: key(b, 'subjects'
 export const useImports = (b: string) => useQuery({ queryKey: key(b, 'imports'), queryFn: () => unwrap(api.GET('/api/brands/{brandId}/knowledge/imports', path(b))) });
 export const importKey = (b: string, runId: string) => key(b, `import-${runId}`);
 
+// fetch has no upload progress, so the PUT to storage uses XHR.
+function put(url: string, file: File, type: string, onPct: (n: number) => void) {
+  return new Promise<void>((resolve, reject) => {
+    const x = new XMLHttpRequest();
+    x.open('PUT', url);
+    x.setRequestHeader('Content-Type', type);
+    x.upload.onprogress = (e) => e.lengthComputable && onPct(Math.round((e.loaded / e.total) * 100));
+    x.onload = () => (x.status < 300 ? resolve() : reject(new Error(`The file could not be stored (${x.status}).`)));
+    x.onerror = () => reject(new Error('The upload was interrupted. Try the file again.'));
+    x.send(file);
+  });
+}
+
+/** Uploads a file as a source: registers it, PUTs it to storage, then the server checks the bytes. */
+export async function uploadFile(brandId: string, file: File, onPct: (n: number) => void = () => {}): Promise<Schemas['Source']> {
+  const mime = file.type || 'application/octet-stream';
+  const made = await unwrap(api.POST('/api/brands/{brandId}/sources/uploads', { params: { path: { brandId } }, body: { filename: file.name, mime, bytes: file.size } }));
+  await put(made.uploadUrl, file, mime, onPct);
+  return unwrap(api.POST('/api/brands/{brandId}/sources/{id}/complete', { params: { path: { brandId, id: made.source.id } } }));
+}
+
 /** Refetch everything the brand module shows (facts, book, palette, readiness all move together). */
 export function refreshAll(client: QueryClient, brandId: string) {
   return client.invalidateQueries({ queryKey: ['kb', brandId] });

@@ -17,6 +17,8 @@ export function toInput(v: FactValue | undefined): string {
 /** The control that fits a catalogue field type, with its visible label. */
 export function ValueInput({ id, field, label, value, onChange }: { id: string; field: FieldDef | undefined; label: string; value: string; onChange: (v: string) => void }) {
   const t = field?.type ?? 'text';
+  const example = t === 'enum' || t === 'date' ? undefined : field?.example;
+  const describedBy = [t === 'list' || t === 'longtext' ? `${id}-hint` : null, example ? `${id}-example` : null].filter(Boolean).join(' ') || undefined;
   let control;
   if (t === 'enum') {
     control = (
@@ -27,19 +29,20 @@ export function ValueInput({ id, field, label, value, onChange }: { id: string; 
     );
   } else if (t === 'longtext' || t === 'list') {
     control = (
-      <textarea id={id} className="input min-h-24 py-2 leading-relaxed" rows={t === 'list' ? 4 : 3} value={value} onChange={(e) => onChange(e.target.value)} aria-describedby={t === 'list' ? `${id}-hint` : undefined}
+      <textarea id={id} className="input min-h-24 py-2 leading-relaxed" rows={t === 'list' ? 4 : 3} value={value} onChange={(e) => onChange(e.target.value)} aria-describedby={describedBy}
         onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) e.currentTarget.form?.requestSubmit(); }} />
     );
   } else {
     control = (
-      <input id={id} className="input" type={t === 'date' ? 'date' : t === 'url' ? 'url' : 'text'} inputMode={t === 'number' || t === 'money' ? 'decimal' : undefined} value={value} onChange={(e) => onChange(e.target.value)} />
+      <input id={id} className="input" type={t === 'date' ? 'date' : t === 'url' ? 'url' : 'text'} inputMode={t === 'number' || t === 'money' ? 'decimal' : undefined} aria-describedby={describedBy} value={value} onChange={(e) => onChange(e.target.value)} />
     );
   }
   return (
     <div className="field">
       <label htmlFor={id} className="label">{label}</label>
       {control}
-      {t === 'list' ? <p id={`${id}-hint`} className="hint">One item per line. Ctrl+Enter saves.</p> : t === 'longtext' ? <p className="hint">Ctrl+Enter saves.</p> : null}
+      {t === 'list' ? <p id={`${id}-hint`} className="hint">One item per line. Ctrl+Enter saves.</p> : t === 'longtext' ? <p id={`${id}-hint`} className="hint">Ctrl+Enter saves.</p> : null}
+      {example ? <p id={`${id}-example`} className="hint">Example: {example}</p> : null}
     </div>
   );
 }

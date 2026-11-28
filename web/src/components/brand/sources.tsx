@@ -6,26 +6,13 @@ import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Async, CostConfirm, MoneyText, MutationError, PageHeader, RunProgress, StateBlock, StatusBadge, useBrand, useBrandId } from '@/components/app';
 import { api, errorMessage, type Schemas, unwrap } from '@/lib/api/client';
-import { importKey, refreshAll, useAssets, useImports, useSources } from './data';
+import { importKey, refreshAll, uploadFile, useAssets, useImports, useSources } from './data';
 
 type Source = Schemas['Source'];
 type Asset = Schemas['Asset'];
 type Rights = Schemas['AssetRights'];
 
 type Pending = { key: number; name: string; pct: number; error?: string };
-
-// fetch has no upload progress, so the PUT to storage uses XHR.
-function put(url: string, file: File, type: string, onPct: (n: number) => void) {
-  return new Promise<void>((resolve, reject) => {
-    const x = new XMLHttpRequest();
-    x.open('PUT', url);
-    x.setRequestHeader('Content-Type', type);
-    x.upload.onprogress = (e) => e.lengthComputable && onPct(Math.round((e.loaded / e.total) * 100));
-    x.onload = () => (x.status < 300 ? resolve() : reject(new Error(`The file could not be stored (${x.status}).`)));
-    x.onerror = () => reject(new Error('The upload was interrupted. Try the file again.'));
-    x.send(file);
-  });
-}
 
 export function SourcesScreen() {
   const brandId = useBrandId()!;
@@ -52,11 +39,8 @@ export function SourcesScreen() {
     const key = Date.now() + Math.random();
     const patch = (p: Partial<Pending>) => setPending((l) => l.map((x) => (x.key === key ? { ...x, ...p } : x)));
     setPending((l) => [...l, { key, name: file.name, pct: 0 }]);
-    const mime = file.type || 'application/octet-stream';
     try {
-      const made = await unwrap(api.POST('/api/brands/{brandId}/sources/uploads', { params: { path: { brandId } }, body: { filename: file.name, mime, bytes: file.size } }));
-      await put(made.uploadUrl, file, mime, (pct) => patch({ pct }));
-      const done = await unwrap(api.POST('/api/brands/{brandId}/sources/{id}/complete', { params: { path: { brandId, id: made.source.id } } }));
+      const done = await uploadFile(brandId, file, (pct) => patch({ pct }));
       setInclude((s) => new Set(s).add(done.id));
       await refreshAll(client, brandId);
       setPending((l) => l.filter((x) => x.key !== key));
@@ -89,8 +73,8 @@ export function SourcesScreen() {
           <h2 id="src-site" className="flex items-center gap-2 text-lg font-semibold"><Globe className="size-[1.125rem]" strokeWidth={1.75} aria-hidden /> Website</h2>
           <div className="field max-w-xl">
             <label htmlFor="site" className="label">Website address</label>
-            <input id="site" className="input" inputMode="url" value={url} placeholder="himalpashmina.com.np" onChange={(e) => { setEdited(true); setSite(e.target.value); }} />
-            <p className="hint">Prachaar picks the pages that matter. Reading pages costs nothing.</p>
+            <input id="site" className="input" inputMode="url" value={url} aria-describedby="site-hint" onChange={(e) => { setEdited(true); setSite(e.target.value); }} />
+            <p id="site-hint" className="hint">Prachaar picks the pages that matter, and finds your logo, colours and fonts. Reading pages costs nothing. Example: ilamleaf.com.np</p>
           </div>
         </section>
 
@@ -98,7 +82,7 @@ export function SourcesScreen() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="grid gap-1">
               <h2 id="src-files" className="flex items-center gap-2 text-lg font-semibold"><FileUp className="size-[1.125rem]" strokeWidth={1.75} aria-hidden /> Files</h2>
-              <p className="max-w-[60ch] text-sm text-muted">Logos, the brand guide, the price list, any other document. Say what each is, and for images and fonts, who owns the rights.</p>
+              <p className="max-w-[60ch] text-sm text-muted">Logos, the brand guide, the price list, any other document. Say what each is, and for images and fonts, who owns the rights. Example: logo.svg, brand-guide.pdf, price-list.pdf. PDF, Word, PNG, JPEG, WebP, SVG, text or CSV, up to 25 MB each.</p>
             </div>
             <input
               ref={input} type="file" multiple className="sr-only" tabIndex={-1} aria-label="Choose files to upload"
@@ -227,6 +211,11 @@ function Run({ brandId, runId }: { brandId: string; runId: string }) {
               </div>
             ))}
           </dl>
+          {r.counts.logos ? (
+            <p className="text-sm">
+              Found a logo on your website. <Link href={`/app/b/${brandId}/brand/visual`} className="font-medium text-action underline">Check it on Visual identity</Link>.
+            </p>
+          ) : null}
           {r.counts.unchanged || r.counts.dropped ? (
             <p className="text-sm text-muted">
               {r.counts.unchanged} already known{r.counts.dropped ? `, ${r.counts.dropped} answers dropped because they did not fit a brand field` : ''}.
@@ -275,6 +264,7 @@ function FileRow({ brandId, source, asset, included, onInclude }: { brandId: str
           <span className="min-w-0 break-all">{name}<span className="sr-only"> (include in import)</span></span>
         </label>
         {asset ? <StatusBadge status={asset.licensed ? 'approved' : 'unverified'} label={asset.licensed ? 'Licence noted' : 'Licence missing'} /> : null}
+        {source.meta.foundOnSite ? <span className="text-sm text-muted">Found on your website</span> : null}
         <span className="num text-sm text-muted">{source.mime}</span>
         <div className="field">
           <label htmlFor={`${id}-use`} className="sr-only">What is {name}?</label>
