@@ -48,6 +48,7 @@ const BODY: Record<string, unknown> = {
   'PATCH /api/brands/:brandId/research/targets/:id': { status: 'paused' },
   'POST /api/brands/:brandId/research/runs': { trigger: 'manual' },
   'PUT /api/brands/:brandId/research/schedule': { enabled: false, weekday: 1, hour: 9 },
+  'POST /api/brands/:brandId/research/discoveries': { keywords: ['momo kathmandu'] },
   'PUT /api/brands/:brandId/plan/settings': { channels: [{ channel: 'instagram', postsPerWeek: 3 }], pillars: [], weekStarts: 0 },
   'POST /api/brands/:brandId/plan/campaigns': { name: 'Tihar', objective: 'awareness', segmentId: '$segment', opportunityId: '$opportunity' },
   'PATCH /api/brands/:brandId/plan/campaigns/:id': { segmentId: '$segment' },
@@ -85,7 +86,7 @@ const QUERY: Record<string, Record<string, string>> = {
 const KIND: Record<string, string> = {
   competitors: 'competitor', sources: 'source', facts: 'fact', assets: 'asset', imports: 'importRun', campaigns: 'campaign',
   items: 'item', targets: 'target', opportunities: 'opportunity', drafts: 'draft', queue: 'draft', channels: 'channel', jobs: 'job',
-  'plan/runs': 'planRun', 'research/runs': 'watchRun', 'studio/runs': 'studioRun',
+  'plan/runs': 'planRun', 'research/runs': 'watchRun', 'studio/runs': 'studioRun', discoveries: 'discoveryRun',
 };
 
 type Ids = Record<string, string>;
@@ -158,6 +159,7 @@ async function seed(brand: string): Promise<Ids> {
   ids.importRun = await one(`insert into import_runs (tenant_id, brand_id, state, stage) values ($1, $2, 'completed', 'done') returning id`);
   ids.planRun = await one(`insert into plan_runs (tenant_id, brand_id, kind, target_id, state) values ($1, $2, 'week', $3, 'completed') returning id`, [SUN]);
   ids.watchRun = await one(`insert into watch_runs (tenant_id, brand_id, trigger, state) values ($1, $2, 'manual', 'completed') returning id`);
+  ids.discoveryRun = await one(`insert into discovery_runs (tenant_id, brand_id, keywords, state) values ($1, $2, '{momo}', 'completed') returning id`);
   ids.profile = await one(
     `insert into competitor_profiles (tenant_id, brand_id, competitor_id, profile, run_id) values ($1, $2, $3, '{"entries":[]}', $4) returning id`,
     [ids.competitor, ids.watchRun],

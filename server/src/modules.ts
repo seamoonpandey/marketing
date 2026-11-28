@@ -11,6 +11,7 @@ import { routes as home } from './domain/home/index.ts';
 import './workflows/brand-import.ts';
 import './workflows/plan-draft.ts';
 import './workflows/research-watch.ts';
+import './workflows/research-discovery.ts';
 import './workflows/studio-run.ts';
 import './workflows/publish-run.ts';
 

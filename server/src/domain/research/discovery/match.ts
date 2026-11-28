@@ -41,8 +41,8 @@ export function matchKey(b: { site: string | null; placeCid?: string | null; nam
   return `name:${foldText(b.name).replace(/[^\p{L}\p{M}\p{N}]+/gu, ' ').trim()}`;
 }
 
-/** A model-written link as stored: http(s) only, cleaned. */
-const cleanUrl = (url: string) => {
+/** A link a model or a search result wrote, as stored: http(s) only, cleaned; null otherwise. */
+export const cleanUrl = (url: string): string | null => {
   const u = httpUrl(url);
   return u ? cleanCut(u.href, MAX_URL) : null;
 };
